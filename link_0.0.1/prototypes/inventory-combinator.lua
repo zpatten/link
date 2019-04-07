@@ -8,7 +8,7 @@ local inventory_combinator = table.deepcopy(data.raw["constant-combinator"]["con
 
 inventory_combinator.name = INVENTORY_COMBINATOR_NAME
 inventory_combinator.item_slot_count = 1024
-inventory_combinator.minable = { mining_time = 4, result = INVENTORY_COMBINATOR_NAME }
+inventory_combinator.minable = { mining_time = 0.5, result = INVENTORY_COMBINATOR_NAME }
 
 local recipe = table.deepcopy(data.raw.recipe["constant-combinator"])
 recipe.enabled = true

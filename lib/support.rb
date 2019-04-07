@@ -1,5 +1,11 @@
 require 'ostruct'
 
+require_relative "support/combinators"
+require_relative "support/config"
+require_relative "support/memory_cache"
+require_relative "support/requests"
+require_relative "support/storage"
+
 class OpenStruct
   def count
     self.to_h.count
@@ -7,23 +13,23 @@ class OpenStruct
 end
 
 # https://gist.github.com/Integralist/9503099
-class Object
-  def deep_symbolize_keys!
-    return self.reduce({}) do |memo, (k, v)|
-      memo.tap { |m| m[k.to_sym] = v.deep_symbolize_keys! }
-    end if self.is_a? Hash
+# class Object
+#   def deep_symbolize_keys!
+#     return self.reduce({}) do |memo, (k, v)|
+#       memo.tap { |m| m[k.to_sym] = v.deep_symbolize_keys! }
+#     end if self.is_a? Hash
 
-    return self.reduce([]) do |memo, v|
-      memo << v.deep_symbolize_keys!; memo
-    end if self.is_a? Array
+#     return self.reduce([]) do |memo, v|
+#       memo << v.deep_symbolize_keys!; memo
+#     end if self.is_a? Array
 
-    self
-  end
-end
+#     self
+#   end
+# end
 
 # Displays RCON response packets for debugging or other uses (i.e. when we do not care about the response)
 def rcon_print(host, packet_fields, data)
-  $logger.debug { "RCON Received Packet: #{packet_fields.inspect}" }
+  # $logger.debug { "RCON Received Packet: #{packet_fields.inspect}" }
 end
 
 # Redirect RCON output to other servers
@@ -33,19 +39,6 @@ def rcon_redirect(host, packet_fields, (player_index, command, origin_host))
   message = %(#{host}#{command}: #{payload})
   command = %(/#{rcon_executor} game.players[#{player_index}].print(#{message.dump}, {r = 1, g = 1, b = 1}))
   origin.rcon_command(command, method(:rcon_print))
-end
-
-# RTT
-def ping(host, packet_fields, started_at)
-  # Calculate the RTT based on how much time passed from the start of the inital
-  # request until we received the response here.
-  rtt = (Time.now.to_f - started_at)
-
-  # Update Factorio Servers with our current RTT
-  server = Servers.find_by_name(host)
-  command = %(/#{rcon_executor} remote.call('link', 'rtt', '#{rtt}'))
-  server.rcon_command(command, method(:rcon_print))
-  $logger.debug { "#{(rtt * 1000.0).round(0)}ms RTT - #{host}" }
 end
 
 # def threaded_task(*args, &block)
@@ -88,16 +81,17 @@ def schedule_task(what, frequency=nil, server=nil, &block)
       if server.nil?
         sleep 1 while Servers.unavailable?
       else
-        sleep 1 while server.unavailable?
+        sleep 1 while [server].flatten.map(&:unavailable?).all?(true)
       end
 
       now = Time.now.to_f
       next_run_at = (now + (frequency - (now % frequency)))
 
       if server.nil?
-        $logger.info { "[#{what}]  next_run_at: #{next_run_at}  frequency: #{frequency}" }
+        $logger.info { "#{what}: next_run_at=#{next_run_at} (frequency=#{frequency})" }
       else
-        $logger.info { "[#{what}] (#{server.name})  next_run_at: #{next_run_at}  frequency: #{frequency}" }
+        id = [server].flatten.map(&:id).join(",")
+        $logger.info { "[#{id}] #{what}: next_run_at=#{next_run_at} (frequency=#{frequency})" }
       end
 
       block.call(*args)
@@ -105,21 +99,22 @@ def schedule_task(what, frequency=nil, server=nil, &block)
   end
 end
 
-def schedule_servers(what, servers=nil, &block)
-  s = if servers.nil?
-    Servers.find(what)
-  elsif servers.is_a?(Symbol)
-    Servers.find_by(servers)
-  else
-    servers
-  end
-
+def schedule_server(what, &block)
   $logger.info { "Scheduling #{what}..." }
 
-  s.each do |server|
+  servers = Servers.find(what)
+  servers.each do |server|
     frequency = Config.server_value(server.name, :scheduler, what)
     schedule_task(what, frequency, server, &block)
   end
+end
+
+def schedule_servers(what, &block)
+  $logger.info { "Scheduling #{what}..." }
+
+  servers = Servers.find(what)
+  frequency = Config.master_value(:scheduler, what)
+  schedule_task(what, frequency, servers, &block)
 end
 
 # RCON Executor
@@ -144,9 +139,10 @@ class RescueRetry
 
     def default_rescue_exceptions
       [
-        Errno::ECONNRESET,
-        Errno::ECONNREFUSED,
         Errno::ECONNABORTED,
+        Errno::ECONNREFUSED,
+        Errno::ECONNRESET,
+        Errno::ENOTSOCK,
         IOError
       ]
     end

@@ -19,7 +19,7 @@ requester_provider_chest.name = REQUESTER_PROVIDER_CHEST_NAME
 -- requester_provider_chest.icon = data.raw["logistic-container"]["logistic-chest-requester"].icon
 requester_provider_chest.inventory = 60
 requester_provider_chest.logistic_slots_count = 18
-requester_provider_chest.minable = { mining_time = 4, result = REQUESTER_PROVIDER_CHEST_NAME }
+requester_provider_chest.minable = { mining_time = 0.5, result = REQUESTER_PROVIDER_CHEST_NAME }
 
 local recipe = table.deepcopy(data.raw.recipe["logistic-chest-requester"])
 recipe.enabled = true

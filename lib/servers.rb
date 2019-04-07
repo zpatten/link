@@ -18,7 +18,7 @@ class Servers
     def find(what)
       what = what.to_sym
       case what
-      when :commands, :chats, :ping, :command_whitelist, :providables, :requests, :combinators
+      when :commands, :chats, :ping, :command_whitelist, :providables, :requests, :inventory_combinators, :transmitter_combinators, :receiver_combinators, :id
         all.select { |s| !!Config.server_value(s.name, what) }
       when :research, :current_research
         all.select { |s| !!Config.server_value(s.name, :research) }
@@ -40,7 +40,7 @@ class Servers
           Config.servers.each_pair do |server_name, server_details|
             server = Server.new(server_name, server_details)
             server_list << server
-            $logger.info { "Registered server #{server.host_tag}" }
+            $logger.info { "[#{server.id}] Registered server #{server.host_tag}" }
           end
           server_list
         end
@@ -53,7 +53,7 @@ class Servers
     def shutdown!
       all.each do |server|
         server.shutdown!
-        $logger.info { "Shutdown server #{server.host_tag}" }
+        $logger.info { "[#{server.id}] Shutdown server #{server.host_tag}" }
       end
     end
 
@@ -64,7 +64,7 @@ class Servers
     end
 
     def available?
-      all.map(&:available?).all?(true)
+      all.map(&:available?).any?(true)
     end
 
     def unavailable?

@@ -1,3 +1,7 @@
+function set_link_id(id)
+  global.link_id = tonumber(id)
+end
+
 function ping()
   global.ticks_since_last_link_operation = 0
 

@@ -14,7 +14,7 @@ class RCon
         type: type,
         payload: payload
       )
-      $logger.debug { "Built Packet: #{packet_fields.inspect}" }
+      # $logger.debug { "[#{self.id}] Built Packet: #{packet_fields.inspect}" }
       packet_fields
     end
 
@@ -47,7 +47,9 @@ class RCon
       buffer.write(data)
 
       buffer.rewind
-      decode_packet(buffer.read)
+      packet_fields = decode_packet(buffer.read)
+      $logger.debug { %([#{self.id}] RCON< #{packet_fields.payload.to_s.strip}) }
+      packet_fields
     end
 
     def send_packet(packet_fields)
@@ -63,6 +65,8 @@ class RCon
         buffer.seek(total_sent)
         total_sent += socket.send(buffer.read, 0)
       end while total_sent < buffer.length
+
+      $logger.debug { %([#{self.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 
       total_sent
     end

@@ -1,5 +1,6 @@
 require "constants"
 require "support"
+require "util"
 
 require "control.init"
 require "control.config"

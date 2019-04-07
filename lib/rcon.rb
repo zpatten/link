@@ -47,6 +47,12 @@ class RCon
     end
   end
 
+################################################################################
+
+  def id
+    Zlib::crc32(@name.to_s)
+  end
+
   def shutdown!
     disconnect!
     @threads.map(&:exit)
@@ -109,7 +115,7 @@ class RCon
         received_packet = recv_packet
         next if received_packet.nil?
 
-        raise "Authentication Failed!" if received_packet.id == -1
+        raise "[#{self.id}] Authentication Failed!" if received_packet.id == -1
         packet_callback(received_packet)
       end
     end

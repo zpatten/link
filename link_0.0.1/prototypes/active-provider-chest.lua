@@ -22,7 +22,7 @@ active_provider_chest.inventory = 60
 active_provider_chest.animation = data.raw["logistic-container"]["logistic-chest-active-provider"].animation
 -- active_provider_chest.logistic_mode = "requester"
 -- active_provider_chest.logistic_slots_count = 1
-active_provider_chest.minable = { mining_time = 4, result = ACTIVE_PROVIDER_CHEST_NAME }
+active_provider_chest.minable = { mining_time = 0.5, result = ACTIVE_PROVIDER_CHEST_NAME }
 
 local recipe = table.deepcopy(data.raw.recipe["logistic-chest-active-provider"])
 recipe.enabled = true

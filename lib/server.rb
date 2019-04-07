@@ -1,3 +1,5 @@
+require_relative "rcon"
+
 class Server
 
 ################################################################################
@@ -18,6 +20,12 @@ class Server
     @command_whitelist = details["command_whitelist"]
 
     @rcon = RCon.new(name, host, port, password)
+  end
+
+################################################################################
+
+  def id
+    Zlib::crc32(@name.to_s)
   end
 
 ################################################################################
@@ -50,6 +58,16 @@ class Server
 
 ################################################################################
 
+  def authenticated?
+    @rcon.authenticated?
+  end
+
+  def unauthenticated?
+    @rcon.unauthenticated?
+  end
+
+################################################################################
+
   def available?
     @rcon.available?
   end
@@ -65,8 +83,8 @@ class Server
   end
 
   def rcon_command(command, callback, data=nil)
-    sleep 1 while disconnected?
-    $logger.debug { "RCON[#{@name}]> #{command}" }
+    sleep 1 while unavailable?
+    data = self if data.nil?
     @rcon.enqueue_packet(command, callback, data)
   end
 

@@ -23,11 +23,14 @@ function handle_link_command(event)
     global.link_debug = false
   elseif event.parameter == "status" then
     printer.print("Link v0.0.1")
-    printer.print("  - Enabled: "..tostring(global.link_enabled).."  (debug:"..tostring(global.link_debug)..")")
+    printer.print("  - Enabled: "..tostring(global.link_enabled).."  (id:"..global.link_id..", debug:"..tostring(global.link_debug)..")")
     printer.print("  - RCON RTT: "..round(global.link_rtt * 1000, nil).."ms  (master <-> rcon)")
     printer.print("  - Last Operation: "..global.ticks_since_last_link_operation.." ticks")
-    printer.print("  - Entity Count, Provider Chest: "..table_count(global.link_provider_chests))
-    printer.print("  - Entity Count, Requester Chest: "..table_count(global.link_requester_chests))
+    printer.print("  - Provider Chest Count: "..table_count(global.link_provider_chests))
+    printer.print("  - Requester Chest Count: "..table_count(global.link_requester_chests))
+    printer.print("  - Inventory Combinator Count: "..table_count(global.link_inventory_combinators))
+    printer.print("  - Receiver Combinator Count: "..table_count(global.link_receiver_combinators))
+    printer.print("  - Transmitter Combinator Count: "..table_count(global.link_transmitter_combinators))
     printer.print("  - Event Count: "..table_count(global.link_events))
     printer.print("  - Command Whitelist: "..dump(global.link_command_whitelist))
   end

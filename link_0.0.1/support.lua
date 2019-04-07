@@ -1,8 +1,25 @@
 -- https://stackoverflow.com/questions/2705793/how-to-get-number-of-entries-in-a-lua-table
 function table_count(t)
   local count = 0
+  if not t then
+    return 0
+  end
   for _ in pairs(t) do count = count + 1 end
   return count
+end
+
+function uniq(a)
+  local hash = {}
+  local res = {}
+
+  for _,v in ipairs(a) do
+    if (not hash[v]) then
+      res[#res+1] = v -- you could print here instead of saving to result table if you wanted
+      hash[v] = true
+    end
+  end
+
+  return res
 end
 
 -- https://stackoverflow.com/questions/9168058/how-to-dump-a-table-to-console

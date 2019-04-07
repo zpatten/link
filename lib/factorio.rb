@@ -1,0 +1,8 @@
+# require_relative "factorio/chats"
+require_relative "factorio/combinator"
+# require_relative "factorio/commands"
+# require_relative "factorio/id"
+# require_relative "factorio/ping"
+# require_relative "factorio/providables"
+# require_relative "factorio/requests"
+# require_relative "factorio/research"
