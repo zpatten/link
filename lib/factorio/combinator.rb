@@ -103,9 +103,9 @@ def get_transmitter_combinator(host, packet_fields, server)
     signal_lists = JSON.parse(payload)
     unless signal_lists.empty?
       if signal_lists["noop"].nil?
-        puts ("X" * 80)
-        puts ("X" * 80)
-        puts ("X" * 80)
+        $logger.debug { ("X" * 80) }
+        $logger.debug { ("X" * 80) }
+        $logger.debug { ("X" * 80) }
         $logger.debug { "[#{server.id}] tx-signals: #{PP.singleline_pp(signal_lists, "")}" }
         Combinators.tx(signal_lists, server)
       else

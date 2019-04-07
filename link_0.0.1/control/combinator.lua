@@ -113,6 +113,20 @@ function set_link_receiver_combinator(data)
     end
   end
 
+  for unit_number, data in pairs(global.link_inventory_combinators) do
+    local behaviour = data.behaviour
+    local entity = data.entity
+
+    if entity.valid and behaviour.valid then
+      local signals = extract_circuit_network("inventory", link_signal_networks)
+
+      for i, s in pairs(signals) do
+        behaviour.set_signal(s.index, s)
+      end
+      behaviour.enabled = true
+    end
+  end
+
   rcon.print("OK")
 end
 

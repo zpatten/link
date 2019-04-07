@@ -17,3 +17,7 @@ schedule_task(:servers) do
 
   ThreadPool.log
 end
+
+# schedule_task(:display) do
+#   ThreadPool.display
+# end

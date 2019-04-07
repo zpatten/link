@@ -15,9 +15,7 @@ class MemoryCache
       if (value = read(key, options)).nil?
         $logger.debug { "MemoryCache generate: #{key}#{options.empty? ? "" : "(#{options})"}" }
         return nil if !block_given?
-        puts "PREBLOCK"
         value = block.call
-        puts "WRITE"
         write(key, value, options)
       # else
       #   $logger.debug { "MemoryCache fetch-hit: #{key}#{options.empty? ? "" : "(#{options})"}" }

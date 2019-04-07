@@ -49,41 +49,11 @@ end
 
 def schedule_task(what, frequency=nil, server=nil, &block)
   frequency = if frequency.nil?
-    Config.master.scheduler.send(what)
+    Config.master_value(:scheduler, what)
   else
     frequency
   end
   ThreadPool.register(what, frequency, server, &block)
-
-  # args = [server].compact
-
-  # $threads << Thread.new do
-
-  #   next_run_at = Time.now.to_f
-  #   loop do
-  #     while (next_run_at > Time.now.to_f) do
-  #       Thread.pass
-  #     end
-
-  #     if server.nil?
-  #       Thread.pass while Servers.unavailable?
-  #     else
-  #       Thread.pass while [server].flatten.map(&:unavailable?).all?(true)
-  #     end
-
-  #     now = Time.now.to_f
-  #     next_run_at = (now + (frequency - (now % frequency)))
-
-  #     if server.nil?
-  #       $logger.info { "#{what}: next_run_at=#{next_run_at} (frequency=#{frequency})" }
-  #     else
-  #       id = [server].flatten.map(&:id).join(",")
-  #       $logger.info { "[#{id}] #{what}: next_run_at=#{next_run_at} (frequency=#{frequency})" }
-  #     end
-
-  #     block.call(*args)
-  #   end
-  # end
 end
 
 def schedule_server(what, &block)

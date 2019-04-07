@@ -25,5 +25,7 @@ schedule_servers(:requests) do |servers|
   fulfillments
 
   command = %(/#{rcon_executor} remote.call('link', 'get_requests'))
-  servers.each { |s| s.rcon_command_nonblock(command, method(:get_requests)) }
+  servers.each do |s|
+    s.rcon_command_nonblock(command, method(:get_requests))
+  end
 end

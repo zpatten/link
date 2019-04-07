@@ -19,6 +19,7 @@ SLEEP_TIME = 0.0001
 ################################################################################
 
 $logger = Logger.new(STDOUT)
+# $logger = Logger.new("link.log")
 $logger.level = (!!ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO)
 
 $threads = Array.new

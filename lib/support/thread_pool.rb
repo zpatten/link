@@ -74,7 +74,7 @@ class ThreadPool
         server = schedule.server
         block = schedule.block
 
-        id = "server:#{[server].map(&:id).join(",")}" unless server.nil?
+        id = "server:#{[server].flatten.map(&:id).join(",")}" unless server.nil?
         log_fields = [
           "next_run_at:#{next_run_at}",
           "frequency:#{frequency}",
@@ -97,10 +97,19 @@ class ThreadPool
     def log
       $logger.info { ("=" * 80) }
       @@thread_pool.each do |thread|
-        name = (thread.thread_variable_get(:name) || "starting")
+        name = (thread.thread_variable_get(:name) || "<starting>")
         $logger.debug { "[THREAD] #{name}: #{thread.status}" }
       end
       $logger.info { ("=" * 80) }
+    end
+
+    def display
+      puts "\e[H"
+      puts "\e[2J"
+      @@thread_pool.each do |thread|
+        name = (thread.thread_variable_get(:name) || "<starting>")
+        puts "[THREAD] #{name}: #{thread.status}"
+      end
     end
 
     def execute
@@ -117,14 +126,6 @@ class ThreadPool
               end
 
               schedule_next_run(schedule)
-
-              server = schedule.server
-              id = "server:#{[server].map(&:id).join(",")}" unless server.nil?
-              thread_log_message_fields = [
-                "next_run_at:#{schedule.next_run_at}",
-                "frequency:#{schedule.frequency}",
-                id
-              ].compact.join(", ")
               schedule_log(:thread, :scheduled, schedule)
             end
           end

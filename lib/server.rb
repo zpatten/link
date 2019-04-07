@@ -83,13 +83,13 @@ class Server
   end
 
   def rcon_command_nonblock(command, callback, data=nil)
-    Thread.stop while unavailable?
+    return if unavailable?
     data = self if data.nil?
     @rcon.enqueue_packet(command, callback, data)
   end
 
   def rcon_command(command)
-    Thread.stop while unavailable?
+    return if unavailable?
     packet_fields = @rcon.enqueue_packet(command)
     response = nil
     loop do

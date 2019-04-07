@@ -53,7 +53,6 @@ class RCon
 
   def shutdown!
     disconnect!
-    @threads.map(&:exit)
     true
   end
 

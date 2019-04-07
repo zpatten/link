@@ -107,7 +107,7 @@ class Combinators
       Combinators.update_inventory_signals
 
       $logger.debug { "RX network-id: #{network_id}" }
-      pp @@combinators
+      # pp @@combinators
       signals = circuit_network_synchronize(network_id) do
         deep_clone(@@combinators[network_id] ||= Array.new)
       end
