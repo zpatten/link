@@ -34,8 +34,7 @@ def rcon_print(host, packet_fields, data)
 end
 
 def deep_clone(object)
-  #Marshal.load(Marshal.dump(object))
-  object #.clone
+  Marshal.load(Marshal.dump(object))
 end
 
 # Redirect RCON output to other servers
@@ -120,7 +119,7 @@ class RescueRetry
         # sleep_for = 60 if sleep_for > 60
 
         # let the user know what is going on
-        $logger.fatal { "Exception: #{e}" }
+        $logger.fatal { "Exception: #{e.full_message}" }
         $logger.fatal { "Sleeping for #{sleep_for} seconds then retrying...  (Attempt #{attempts} of #{max_attempts})" }
 
         # if we exceed the max attempts throw the exception

@@ -47,13 +47,14 @@ def set_receiver_combinator(host, packet_fields, server)
   unless payload.empty?
     network_ids = JSON.parse(payload)
     unless network_ids.empty?
-      network_ids.collect! { |nid| nid.is_a?(Integer) ? nid : nid.to_sym }
+      network_ids.collect! { |nid| nid == "inventory" ? nid.to_sym : nid.to_i }
       $logger.debug { "[#{server.id}] network-ids: #{network_ids}" }
       signal_networks = Hash.new
       network_ids.each do |network_id|
         cache_key = "receiver-combinator-previous-signals-#{server.name}-#{network_id}"
         previous_signals = MemoryCache.read(cache_key)
         signals = Combinators.rx(network_id, server)
+
         if (!!previous_signals && (previous_signals == signals))
           $logger.debug { "[#{server.id}] network-id(#{network_id}): Skipping sending signals to receiver combinators; no changes detected." }
         else
@@ -66,7 +67,7 @@ def set_receiver_combinator(host, packet_fields, server)
               signal_deltas << signal
             else
               count_changed = (previous_signal["count"].to_i != signal["count"].to_i)
-              index_changed = (previous_signal["signal"]["index"] != signal["signal"]["index"])
+              index_changed = (previous_signal["index"].to_i != signal["index"].to_i)
               if count_changed || index_changed
                 $logger.debug { "[#{server.id}] network-id(#{network_id}): Signal #{signal_name} changed; adding to delta." }
                 signal_deltas << signal

@@ -11,8 +11,8 @@ end
 
 def fulfillments
   Requests.fulfill do |host,fulfillments|
-    $logger.debug { "[#{server.id}] fulfillments: #{PP.singleline_pp(fulfillments, "")}" }
     s = Servers.find_by_name(host)
+    $logger.debug { "[#{s.id}] fulfillments: #{PP.singleline_pp(fulfillments, "")}" }
     command = %(/#{rcon_executor} remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
     s.rcon_command_nonblock(command, method(:rcon_print))
   end

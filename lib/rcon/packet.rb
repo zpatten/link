@@ -50,7 +50,7 @@ class RCon
 
       buffer.rewind
       packet_fields = decode_packet(buffer.read)
-      $logger.debug { %([#{self.id}] RCON< #{packet_fields.payload.to_s.strip}) }
+      $logger.debug { %([#{self.id}:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
       register_response(packet_fields)
       packet_fields
     end
@@ -71,7 +71,7 @@ class RCon
         end while total_sent < buffer.length
       end
 
-      $logger.debug { %([#{self.id}] RCON> #{packet_fields.payload.to_s.strip}) }
+      $logger.debug { %([#{self.id}:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 
       total_sent
     end

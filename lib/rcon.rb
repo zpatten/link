@@ -39,16 +39,19 @@ class RCon
     @socket_write_mutex   = Mutex.new
     @response_mutex = Mutex.new
 
-    tag = "#{name}@#{host}:#{port}"
-    ThreadPool.thread("#{tag}-connection-manager") { conn_manager }
-    ThreadPool.thread("#{tag}-send") { poll_send }
-    ThreadPool.thread("#{tag}-recv") { poll_recv }
+    conn_manager
+    poll_send
+    poll_recv
   end
 
 ################################################################################
 
   def id
     Zlib::crc32(@name.to_s)
+  end
+
+  def rcon_tag
+    "#{@name}@#{@host}:#{@port}"
   end
 
   def shutdown!
@@ -69,9 +72,11 @@ class RCon
   end
 
   def conn_manager
-    RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
+    ThreadPool.thread("#{rcon_tag}-connection-manager") do
       loop do
-        connect! if disconnected?
+        RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
+          connect! if disconnected?
+        end
         authenticate if unauthenticated?
 
         Thread.stop while connected?
@@ -80,6 +85,7 @@ class RCon
   end
 
   def poll_send
+    ThreadPool.thread("#{rcon_tag}-send") do
     RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
       loop do
         queued_packet = nil
@@ -90,6 +96,7 @@ class RCon
         end
         send_packet(queued_packet.packet_fields)
       end
+    end
     end
   end
 
@@ -105,6 +112,7 @@ class RCon
   end
 
   def poll_recv
+    ThreadPool.thread("#{rcon_tag}-recv") do
     RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
       loop do
         # poll_sleep
@@ -112,6 +120,7 @@ class RCon
         receive_packet
         Thread.stop
       end
+    end
     end
   end
 

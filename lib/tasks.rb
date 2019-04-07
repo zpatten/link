@@ -10,7 +10,7 @@ schedule_task(:servers) do
   Servers.all.each do |server|
     a = server.authenticated? ? "authenticated" : "UNAUTHENTICATED"
     c = server.connected? ? "connected" : "DISCONNECTED"
-    $logger.info { "[#{server.id}] #{server.host_tag} - #{a} #{c}" }
+    $logger.info { "[#{server.id}] #{server.host_tag} - #{c} #{a}" }
   end
 
   $logger.info { ("-" * 80) }

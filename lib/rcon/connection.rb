@@ -16,7 +16,7 @@ class RCon
     end
 
     def connect!
-      RescueRetry.attempt(max_attempts: -1) do
+      # RescueRetry.attempt(max_attempts: -1) do
         $logger.info { "[#{self.id}] Attempting connection to #{host_tag}" }
 
         @socket_mutex.synchronize { @socket = ::TCPSocket.new(@host, @port) }
@@ -28,7 +28,7 @@ class RCon
         else
           false
         end
-      end
+      # end
     end
 
     def disconnect!

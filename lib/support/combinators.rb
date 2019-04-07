@@ -48,12 +48,13 @@ class Combinators
       signals.sort! { |a,b| signal_name(a) <=> signal_name(b) }
       # cleanup and signals we will be inserting
       signals.delete_if do |s|
-        signal_data.any? { |n,v| (n == s["signal"]["name"]) }
+        signal_data.any? { |n,v| (n == signal_name(s)) }
       end
       # insert specified signals
       signal_data.each do |signal_name, signal_value|
         next if signal_value.nil?
         signal = build_signal(signal_name, signal_value)
+        # pp signal
         signals.insert(0, signal)
       end
       signals
@@ -63,7 +64,7 @@ class Combinators
       signal_lists.each do |unit_number, signals|
         # pp signals
         network_id = extract_circuit_network_id(signals)
-        unless (network_id == :inventory) || server.nil?
+        unless (network_id == :inventory)
           signal_data = {
             "signal-link-epoch" => nil,
             "signal-link-network-id" => network_id,
@@ -112,7 +113,7 @@ class Combinators
         deep_clone(@@combinators[network_id] ||= Array.new)
       end
 
-      unless (network_id == :inventory) || server.nil?
+      unless (network_id == :inventory)
         signal_data = {
           "signal-link-epoch" => Time.now.to_i,
           "signal-link-local-id" => server.id,
