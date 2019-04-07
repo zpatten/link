@@ -116,23 +116,32 @@ function set_link_receiver_combinator(data)
   rcon.print("OK")
 end
 
-function set_link_inventory_combinator(data)
-  local storage = game.json_to_table(data)
-  local signals = {}
-
+function link_lookup_item_type(item_name)
   local fluids = game.fluid_prototypes
   local items = game.item_prototypes
   local virtuals = game.virtual_signal_prototypes
 
+  if items[item_name] then
+    rcon.print("item")
+  elseif fluids[item_name] then
+    rcon.print("fluid")
+  elseif virtuals[item_name] then
+    rcon.print("virtual")
+  end
+
+  rcon.print("")
+end
+
+function set_link_inventory_combinator(data)
+  local storage = game.json_to_table(data)
+  local signals = {}
+
+
   for item_name, item_count in pairs(storage) do
-    local signal_id = {}
-    if items[item_name] then
-      signal_id = { name = item_name, type = "item" }
-    elseif fluids[item_name] then
-      signal_id = { name = item_name, type = "fluid" }
-    elseif virtuals[item_name] then
-      signal_id = { name = item_name, type = "virtual" }
-    end
+    local signal_id = {
+      name = item_name,
+      type = link_lookup_item_type(item_name)
+    }
     signals[#signals+1] = { signal = signal_id, count = item_count, index = #signals+1 }
   end
 

@@ -5,6 +5,7 @@ require_relative "support/config"
 require_relative "support/memory_cache"
 require_relative "support/requests"
 require_relative "support/storage"
+require_relative "support/thread_pool"
 
 class OpenStruct
   def count
@@ -32,35 +33,19 @@ def rcon_print(host, packet_fields, data)
   # $logger.debug { "RCON Received Packet: #{packet_fields.inspect}" }
 end
 
+def deep_clone(object)
+  #Marshal.load(Marshal.dump(object))
+  object #.clone
+end
+
 # Redirect RCON output to other servers
 def rcon_redirect(host, packet_fields, (player_index, command, origin_host))
   origin = Servers.find_by_name(origin_host)
   payload = packet_fields.payload.strip
   message = %(#{host}#{command}: #{payload})
   command = %(/#{rcon_executor} game.players[#{player_index}].print(#{message.dump}, {r = 1, g = 1, b = 1}))
-  origin.rcon_command(command, method(:rcon_print))
+  origin.rcon_command_nonblock(command, method(:rcon_print))
 end
-
-# def threaded_task(*args, &block)
-#   $threads << Thread.new do
-#     next_run_at = Time.now.to_f
-#     loop do
-#       while (next_run_at > Time.now.to_f) do
-#         sleep SLEEP_TIME
-#       end
-
-#       if (args.nil? || (args.count == 0))
-#         $logger.info { "[#{what}]  next_run_at: #{next_run_at}  frequency: #{frequency}" }
-#       else
-#         $logger.info { "[#{what}] (#{args.first.name})  next_run_at: #{next_run_at}  frequency: #{frequency}" }
-#       end
-
-#       now = Time.now.to_f
-#       next_run_at = (now + (frequency - (now % frequency)))
-#       block.call(*args)
-#     end
-#   end
-# end
 
 def schedule_task(what, frequency=nil, server=nil, &block)
   frequency = if frequency.nil?
@@ -68,35 +53,37 @@ def schedule_task(what, frequency=nil, server=nil, &block)
   else
     frequency
   end
-  args = [server].compact
+  ThreadPool.register(what, frequency, server, &block)
 
-  $threads << Thread.new do
+  # args = [server].compact
 
-    next_run_at = Time.now.to_f
-    loop do
-      while (next_run_at > Time.now.to_f) do
-        sleep SLEEP_TIME
-      end
+  # $threads << Thread.new do
 
-      if server.nil?
-        sleep 1 while Servers.unavailable?
-      else
-        sleep 1 while [server].flatten.map(&:unavailable?).all?(true)
-      end
+  #   next_run_at = Time.now.to_f
+  #   loop do
+  #     while (next_run_at > Time.now.to_f) do
+  #       Thread.pass
+  #     end
 
-      now = Time.now.to_f
-      next_run_at = (now + (frequency - (now % frequency)))
+  #     if server.nil?
+  #       Thread.pass while Servers.unavailable?
+  #     else
+  #       Thread.pass while [server].flatten.map(&:unavailable?).all?(true)
+  #     end
 
-      if server.nil?
-        $logger.info { "#{what}: next_run_at=#{next_run_at} (frequency=#{frequency})" }
-      else
-        id = [server].flatten.map(&:id).join(",")
-        $logger.info { "[#{id}] #{what}: next_run_at=#{next_run_at} (frequency=#{frequency})" }
-      end
+  #     now = Time.now.to_f
+  #     next_run_at = (now + (frequency - (now % frequency)))
 
-      block.call(*args)
-    end
-  end
+  #     if server.nil?
+  #       $logger.info { "#{what}: next_run_at=#{next_run_at} (frequency=#{frequency})" }
+  #     else
+  #       id = [server].flatten.map(&:id).join(",")
+  #       $logger.info { "[#{id}] #{what}: next_run_at=#{next_run_at} (frequency=#{frequency})" }
+  #     end
+
+  #     block.call(*args)
+  #   end
+  # end
 end
 
 def schedule_server(what, &block)

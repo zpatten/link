@@ -13,7 +13,7 @@ def get_commands(host, packet_fields, data)
           command << "/#{command_event["command"]}"
           command << [command_event["parameters"]].flatten.compact.join(" ")
           command = command.flatten.compact.join(" ")
-          server.rcon_command(command, method(:rcon_redirect), [player_index, command.strip, host])
+          server.rcon_command_nonblock(command, method(:rcon_redirect), [player_index, command.strip, host])
         end
       end
     end
@@ -24,7 +24,7 @@ end
 ################################################################################
 schedule_server(:commands) do |server|
   command = %(/#{rcon_executor} remote.call('link', 'get_commands'))
-  server.rcon_command(command, method(:get_commands))
+  server.rcon_command_nonblock(command, method(:get_commands))
 end
 
 # Link Factorio Server Set Command Mirroring Whitelist
@@ -32,5 +32,5 @@ end
 schedule_server(:command_whitelist) do |server|
   command_whitelist = Config.server_value(server.name, :command_whitelist)
   command = %(/#{rcon_executor} remote.call('link', 'set_command_whitelist', '#{command_whitelist.to_json}'))
-  server.rcon_command(command, method(:rcon_print))
+  server.rcon_command_nonblock(command, method(:rcon_print))
 end

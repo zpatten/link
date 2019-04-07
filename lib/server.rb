@@ -82,10 +82,21 @@ class Server
     @rcon
   end
 
-  def rcon_command(command, callback, data=nil)
-    sleep 1 while unavailable?
+  def rcon_command_nonblock(command, callback, data=nil)
+    Thread.stop while unavailable?
     data = self if data.nil?
     @rcon.enqueue_packet(command, callback, data)
+  end
+
+  def rcon_command(command)
+    Thread.stop while unavailable?
+    packet_fields = @rcon.enqueue_packet(command)
+    response = nil
+    loop do
+      Thread.stop if (response = @rcon.find_response(packet_fields.id)).nil?
+      break unless response.nil?
+    end
+    response.payload.strip
   end
 
 ################################################################################

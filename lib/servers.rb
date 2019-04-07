@@ -59,6 +59,12 @@ class Servers
 
 ################################################################################
 
+    def random
+      available_servers = self.available
+      random_index = SecureRandom.random_number(available_servers.count)
+      available_servers[random_index]
+    end
+
     def available
       all.select { |s| s.available? }
     end
@@ -73,9 +79,9 @@ class Servers
 
 ################################################################################
 
-    def rcon_command(command, cserversback, data=nil)
+    def rcon_command_nonblock(command, cserversback, data=nil)
       self.available.each do |server|
-        server.rcon_command(command, cserversback, data)
+        server.rcon_command_nonblock(command, cserversback, data)
       end
     end
 

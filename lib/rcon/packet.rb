@@ -14,7 +14,7 @@ class RCon
         type: type,
         payload: payload
       )
-      # $logger.debug { "[#{self.id}] Built Packet: #{packet_fields.inspect}" }
+      $logger.debug { "[#{self.id}] Built Packet: #{packet_fields.inspect}" }
       packet_fields
     end
 
@@ -22,13 +22,15 @@ class RCon
       return nil if disconnected?
 
       buffer = StringIO.new
-      while buffer.length < length do
-        data = socket.recv_nonblock(length, 0, nil, exception: false)
-        if data == :wait_readable
-          IO.select([socket])
-          next
+      @socket_write_mutex.synchronize do
+        while buffer.length < length do
+          data = socket.recv_nonblock(length, 0, nil, exception: false)
+          if data == :wait_readable
+            IO.select([socket])
+            next
+          end
+          buffer.write(data)
         end
-        buffer.write(data)
       end
       buffer.rewind
       buffer.read
@@ -49,6 +51,7 @@ class RCon
       buffer.rewind
       packet_fields = decode_packet(buffer.read)
       $logger.debug { %([#{self.id}] RCON< #{packet_fields.payload.to_s.strip}) }
+      register_response(packet_fields)
       packet_fields
     end
 
@@ -61,10 +64,12 @@ class RCon
       buffer.write(encoded_packet)
 
       total_sent = 0
-      begin
-        buffer.seek(total_sent)
-        total_sent += socket.send(buffer.read, 0)
-      end while total_sent < buffer.length
+      @socket_read_mutex.synchronize do
+        begin
+          buffer.seek(total_sent)
+          total_sent += socket.send(buffer.read, 0)
+        end while total_sent < buffer.length
+      end
 
       $logger.debug { %([#{self.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 

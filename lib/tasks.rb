@@ -14,4 +14,6 @@ schedule_task(:servers) do
   end
 
   $logger.info { ("-" * 80) }
+
+  ThreadPool.log
 end

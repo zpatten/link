@@ -1,24 +1,37 @@
 class MemoryCache
   module ClassMethods
 
-    $_memory_cache_store ||= Hash.new
+    $_memory_cache_store = Hash.new
+    $_memory_cache_mutex = nil
+
+    def memory_cache_synchronize(key, &block)
+      $_memory_cache_mutex ||= Hash.new
+      $_memory_cache_mutex[key] ||= Mutex.new
+      $_memory_cache_mutex[key].synchronize(&block)
+    end
 
     def fetch(key, options={}, &block)
       value = nil
       if (value = read(key, options)).nil?
         $logger.debug { "MemoryCache generate: #{key}#{options.empty? ? "" : "(#{options})"}" }
         return nil if !block_given?
+        puts "PREBLOCK"
         value = block.call
+        puts "WRITE"
         write(key, value, options)
-      else
-        $logger.debug { "MemoryCache fetch-hit: #{key}#{options.empty? ? "" : "(#{options})"}" }
+      # else
+      #   $logger.debug { "MemoryCache fetch-hit: #{key}#{options.empty? ? "" : "(#{options})"}" }
       end
 
       value
     end
 
     def read(key, options={})
-      unless (cache_item = $_memory_cache_store[key]).nil?
+      cache_item = memory_cache_synchronize(key) do
+        deep_clone($_memory_cache_store[key])
+      end
+      # cache_item = $_memory_cache_store[key]
+      unless cache_item.nil?
         if expired?(cache_item[:expires_at])
           $logger.debug { "MemoryCache expired: #{key}" }
           delete(key, options)
@@ -36,7 +49,6 @@ class MemoryCache
     def write(key, value, options={})
       expires_in = (options.delete(:expires_in) || -1)
       expires_at = (expires_in == -1 ? -1 : (Time.now.to_i + expires_in))
-      # mutex = (options.delete(:mutex) || $_memory_cache_mutex)
 
       $logger.debug { "MemoryCache write: #{key}#{options.empty? ? "" : "(#{options})"}" }
 
@@ -47,17 +59,19 @@ class MemoryCache
         :expires_at => expires_at
       }
 
-      $_memory_cache_store[key] = cache_item
+      memory_cache_synchronize(key) do
+        $_memory_cache_store[key] = cache_item
+      end
+      # $_memory_cache_store[key] = cache_item
 
       true
     end
 
     def delete(key, options={})
-      # mutex = (options.delete(:mutex) || $_memory_cache_mutex)
-      $_memory_cache_store.delete(key)
-      # mutex.synchronize do
-      #   $_memory_cache_store.delete(key)
-      # end
+      memory_cache_synchronize(key) do
+        $_memory_cache_store.delete(key)
+      end
+      # $_memory_cache_store.delete(key)
       $logger.debug { "MemoryCache deleted: #{key}" }
     end
 

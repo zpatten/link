@@ -3,68 +3,93 @@ class Storage
   module ClassMethods
 
     @@storage = nil
-    @@storage_mutex = Mutex.new
+    @@storage_mutex ||= Hash.new
+
+    def storage_synchronize(item_name, &block)
+      @@storage_mutex[item_name] ||= Mutex.new
+      @@storage_mutex[item_name].synchronize(&block)
+    end
+
+    def storage_synchronize_all(&block)
+      # @@storage_mutex.values.map(&:lock)
+      block.call
+      # @@storage_mutex.values.map(&:unlock)
+    end
+
+    def storage
+      @@storage
+    end
+
+    def clone_storage
+      storage_synchronize_all do
+        storage.clone
+      end
+    end
 
     def filename
       File.join(Dir.pwd, "storage.json")
     end
 
     def load
-      @@storage_mutex.synchronize do
+      storage_synchronize_all do
         @@storage = (JSON.parse(IO.read(filename)) rescue Hash.new)
       end
     end
 
     def save
-      @@storage_mutex.synchronize do
-        @@storage.nil? or IO.write(filename, JSON.pretty_generate(@@storage))
+      storage_synchronize_all do
+        @@storage.nil? or IO.write(filename, JSON.pretty_generate(storage))
       end
-    end
-
-    def add(item_name, item_count)
-      @@storage.nil? and load
-
-      @@storage_mutex.synchronize do
-        @@storage[item_name] ||= 0
-        @@storage[item_name] += item_count
-      end
-
-      item_count
     end
 
     def clone
-      @@storage.nil? and load
+      storage.nil? and load
 
       storage_clone = nil
-      @@storage_mutex.synchronize do
-        storage_clone = @@storage.clone
+      storage_synchronize_all do
+        storage_clone = deep_clone(storage)
       end
       storage_clone.delete_if { |n,c| (c == 0) }
     end
 
+    def add(item_name, item_count)
+      storage.nil? and load
+
+      storage_synchronize(item_name) do
+        storage[item_name] ||= 0
+        storage[item_name] += item_count
+      end
+
+      Combinators.update_inventory_signals
+
+      item_count
+    end
+
     def remove(item_name, item_count)
-      @@storage.nil? and load
+      storage.nil? and load
 
       removed_count = 0
-      @@storage_mutex.synchronize do
-        @@storage[item_name] ||= 0
+      storage_synchronize(item_name) do
+        storage[item_name] ||= 0
 
-        removed_count = if @@storage[item_name] < item_count
-          @@storage[item_name]
+        removed_count = if storage[item_name] < item_count
+          storage[item_name]
         else
           item_count
         end
-        @@storage[item_name] -= removed_count
+        storage[item_name] -= removed_count
       end
+
+      Combinators.update_inventory_signals
 
       removed_count
     end
 
     def count(item_name)
-      @@storage.nil? and load
+      storage.nil? and load
 
-      @@storage_mutex.synchronize do
-        @@storage[item_name] ||= 0
+      storage_synchronize(item_name) do
+        storage[item_name] ||= 0
       end
     end
 
@@ -96,19 +121,19 @@ class Storage
     end
 
     def delta
-      @@storage.nil? and load
+      storage.nil? and load
 
-      @@storage_mutex.synchronize do
-        @@previous_storage ||= @@storage.clone  # first run
+      storage_synchronize_all do
+        @@previous_storage ||= storage.clone  # first run
 
         storage_delta = Hash.new
 
-        @@storage.each do |item_name, item_count|
-          count_delta = (@@storage[item_name] - (@@previous_storage[item_name] || 0))
+        storage.each do |item_name, item_count|
+          count_delta = (storage[item_name] - (@@previous_storage[item_name] || 0))
           storage_delta[item_name] = count_delta
         end
 
-        @@previous_storage = @@storage.clone
+        @@previous_storage = storage.clone
 
         if storage_delta.keys.count > 0
           # puts ("-" * 80)
@@ -119,7 +144,7 @@ class Storage
           $logger.info { "-----------------------------------------+----------+----------+----------+----------------" }
           storage_delta.each do |item_name, delta_count|
 
-            storage_count = @@storage[item_name]
+            storage_count = storage[item_name]
             delta_count_1, delta_count_5, delta_count_15 = delta_averages(item_name, delta_count)
             next if delta_count_15 == "-" && storage_count == 0
 

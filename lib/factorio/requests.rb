@@ -14,7 +14,7 @@ def fulfillments
     $logger.debug { "[#{server.id}] fulfillments: #{PP.singleline_pp(fulfillments, "")}" }
     s = Servers.find_by_name(host)
     command = %(/#{rcon_executor} remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
-    s.rcon_command(command, method(:rcon_print))
+    s.rcon_command_nonblock(command, method(:rcon_print))
   end
   Requests.reset
 end
@@ -25,5 +25,5 @@ schedule_servers(:requests) do |servers|
   fulfillments
 
   command = %(/#{rcon_executor} remote.call('link', 'get_requests'))
-  servers.each { |s| s.rcon_command(command, method(:get_requests)) }
+  servers.each { |s| s.rcon_command_nonblock(command, method(:get_requests)) }
 end

@@ -7,6 +7,7 @@ require_relative "rcon/callback"
 require_relative "rcon/connection"
 require_relative "rcon/packet"
 require_relative "rcon/queue"
+require_relative "rcon/responses"
 
 class RCon
   include RCon::Authentication
@@ -14,6 +15,7 @@ class RCon
   include RCon::Connection
   include RCon::Packet
   include RCon::Queue
+  include RCon::Responses
 
   attr_reader :thread
 
@@ -27,24 +29,20 @@ class RCon
     @authenticated = false
 
     @callbacks    = Array.new
+    @responses    = Array.new
     @packet_queue = Array.new
 
     @queue_mutex    = Mutex.new
     @callback_mutex = Mutex.new
     @socket_mutex   = Mutex.new
+    @socket_read_mutex   = Mutex.new
+    @socket_write_mutex   = Mutex.new
+    @response_mutex = Mutex.new
 
-    @threads = Array.new
-
-    @threads << Thread.new do
-      conn_manager
-    end
-
-    @threads << Thread.new do
-      poll_send
-    end
-    @threads << Thread.new do
-      poll_recv
-    end
+    tag = "#{name}@#{host}:#{port}"
+    ThreadPool.thread("#{tag}-connection-manager") { conn_manager }
+    ThreadPool.thread("#{tag}-send") { poll_send }
+    ThreadPool.thread("#{tag}-recv") { poll_recv }
   end
 
 ################################################################################
@@ -77,46 +75,43 @@ class RCon
         connect! if disconnected?
         authenticate if unauthenticated?
 
-        conn_sleep
+        Thread.stop while connected?
       end
     end
   end
 
-  def conn_sleep
-    sleep 1 while connected?
-  end
-
-  def poll_sleep
-    sleep 1 while disconnected?
-  end
-
   def poll_send
     RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
-      queued_packet = nil
       loop do
-        poll_sleep
-
+        queued_packet = nil
         loop do
           queued_packet = get_queued_packet
           break unless queued_packet.nil?
-          sleep SLEEP_TIME
+          Thread.stop
         end
-
         send_packet(queued_packet.packet_fields)
       end
+    end
+  end
+
+  def receive_packet
+    received_packet = recv_packet
+    return if received_packet.nil?
+
+    raise "[#{self.id}] Authentication Failed!" if received_packet.id == -1
+    tag = "packet-callback-#{received_packet.id}"
+    ThreadPool.thread(tag) do
+      packet_callback(received_packet)
     end
   end
 
   def poll_recv
     RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
       loop do
-        poll_sleep
+        # poll_sleep
 
-        received_packet = recv_packet
-        next if received_packet.nil?
-
-        raise "[#{self.id}] Authentication Failed!" if received_packet.id == -1
-        packet_callback(received_packet)
+        receive_packet
+        Thread.stop
       end
     end
   end

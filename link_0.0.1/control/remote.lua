@@ -16,7 +16,8 @@ local remote_interface = {
   set_inventory_combinator = set_link_inventory_combinator,
   set_receiver_combinator = set_link_receiver_combinator,
   get_transmitter_combinator = get_link_transmitter_combinator,
-  set_research = set_link_research
+  set_research = set_link_research,
+  lookup_item_type = link_lookup_item_type
 }
 
 remote.add_interface("link", remote_interface)

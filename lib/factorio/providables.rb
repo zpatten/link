@@ -15,5 +15,5 @@ end
 ################################################################################
 schedule_server(:providables) do |server|
   command = %(/#{rcon_executor} remote.call('link', 'get_providables'))
-  server.rcon_command(command, method(:get_providables))
+  server.rcon_command_nonblock(command, method(:get_providables))
 end

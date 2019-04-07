@@ -10,7 +10,7 @@ class Config
 
     def master_value(*keys)
       key = keys.map(&:to_sym)
-      MemoryCache.fetch(key, mutex: Mutex.new) do
+      MemoryCache.fetch(key) do
         (@@config.master.dig(*keys) rescue nil)
       end
     end
@@ -19,7 +19,7 @@ class Config
       key = [server, *keys].flatten.compact.map(&:to_s).join("_")
       server = server.to_sym
       keys.map(&:to_sym)
-      MemoryCache.fetch(key, mutex: Mutex.new) do
+      MemoryCache.fetch(key) do
         sv = (@@config.servers.send(server).dig(*keys) rescue nil)
         mv = (@@config.master.dig(*keys) rescue nil)
         (sv || mv)
