@@ -32,8 +32,8 @@ function calculate_position(entity, offset)
   }
 end
 
-function create_combinator(entity)
-  local position = calculate_position(entity, 0)
+function create_combinator(entity, offset)
+  local position = calculate_position(entity, offset)
 
   local link_network_id = entity.surface.create_entity{
     name = NETWORK_ID_COMBINATOR_NAME,
@@ -85,7 +85,7 @@ function add_link_entity(entity)
   elseif entity.name == RECEIVER_COMBINATOR_NAME then
     game.print("add_link_entity(RECEIVER_COMBINATOR_NAME): "..entity.unit_number)
     entity.operable = false
-    local parts = create_combinator(entity)
+    local parts = create_combinator(entity, 0)
     global.link_receiver_combinators[entity.unit_number] = {
       entity = entity,
       behaviour = entity.get_or_create_control_behavior(),
@@ -93,6 +93,7 @@ function add_link_entity(entity)
     }
   elseif entity.name == TRANSMITTER_COMBINATOR_NAME then
     entity.operable = false
+    local parts = create_combinator(entity, 1)
     game.print("add_link_entity(TRANSMITTER_COMBINATOR_NAME): "..entity.unit_number)
     local behavior = entity.get_or_create_control_behavior()
     local parameters = {
@@ -104,7 +105,8 @@ function add_link_entity(entity)
     behavior.parameters = { parameters = parameters }
     global.link_transmitter_combinators[entity.unit_number] = {
       entity = entity,
-      behaviour = entity.get_or_create_control_behavior()
+      behaviour = entity.get_or_create_control_behavior(),
+      link_network_id = parts.link_network_id
     }
   end
 end

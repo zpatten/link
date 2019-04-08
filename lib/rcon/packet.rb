@@ -14,7 +14,7 @@ class RCon
         type: type,
         payload: payload
       )
-      $logger.debug { "[#{self.id}] Built Packet: #{packet_fields.inspect}" }
+      $logger.debug { "[#{self.id}] Built Packet: #{packet_fields.id}" }
       packet_fields
     end
 
@@ -22,7 +22,7 @@ class RCon
       return nil if disconnected?
 
       buffer = StringIO.new
-      $socket_write_mutex.synchronize do
+      @socket_write_mutex.synchronize do
         while buffer.length < length do
           data = socket.recv_nonblock(length, 0, nil, exception: false)
           if data == :wait_readable
@@ -66,7 +66,7 @@ class RCon
       buffer.write(encoded_packet)
 
       total_sent = 0
-      $socket_read_mutex.synchronize do
+      @socket_read_mutex.synchronize do
         begin
           buffer.seek(total_sent)
           total_sent += socket.send(buffer.read, 0)

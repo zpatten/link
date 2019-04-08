@@ -6,25 +6,37 @@ function get_link_transmitter_combinator(force)
   for unit_number, data in pairs(global.link_transmitter_combinators) do
     local behaviour = data.behaviour
     local entity = data.entity
+    local link_network_id_entity = data.link_network_id
 
-    if entity.valid and behaviour.valid then
-      link_signals[entity.unit_number] = behaviour.signals_last_tick
+    if entity.valid and behaviour.valid and link_network_id_entity.valid then
+      link_network_id = fetch_circuit_network_id(link_network_id_entity)
+      link_signals[entity.unit_number] = {}
+      link_signals[entity.unit_number][link_network_id] = behaviour.signals_last_tick
     end
   end
 
   if not force and global.link_previous_signals then
-    for unit_number, signals in pairs(link_signals) do
-      so = global.link_previous_signals[unit_number]
+    for unit_number, networks in pairs(link_signals) do
+      for network_id, signals in pairs(networks) do
+        so = global.link_previous_signals[unit_number][network_id]
 
-      for i, sn in pairs(signals) do
-        if sn["signal"]["name"] ~= so[i]["signal"]["name"] then
-          table.insert(signal_delta[unit_number], sn)
+        local unit_signal_delta = {}
+        for i, sn in pairs(signals) do
+          if sn["signal"]["name"] ~= so[i]["signal"]["name"] then
+            table.insert(unit_signal_delta, sn)
+          elseif sn["count"] ~= so[i]["count"] then
+            table.insert(unit_signal_delta, sn)
+          end
+        end
+        if table_count(unit_signal_delta) > 0 then
+          if not signal_delta[unit_number] then signal_delta[unit_number] = {} end
+          signal_delta[unit_number][network_id] = unit_signal_delta
         end
       end
     end
   end
 
-  log(dump(signal_delta))
+  log("signal-delta: "..dump(signal_delta))
 
   if not force and table_count(signal_delta) == 0 then
     rcon.print(game.table_to_json(noop))

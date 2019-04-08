@@ -34,10 +34,11 @@ class RCon
 
     @queue_mutex    = Mutex.new
     @callback_mutex = Mutex.new
-    @socket_mutex   = Mutex.new
-    $socket_read_mutex   = Mutex.new
-    $socket_write_mutex   = Mutex.new
     @response_mutex = Mutex.new
+
+    @socket_mutex       = Mutex.new
+    @socket_read_mutex  = Mutex.new
+    @socket_write_mutex = Mutex.new
 
     conn_manager
     poll_send

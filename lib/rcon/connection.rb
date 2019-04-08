@@ -19,12 +19,7 @@ class RCon
       # RescueRetry.attempt(max_attempts: -1) do
         $logger.info { "[#{self.id}] Attempting connection to #{host_tag}" }
 
-        $socket_write_mutex.synchronize do
-          $socket_read_mutex.synchronize do
-            @socket = ::TCPSocket.new(@host, @port)
-          end
-        end
-        # @socket_mutex.synchronize {  }
+        @socket = @socket_mutex.synchronize { TCPSocket.new(@host, @port) }
 
         unless @socket.nil?
           @connected = true
@@ -38,16 +33,7 @@ class RCon
 
     def disconnect!
       if !@socket.nil?
-        # puts "a"
-        # $socket_write_mutex.lock
-        # puts "b"
-        # $socket_read_mutex.lock
-        # puts "c"
-        @socket.shutdown
-
-        # $socket_write_mutex.unlock
-        # $socket_read_mutex.unlock
-        # @socket_mutex.synchronize { @socket.close }
+        @socket_mutex.synchronize { @socket.shutdown }
         $logger.info { "[#{self.id}] Disconnected from #{host_tag}" }
       end
       @connected     = false

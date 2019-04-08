@@ -165,8 +165,7 @@ class ThreadPool
               thread.wakeup if thread.status == "sleep"
 
             when false
-              name = thread.thread_variable_get(:name)
-              puts "name: #{name}"
+              name = thread.thread_variable_get(:name) || "<dead>"
               @@thread_pool -= [thread]
               schedule_log(:thread, :exit, name)
             end

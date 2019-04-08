@@ -10,6 +10,29 @@ require "zlib"
 require_relative "lib/servers"
 require_relative "lib/support"
 
+File.truncate("link.log", 0)
+File.truncate("combinator.log", 0)
+
+class MultiLogger
+  module ClassMethods
+    @@loggers ||= Array.new
+    def add(logger)
+      @@loggers << logger
+    end
+
+    def loggers
+      @@loggers
+    end
+  end
+  extend ClassMethods
+
+  def method_missing(method_name, *method_args, &block)
+    self.class.loggers.each do |logger|
+      logger.send(method_name, *method_args, &block)
+    end
+  end
+end
+
 ################################################################################
 
 ENV["DEBUG"] = "1"
@@ -17,8 +40,11 @@ ENV["DEBUG"] = "1"
 SLEEP_TIME = 0.0001
 
 ################################################################################
+$logger = MultiLogger.new
+MultiLogger.add(Logger.new(STDOUT))
+MultiLogger.add(Logger.new("link.log"))
 
-$logger = Logger.new(STDOUT)
+# $logger = Logger.new(STDOUT)
 $logger.datetime_format = '%Y-%m-%d %H:%M:%S.%6N'
 # $logger = Logger.new("link.log")
 $logger.level = (!!ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO)
