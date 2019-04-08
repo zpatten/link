@@ -89,10 +89,10 @@ def set_receiver_combinator(host, packet_fields, server)
   end
 end
 
-schedule_server(:receiver_combinators) do |server|
-  command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
-  server.rcon_command_nonblock(command, method(:set_receiver_combinator))
-end
+# schedule_server(:receiver_combinators) do |server|
+#   command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
+#   server.rcon_command_nonblock(command, method(:set_receiver_combinator))
+# end
 
 
 # Link Transmitter Combinator

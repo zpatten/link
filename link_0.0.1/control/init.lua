@@ -33,7 +33,7 @@ function on_link_init()
   global.link_provider_chests = {}
   global.link_requester_chests = {}
 
-  global.link_transmitter_combinators_previous_signals = {}
+  global.link_previous_signals = {}
 
   global.link_inventory_combinators = {}
   global.link_receiver_combinators = {}

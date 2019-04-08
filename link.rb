@@ -19,10 +19,17 @@ SLEEP_TIME = 0.0001
 ################################################################################
 
 $logger = Logger.new(STDOUT)
+$logger.datetime_format = '%Y-%m-%d %H:%M:%S.%6N'
 # $logger = Logger.new("link.log")
 $logger.level = (!!ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO)
-
-$threads = Array.new
+Format = "%s [%s] %s: %s\n".freeze
+$logger.formatter = proc do |severity, datetime, progname, msg|
+  progname = Thread.current.thread_variable_get(:name) || "main"
+  datetime = Time.now.utc.strftime('%Y-%m-%d %H:%M:%S.%6N')
+  Format % [severity[0..0], datetime, progname,
+        msg]
+  # "#{datetime}: #{msg}\n"
+end
 
 ################################################################################
 
@@ -47,8 +54,9 @@ end
 at_exit do
   $stderr.puts "Shutting down!"
   Servers.shutdown!
-  $threads.map(&:exit)
+  ThreadPool.shutdown!
   Storage.save
+  $logger.close
 end
 
 ################################################################################
@@ -59,6 +67,5 @@ require_relative "lib/factorio"
 ################################################################################
 
 ThreadPool.execute
-$threads.map(&:join)
 
 ################################################################################

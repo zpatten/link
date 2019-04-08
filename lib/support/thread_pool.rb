@@ -29,7 +29,7 @@ class ThreadPool
       @@thread_pool << Thread.new do
         Thread.current.thread_variable_set(:name, name)
         block.call
-        schedule_log(:thread, :stopped, name)
+        # schedule_log(:thread, :stopped, name)
         Thread.exit
       end
     end
@@ -55,13 +55,22 @@ class ThreadPool
       args   = [server].compact
 
       @@thread_pool << Thread.new do
-        Thread.current.thread_variable_set(:name, schedule.what)
+        thread_name = [
+          schedule.what.to_s,
+          server_ids(server)
+        ].compact.join(":")
+        Thread.current.thread_variable_set(:name, thread_name)
         block.call(*args)
-        schedule_log(:thread, :stopped, schedule)
+        # schedule_log(:thread, :stopped, schedule)
         Thread.exit
       end
 
       true
+    end
+
+    def server_ids(server)
+      return nil if server.nil? || server.empty?
+      [server].flatten.map(&:id).join(",")
     end
 
     def schedule_log(action, who, schedule)
@@ -74,7 +83,7 @@ class ThreadPool
         server = schedule.server
         block = schedule.block
 
-        id = "server:#{[server].flatten.map(&:id).join(",")}" unless server.nil?
+        id = "server:#{server_ids(server)}" unless server.nil?
         log_fields = [
           "next_run_at:#{next_run_at}",
           "frequency:#{frequency}",
@@ -110,6 +119,14 @@ class ThreadPool
         name = (thread.thread_variable_get(:name) || "<starting>")
         puts "[THREAD] #{name}: #{thread.status}"
       end
+    end
+
+    def shutdown!
+      # disable schedules
+      @@thread_schedules = Array.new
+      sleep 3
+      # stop threads
+      @@thread_pool.each { |t| t.terminate }
     end
 
     def execute
@@ -148,7 +165,10 @@ class ThreadPool
               thread.wakeup if thread.status == "sleep"
 
             when false
+              name = thread.thread_variable_get(:name)
+              puts "name: #{name}"
               @@thread_pool -= [thread]
+              schedule_log(:thread, :exit, name)
             end
           end
         end

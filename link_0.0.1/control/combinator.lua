@@ -1,5 +1,6 @@
 function get_link_transmitter_combinator(force)
   local link_signals = {}
+  local signal_delta = {}
   local noop = { noop = true }
 
   for unit_number, data in pairs(global.link_transmitter_combinators) do
@@ -11,12 +12,30 @@ function get_link_transmitter_combinator(force)
     end
   end
 
-  if not force and table.compare(global.link_transmitter_combinators_previous_signals, link_signals) then
+  if not force and global.link_previous_signals then
+    for unit_number, signals in pairs(link_signals) do
+      so = global.link_previous_signals[unit_number]
+
+      for i, sn in pairs(signals) do
+        if sn["signal"]["name"] ~= so[i]["signal"]["name"] then
+          table.insert(signal_delta[unit_number], sn)
+        end
+      end
+    end
+  end
+
+  log(dump(signal_delta))
+
+  if not force and table_count(signal_delta) == 0 then
     rcon.print(game.table_to_json(noop))
+  elseif not force and table_count(signal_delta) > 0 then
+    rcon.print(game.table_to_json(signal_delta))
   else
     rcon.print(game.table_to_json(link_signals))
     global.link_transmitter_combinators_previous_signals = link_signals
   end
+
+  global.link_previous_signals = table.deepcopy(link_signals)
 end
 
 -- function extract_network_id_signal(signals)

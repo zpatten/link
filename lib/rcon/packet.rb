@@ -22,7 +22,7 @@ class RCon
       return nil if disconnected?
 
       buffer = StringIO.new
-      @socket_write_mutex.synchronize do
+      $socket_write_mutex.synchronize do
         while buffer.length < length do
           data = socket.recv_nonblock(length, 0, nil, exception: false)
           if data == :wait_readable
@@ -34,6 +34,8 @@ class RCon
       end
       buffer.rewind
       buffer.read
+    rescue Errno::ESHUTDOWN
+      # server is shutting down
     end
 
     def recv_packet
@@ -64,7 +66,7 @@ class RCon
       buffer.write(encoded_packet)
 
       total_sent = 0
-      @socket_read_mutex.synchronize do
+      $socket_read_mutex.synchronize do
         begin
           buffer.seek(total_sent)
           total_sent += socket.send(buffer.read, 0)
@@ -74,6 +76,8 @@ class RCon
       $logger.debug { %([#{self.id}:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 
       total_sent
+    rescue Errno::ESHUTDOWN
+      # server is shutting down
     end
 
     def encode_packet(packet_fields)
