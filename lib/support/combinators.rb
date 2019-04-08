@@ -115,10 +115,22 @@ class Combinators
         @@combinators[network_id][unit_number] ||= Array.new
         unit_signals = @@combinators[network_id][unit_number]
         name = signal_name(signal)
+        current_count = signal_count(signal)
         if (unit_signal = get_signal(unit_signals, name)).nil?
-          unit_signals << build_signal(name, signal_count(signal), signal_type(signal))
+          # new signal
+          unit_signals << build_signal(name, current_count, signal_type(signal))
+          $logger.debug(:combinator_tx) { "New Signal: #{name} (#{current_count})" }
         else
-          unit_signal["count"] = signal["count"]
+          previous_count = signal_count(unit_signal)
+          if current_count == 0
+            # delete signal
+            unit_signals.delete_if { |us| signal_name(us) == name }
+            $logger.debug(:combinator_tx) { "Delete Signal: #{name}" }
+          elsif previous_count != current_count
+            # update signal
+            unit_signal["count"] = current_count
+            $logger.debug(:combinator_tx) { "Update Signal: #{name} (#{previous_count} -> #{current_count})" }
+          end
         end
         IO.write("combinators.json", JSON.pretty_generate(@@combinators))
       end
@@ -129,7 +141,7 @@ class Combinators
         networks.each do |network_id, signals|
           network_id = scrub_network_id(network_id)
           # pp signals
-          $logger.debug { "TX network-id: #{network_id.inspect}" }
+          $logger.debug(:combinator_tx) { "Circuit Network ID: #{PP.singleline_pp(network_id, "")}" }
           unless (network_id == :inventory)
             signal_data = {
               "signal-link-epoch" => nil,
@@ -141,7 +153,7 @@ class Combinators
           # index the signals
           signals = index_signals(signals)
 
-          $logger.debug { "Setting #{signals.count} signals" }
+          $logger.debug(:combinator_tx) { "Refreshing #{signals.count} signals for circuit network #{network_id}." }
 
           # pp signals
           signals.each do |signal|
@@ -161,7 +173,7 @@ class Combinators
       Combinators.update_inventory_signals
       network_id = scrub_network_id(network_id)
 
-      $logger.debug { "RX network-id: #{network_id}" }
+      $logger.debug(:combinator_rx) { "Circuit Network ID: #{PP.singleline_pp(network_id, "")}" }
       # pp @@combinators
       unit_signals = circuit_network_synchronize(network_id) do
         @@combinators[network_id] ||= Hash.new

@@ -48,12 +48,12 @@ MultiLogger.add(Logger.new("link.log"))
 $logger.datetime_format = '%Y-%m-%d %H:%M:%S.%6N'
 # $logger = Logger.new("link.log")
 $logger.level = (!!ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO)
-Format = "%s [%s] %s: %s\n".freeze
+Format = "%s [%s] %s: %s %s\n".freeze
 $logger.formatter = proc do |severity, datetime, progname, msg|
-  progname = Thread.current.thread_variable_get(:name) || "main"
+  progname = "[#{progname.to_s.upcase.gsub("_", "-")}]"
+  thread_name = Thread.current.thread_variable_get(:name) || "main"
   datetime = Time.now.utc.strftime('%Y-%m-%d %H:%M:%S.%6N')
-  Format % [severity[0..0], datetime, progname,
-        msg]
+  Format % [severity[0..0], datetime, thread_name, progname, msg]
   # "#{datetime}: #{msg}\n"
 end
 

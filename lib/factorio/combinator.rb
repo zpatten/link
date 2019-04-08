@@ -105,10 +105,10 @@ def set_receiver_combinator(host, packet_fields, server)
   end
 end
 
-schedule_server(:receiver_combinators) do |server|
-  command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
-  server.rcon_command_nonblock(command, method(:set_receiver_combinator))
-end
+# schedule_server(:receiver_combinators) do |server|
+#   command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
+#   server.rcon_command_nonblock(command, method(:set_receiver_combinator))
+# end
 
 
 # Link Transmitter Combinator
@@ -121,13 +121,13 @@ def get_transmitter_combinator(host, packet_fields, server)
     unit_networks_list = JSON.parse(payload)
     unless unit_networks_list.empty?
       if unit_networks_list["noop"].nil?
-        $logger.debug { ("X" * 80) }
-        $logger.debug { ("X" * 80) }
-        $logger.debug { ("X" * 80) }
-        $logger.debug { "[#{server.id}] tx-signals: #{PP.singleline_pp(unit_networks_list, "")}" }
+        # $logger.debug { ("X" * 80) }
+        # $logger.debug { ("X" * 80) }
+        # $logger.debug { ("X" * 80) }
+        $logger.debug(:combinator_tx) { "[#{server.id}] Received signals for circuit networks: #{PP.singleline_pp(unit_networks_list.values.map(&:keys).flatten, "")}" }
         Combinators.tx(unit_networks_list, server)
       else
-        $logger.debug { "[#{server.id}] tx-signals: NOOP" }
+        $logger.debug(:combinator_tx) { "[#{server.id}] NOOP" }
         return
       end
     end
