@@ -1,19 +1,10 @@
 function link_sn(signal)
-  return signal["signal"]["name"]
+  return signal.signal.name
 end
 
 function link_sc(signal)
-  return signal["count"]
+  return signal.count
 end
-
-function find_signal(signals, signal_name)
-  for i, signal in pairs(signals) do
-    if link_sn(signal) == signal_name then
-      return signal
-    end
-  end
-end
-
 
 function get_link_transmitter_combinator(force)
   local link_signals = {}
@@ -31,127 +22,101 @@ function get_link_transmitter_combinator(force)
       link_signals[entity.unit_number] = {}
       link_signals[entity.unit_number][link_network_id] = behaviour.signals_last_tick
 
+      log(string.format("[COMBINATORS-TX] Processing Network ID: %d", link_network_id))
+
       if not force and global.link_previous_signals then
+        -- get the current signals
         local current_signals = link_signals[entity.unit_number][link_network_id]
         if not current_signals then current_signals = {} end
 
+        -- do we have previous signals to generate a delta with?
         if global.link_previous_signals[entity.unit_number] and global.link_previous_signals[entity.unit_number][link_network_id] then
+
+          -- get the previous signals
           local previous_signals = global.link_previous_signals[entity.unit_number][link_network_id]
           if not previous_signals then previous_signals = {} end
-          log("current signal count:"..table_count(current_signals))
-          log("previous signal count:"..table_count(previous_signals))
+
+          -- did the signals change?
           if not table.compare(current_signals, previous_signals) then
 
+            -- build a hash map of the current signals for faster lookup
+            local current_signals_map = {}
+            for i, signal in pairs(current_signals) do
+              current_signals_map[link_sn(signal)] = signal
+            end
+
+            -- build a hash map of the previous signals for faster lookup
+            local previous_signals_map = {}
+            for i, signal in pairs(previous_signals) do
+              previous_signals_map[link_sn(signal)] = signal
+            end
+
             -- look for new or changed signals
-            for i, signal_new in pairs(current_signals) do
-              local signal_old = find_signal(previous_signals, link_sn(signal_new))
-              if not signal_old then
+            for i, current_signal in pairs(current_signals) do
+              local previous_signal = previous_signals_map[link_sn(current_signal)]
+              if not previous_signal then
                 -- new signal
-                table.insert(unit_signal_delta, signal_new)
-              elseif link_sc(signal_new) ~= link_sc(signal_old) then
+                log(string.format("[COMBINATORS-TX] Create Signal: %s (%d)", current_signal.signal.name, current_signal.count))
+                table.insert(unit_signal_delta, current_signal)
+              elseif link_sc(current_signal) ~= link_sc(previous_signal) then
                 -- signal count changed
-                table.insert(unit_signal_delta, signal_new)
+                log(string.format("[COMBINATORS-TX] Update Signal: %s (%d -> %d)", current_signal.signal.name, previous_signal.count, current_signal.count))
+                table.insert(unit_signal_delta, current_signal)
               end
             end
 
             -- look for deleted signals
-            for i, signal_old in pairs(previous_signals) do
-              local signal_new = find_signal(current_signals, link_sn(signal_old))
-              if not signal_new then
+            for i, previous_signal in pairs(previous_signals) do
+              local current_signal = current_signals_map[link_sn(previous_signal)]
+              if not current_signal then
                 -- signal deleted
-                signal_old["count"] = 0
-                table.insert(unit_signal_delta, signal_old)
+                log(string.format("[COMBINATORS-TX] Delete Signal: %s", previous_signal.signal.name))
+                previous_signal["count"] = 0
+                table.insert(unit_signal_delta, previous_signal)
               end
             end
 
-            -- -- we have changes, calculate deltas
-            -- for i, signal_old in pairs(previous_signals) do
-            --   local signal_new = current_signals[i]
-            --   if not signal_new then
-            --     -- deleted
-            --     signal_old["count"] = 0
-            --     table.insert(unit_signal_delta, signal_old)
-            --   else
-            --     -- changed
-            --     if link_sn(signal_new) ~= link_sn(signal_old) then
-            --       table.insert(unit_signal_delta, signal_new)
-            --     elseif link_sc(signal_new) ~= link_sc(signal_old) then
-            --       table.insert(unit_signal_delta, signal_new)
-            --     end
-            --   end
-            -- end
-          end
-        end
+            if table_count(unit_signal_delta) > 0 then
+              -- if we we able to generate a delta for this entity, add the signal deltas to the list
+              if not signal_delta[unit_number] then signal_delta[unit_number] = {} end
+              signal_delta[unit_number][link_network_id] = unit_signal_delta
+            end
 
-        if table_count(unit_signal_delta) > 0 then
-          if not signal_delta[unit_number] then signal_delta[unit_number] = {} end
-          signal_delta[unit_number][link_network_id] = unit_signal_delta
+          else
+            -- signals are the same; NOOP
+          end
+
+        else
+          -- no previous signals
+
+          -- if we could not generate a delta and we have signals, add all signals to the list
+          if table_count(link_signals[entity.unit_number][link_network_id]) > 0 then
+            if not signal_delta[unit_number] then signal_delta[unit_number] = {} end
+            signal_delta[unit_number][link_network_id] = link_signals[entity.unit_number][link_network_id]
+          end
+
         end
       end
     end
   end
 
-  -- if not force and global.link_previous_signals then
-  --   for unit_number, networks in pairs(link_signals) do
-  --     for network_id, signals in pairs(networks) do
-  --       so = global.link_previous_signals[unit_number][network_id]
-
-  --       local unit_signal_delta = {}
-  --       for i, sn in pairs(signals) do
-  --         if sn["signal"]["name"] ~= so[i]["signal"]["name"] then
-  --           table.insert(unit_signal_delta, sn)
-  --         elseif sn["count"] ~= so[i]["count"] then
-  --           table.insert(unit_signal_delta, sn)
-  --         end
-  --       end
-  --       if table_count(unit_signal_delta) > 0 then
-  --         if not signal_delta[unit_number] then signal_delta[unit_number] = {} end
-  --         signal_delta[unit_number][network_id] = unit_signal_delta
-  --       end
-  --     end
-  --   end
-  -- end
-
-  log("signal-delta: "..dump(signal_delta))
-
   if not force and table_count(signal_delta) == 0 then
+    -- if this is not a forced refresh and if no signals changed send a NOOP
     rcon.print(game.table_to_json(noop))
+    log("[COMBINATORS-TX] NOOP")
   elseif not force and table_count(signal_delta) > 0 then
+    -- if this is not a forced refresh and we have a delta send it
+    log("[COMBINATORS-TX] Sending signal deltas.")
     rcon.print(game.table_to_json(signal_delta))
   else
+    -- otherwise send everything
+    log("[COMBINATORS-TX] Sending all signals (forced).")
     rcon.print(game.table_to_json(link_signals))
   end
 
+  -- update the previous signals
   global.link_previous_signals = table.deepcopy(link_signals)
 end
-
--- function extract_network_id_signal(signals)
---   if table_count(signals) > 0 then
---     for _, s in pairs(signals) do
---       if s and s.signal then
---         if s.signal.type == "virtual" and s.signal.name == "signal-link-network-id" then
---           return s
---         end
---       end
---     end
---   end
---   return {
---     signal = {
---       type = "virtual",
---       name = "signal-link-network-id"
---     },
---     count = 0
---   }
--- end
-
--- function extract_network_id(signals)
---   local network_id_signal = extract_network_id_signal(signals)
---   if network_id_signal then
---     return network_id_signal.count
---   else
---     return 0
---   end
--- end
 
 function get_link_receiver_combinator_network_ids()
   local network_ids = {}
@@ -200,8 +165,23 @@ function fetch_circuit_network_id(entity)
   return 0
 end
 
-function set_link_receiver_combinator(data)
+function scrub_signals(signals)
+  local s = {}
+
+  for _, signal in pairs(signals) do
+    if signal.count > 0 then
+      signal.index = #s+1
+      s[#s+1] = signal
+    end
+  end
+
+  return s
+end
+
+function set_link_receiver_combinator(force, data)
   local link_signal_networks = game.json_to_table(data)
+
+  if not global.rx_signals then global.rx_signals = {} end
 
   for unit_number, data in pairs(global.link_receiver_combinators) do
     local behaviour = data.behaviour
@@ -212,9 +192,36 @@ function set_link_receiver_combinator(data)
       link_network_id = fetch_circuit_network_id(link_network_id_entity)
       local signals = extract_circuit_network(link_network_id, link_signal_networks)
 
-      for i, s in pairs(signals) do
-        behaviour.set_signal(s.index, s)
+      log(string.format("[COMBINATORS-RX] Processing Network ID: %d", link_network_id))
+
+      if force then
+        global.rx_signals[link_network_id] = signals
+      else
+        local signals_map = {}
+        for i, signal in pairs(global.rx_signals[link_network_id]) do
+          signals_map[link_sn(signal)] = signal
+        end
+
+        for i, s in pairs(signals) do
+          local existing_signal = signals_map[s.signal.name]
+          if existing_signal then
+            if s.count == 0 then
+              log(string.format("[COMBINATORS-RX] Delete Signal: %s", s.signal.name))
+              existing_signal.count = s.count
+            else
+              log(string.format("[COMBINATORS-RX] Update Signal: %s (%d -> %d)", s.signal.name, existing_signal.count, s.count))
+              existing_signal.count = s.count
+            end
+          else
+            log(string.format("[COMBINATORS-RX] Create Signal: %s (%d)", s.signal.name, s.count))
+            table.insert(global.rx_signals[link_network_id], s)
+          end
+        end
       end
+
+      global.rx_signals[link_network_id] = scrub_signals(global.rx_signals[link_network_id])
+
+      behaviour.parameters = { parameters = global.rx_signals[link_network_id] }
       behaviour.enabled = true
     end
   end
@@ -226,10 +233,30 @@ function set_link_receiver_combinator(data)
     if entity.valid and behaviour.valid then
       local signals = extract_circuit_network("inventory", link_signal_networks)
 
+      local deleted_signals = {}
+      local non_zero_signals = {}
+
       for i, s in pairs(signals) do
-        behaviour.set_signal(s.index, s)
+        if s.count ~= 0 then
+          behaviour.set_signal(s.index, s)
+          non_zero_signals[s.index] = true
+        else
+          table.insert(deleted_signals, s)
+        end
       end
+
+      for i, s in pairs(deleted_signals) do
+        if not non_zero_signals[s.index] then
+          behaviour.set_signal(s.index, nil)
+        end
+      end
+
       behaviour.enabled = true
+
+      -- for i, s in pairs(signals) do
+      --   behaviour.set_signal(s.index, s)
+      -- end
+      -- behaviour.enabled = true
     end
   end
 

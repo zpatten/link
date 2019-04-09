@@ -33,11 +33,17 @@ class MultiLogger
   end
 end
 
+def pp_inline(object)
+  PP.singleline_pp(object, "")
+end
+
 ################################################################################
 
 ENV["DEBUG"] = "1"
 
 SLEEP_TIME = 0.0001
+
+STDOUT.sync = true
 
 ################################################################################
 $logger = MultiLogger.new

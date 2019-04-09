@@ -60,43 +60,49 @@ def set_receiver_combinator(host, packet_fields, server)
     unless network_ids.empty?
       # network_ids = network_ids.map(&:deep_symbolize_keys!)
       #network_ids.collect! { |nid, count| [nid == "inventory" ? nid.to_sym : nid.to_i, count] }
-      $logger.debug { "[#{server.id}] network-ids: #{network_ids}" }
+      $logger.debug(:combinators_rx) { "[#{server.id}] Received circuit networks: #{pp_inline(network_ids)}" }
+
       signal_networks = Hash.new
       network_ids.each do |network_id|
-        cache_key = "receiver-combinator-previous-signals-#{server.name}-#{network_id}"
-        previous_signals = MemoryCache.read(cache_key)
-        signals = Combinators.rx(network_id, server)
+        # cache_key = "receiver-combinator-previous-signals-#{server.name}-#{network_id}"
+        # previous_signals = MemoryCache.read(cache_key)
+        network_signals = Combinators.rx(network_id, server)
 
-        if (!!previous_signals && (previous_signals == signals))
-          $logger.debug { "[#{server.id}] network-id(#{network_id}): Skipping sending signals to receiver combinators; no changes detected." }
-        else
-          signal_deltas = Array.new
-          signals.each do |signal|
-            signal_name = signal["signal"]["name"]
-            previous_signal = lookup_signal(previous_signals, signal_name)
-            if previous_signal.nil? || $receiver_combinators_initalized[server.name].nil?
-              $logger.debug { "[#{server.id}] network-id(#{network_id}): Signal #{signal_name} is new; adding to delta." }
-              signal_deltas << signal
-            else
-              count_changed = (previous_signal["count"].to_i != signal["count"].to_i)
-              index_changed = (previous_signal["index"].to_i != signal["index"].to_i)
-              if count_changed || index_changed
-                $logger.debug { "[#{server.id}] network-id(#{network_id}): Signal #{signal_name} changed; adding to delta; #{previous_signal["count"]} != #{signal["count"]}" }
-                signal_deltas << signal
-              else
-                # $logger.debug { "[#{server.id}] network-id(#{network_id}): Signal #{signal_name} unchanged; #{previous_signal["count"]} == #{signal["count"]}" }
-              end
-            end
-          end
-          $logger.info { "[#{server.id}] network-id(#{network_id}): Signals changed (#{signal_deltas.count} of #{signals.count}), updating receiver combinators." }
-          signal_networks[network_id] = signal_deltas
+        unless network_signals.nil? || network_signals.empty?
+          signal_networks[network_id] = network_signals
         end
-        MemoryCache.write(cache_key, signals)
+
+        # if (!!previous_signals && (previous_signals == signals))
+        #   $logger.debug { "[#{server.id}] network-id(#{network_id}): Skipping sending signals to receiver combinators; no changes detected." }
+        # else
+        #   signal_deltas = Array.new
+        #   signals.each do |signal|
+        #     signal_name = signal["signal"]["name"]
+        #     previous_signal = lookup_signal(previous_signals, signal_name)
+        #     if previous_signal.nil? || $receiver_combinators_initalized[server.name].nil?
+        #       $logger.debug { "[#{server.id}] network-id(#{network_id}): Signal #{signal_name} is new; adding to delta." }
+        #       signal_deltas << signal
+        #     else
+        #       count_changed = (previous_signal["count"].to_i != signal["count"].to_i)
+        #       index_changed = (previous_signal["index"].to_i != signal["index"].to_i)
+        #       if count_changed || index_changed
+        #         $logger.debug { "[#{server.id}] network-id(#{network_id}): Signal #{signal_name} changed; adding to delta; #{previous_signal["count"]} != #{signal["count"]}" }
+        #         signal_deltas << signal
+        #       else
+        #         # $logger.debug { "[#{server.id}] network-id(#{network_id}): Signal #{signal_name} unchanged; #{previous_signal["count"]} == #{signal["count"]}" }
+        #       end
+        #     end
+        #   end
+        #   $logger.info { "[#{server.id}] network-id(#{network_id}): Signals changed (#{signal_deltas.count} of #{signals.count}), updating receiver combinators." }
+        #   signal_networks[network_id] = signal_deltas
+        # end
+        # MemoryCache.write(cache_key, signals)
       end
 
       if signal_networks.count > 0
         # update rx combinators with the signal networks
-        command = %(/#{rcon_executor} remote.call('link', 'set_receiver_combinator', '#{signal_networks.to_json}'))
+        force = ($receiver_combinators_initalized[server.name] != true)
+        command = %(/#{rcon_executor} remote.call('link', 'set_receiver_combinator', #{force}, '#{signal_networks.to_json}'))
     write_log("signal_networks:#{JSON.pretty_generate(signal_networks)}")
         server.rcon_command_nonblock(command, method(:rcon_print))
         $receiver_combinators_initalized[server.name] = true
@@ -105,10 +111,10 @@ def set_receiver_combinator(host, packet_fields, server)
   end
 end
 
-# schedule_server(:receiver_combinators) do |server|
-#   command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
-#   server.rcon_command_nonblock(command, method(:set_receiver_combinator))
-# end
+schedule_server(:receiver_combinators) do |server|
+  command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
+  server.rcon_command_nonblock(command, method(:set_receiver_combinator))
+end
 
 
 # Link Transmitter Combinator
@@ -121,10 +127,7 @@ def get_transmitter_combinator(host, packet_fields, server)
     unit_networks_list = JSON.parse(payload)
     unless unit_networks_list.empty?
       if unit_networks_list["noop"].nil?
-        # $logger.debug { ("X" * 80) }
-        # $logger.debug { ("X" * 80) }
-        # $logger.debug { ("X" * 80) }
-        $logger.debug(:combinator_tx) { "[#{server.id}] Received signals for circuit networks: #{PP.singleline_pp(unit_networks_list.values.map(&:keys).flatten, "")}" }
+        $logger.debug(:combinator_tx) { "[#{server.id}] Received signals for circuit networks: #{pp_inline(unit_networks_list.values.map(&:keys).flatten.uniq.sort)}" }
         Combinators.tx(unit_networks_list, server)
       else
         $logger.debug(:combinator_tx) { "[#{server.id}] NOOP" }

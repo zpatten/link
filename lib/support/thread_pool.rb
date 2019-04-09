@@ -90,9 +90,9 @@ class ThreadPool
           id,
           "block:#{block}"
         ].compact.join(", ")
-        $logger.debug { "[THREAD] #{who} #{action} #{what}: #{log_fields}" }
+        $logger.debug(:thread) { "#{who} #{action} #{what}: #{log_fields}" }
       else
-        $logger.debug { "[THREAD] #{who} #{action} #{schedule.to_s.downcase}" }
+        $logger.debug(:thread) { "#{who} #{action} #{schedule.to_s.downcase}" }
       end
     end
 
