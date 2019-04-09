@@ -1,0 +1,21 @@
+<h1>Storage</h1>
+
+<table>
+  <tr>
+    <th>Item Name</th>
+    <th>Storage Count</th>
+    <th>1m</th>
+    <th>5m</th>
+    <th>15m</th>
+  </tr>
+<% storage.each do |item_name, item_count| %>
+<%   item_statistics = statistics[item_name] %>
+  <tr>
+    <td><%= item_name %></td>
+    <td><%= item_count %></td>
+    <td><%= item_statistics.delta_count_1 %></td>
+    <td><%= item_statistics.delta_count_5 %></td>
+    <td><%= item_statistics.delta_count_15 %></td>
+  </tr>
+<% end %>
+</table>

@@ -134,12 +134,31 @@ class Signals
     end
 
     def scrub_network_id(nid)
+      return nid if nid.is_a?(Symbol)
       (nid == "inventory" ? nid.to_sym : nid.to_i)
+    end
+
+    def get_network_ids
+      deep_clone(signal_networks.keys)
     end
 
     def clone(network_id)
       circuit_network_synchronize(network_id) do
         deep_clone(signal_networks[network_id])
+      end
+    end
+
+    def clone_all
+      networks = Hash.new
+      get_network_ids.each do |nid|
+        networks.merge!(circuit_network_synchronize(nid) do
+          signals = deep_clone(signal_networks[nid])
+          if signals.nil? || signals.empty?
+            {}
+          else
+            { nid => signals }
+          end
+        end)
       end
     end
 

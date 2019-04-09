@@ -75,7 +75,8 @@ end
 # RCON Executor
 # Switch between using 'c' or 'silent-command' depending on the debug flag.
 def rcon_executor
-  (debug? ? "c" : "silent-command")
+  # (debug? ? "c" : "silent-command")
+  "silent-command"
 end
 
 def debug?

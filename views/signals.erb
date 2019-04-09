@@ -1,0 +1,27 @@
+<h1>Signals</h1>
+
+Seen Network IDs: <%= signals.get_network_ids %><br />
+<br />
+<% signals.get_network_ids.each do |nid| %>
+  <% s = signals.tx(nid, nil, true) %>
+<h2>Network ID <%= nid %></h2>
+<hr />
+  <% if s.nil? %>
+No Signals!
+  <% else %>
+<table>
+  <tr>
+    <th>Signal Name</th>
+    <th>Signal Type</th>
+    <th>Signal Count</th>
+  </tr>
+    <% s.each do |signal| %>
+  <tr>
+    <td><%= signal["signal"]["name"] %></td>
+    <td><%= signal["signal"]["type"] %></td>
+    <td><%= signal["count"] %></td>
+  </tr>
+    <% end %>
+  <% end %>
+</table>
+<% end %>

@@ -1,3 +1,6 @@
+require 'rubygems'
+require 'bundler/setup'
+
 ################################################################################
 
 require "logger"
@@ -95,6 +98,31 @@ end
 
 require_relative "lib/tasks"
 require_relative "lib/factorio"
+
+################################################################################
+
+require 'sinatra/base'
+
+class WebServer < Sinatra::Application
+  set :port, 4242
+
+  get "/" do
+    erb :index
+  end
+
+  get "/storage" do
+    erb :storage, locals: { storage: Storage.clone, statistics: Storage.statistics }
+  end
+
+  get "/signals" do
+    erb :signals, locals: { signals: Signals }
+  end
+
+  ThreadPool.thread("sinatra") do
+    run! if app_file == $0
+  end
+end
+
 
 ################################################################################
 

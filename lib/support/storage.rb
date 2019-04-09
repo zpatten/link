@@ -4,6 +4,8 @@ class Storage
 
     @@storage = nil
     @@storage_mutex ||= Hash.new
+    @@storage_statistics ||= Hash.new
+
 
     def storage_synchronize(item_name, &block)
       @@storage_mutex[item_name] ||= Mutex.new
@@ -120,7 +122,11 @@ class Storage
       [delta_count_1, delta_count_5, delta_count_15]
     end
 
-    def delta
+    def statistics
+      deep_clone(@@storage_statistics)
+    end
+
+    def calculate_statistics
       storage.nil? and load
 
       storage_synchronize_all do
@@ -136,22 +142,23 @@ class Storage
         @@previous_storage = storage.clone
 
         if storage_delta.keys.count > 0
-          # puts ("-" * 80)
-          # puts "  Storage Delta: "
-          # puts ("-" * 80)
-          $logger.info { "-----------------------------------------+----------+----------+----------+----------------" }
-          $logger.info { " STORAGE REPORT                Item Name | Delta-1  | Delta-5  | Delta-15 | In Storage" }
-          $logger.info { "-----------------------------------------+----------+----------+----------+----------------" }
-          storage_delta.each do |item_name, delta_count|
 
+          storage_delta.each do |item_name, delta_count|
             storage_count = storage[item_name]
             delta_count_1, delta_count_5, delta_count_15 = delta_averages(item_name, delta_count)
             next if delta_count_15 == "-" && storage_count == 0
 
-            $logger.info { "%40s | %-8s | %-8s | %-8s | %-8s" % [item_name, delta_count_1, delta_count_5, delta_count_15, storage_count] }
+            @@storage_statistics[item_name] = OpenStruct.new(
+              delta_count: delta_count,
+              delta_count_1: delta_count_1,
+              delta_count_5: delta_count_5,
+              delta_count_15: delta_count_15
+            )
           end
         end
       end
+
+      @@storage_statistics
     end
 
   end

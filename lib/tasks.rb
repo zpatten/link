@@ -1,7 +1,7 @@
 # Tasks
 ################################################################################
 schedule_task(:statistics) do
-  Storage.delta
+  Storage.calculate_statistics
 end
 
 schedule_task(:servers) do
