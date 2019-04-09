@@ -18,7 +18,7 @@ class Servers
     def find(what)
       what = what.to_sym
       case what
-      when :commands, :chats, :ping, :command_whitelist, :providables, :requests, :inventory_combinators, :transmitter_combinators, :receiver_combinators, :id
+      when :commands, :chats, :ping, :command_whitelist, :providables, :requests, :tx_signals, :rx_signals, :id
         all.select { |s| !!Config.server_value(s.name, what) }
       when :research, :current_research
         all.select { |s| !!Config.server_value(s.name, :research) }
@@ -53,7 +53,7 @@ class Servers
     def shutdown!
       all.each do |server|
         server.shutdown!
-        $logger.info { "[#{server.id}] Shutdown server #{server.host_tag}" }
+        $logger.info(:servers) { "[#{server.id}] Shutdown server #{server.host_tag}" }
       end
     end
 

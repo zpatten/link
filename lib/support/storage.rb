@@ -60,7 +60,7 @@ class Storage
         storage[item_name] += item_count
       end
 
-      Combinators.update_inventory_signals
+      Signals.update_inventory_signals
 
       item_count
     end
@@ -80,7 +80,7 @@ class Storage
         storage[item_name] -= removed_count
       end
 
-      Combinators.update_inventory_signals
+      Signals.update_inventory_signals
 
       removed_count
     end

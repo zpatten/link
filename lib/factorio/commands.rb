@@ -3,7 +3,7 @@ def get_commands(host, packet_fields, data)
   unless payload.empty?
     command_events = JSON.parse(payload)
     unless command_events.empty?
-      $logger.debug { PP.singleline_pp(command_events, "") }
+      $logger.debug(:commands) { PP.singleline_pp(command_events, "") }
       origin_server = Servers.find_by_name(host)
       (Servers.find(:commands) - [origin_server]).each do |server|
         command_events.each do |command_event|

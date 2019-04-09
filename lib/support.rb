@@ -1,6 +1,5 @@
 require 'ostruct'
 
-require_relative "support/combinators"
 require_relative "support/config"
 require_relative "support/memory_cache"
 require_relative "support/requests"

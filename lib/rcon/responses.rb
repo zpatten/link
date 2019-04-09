@@ -4,7 +4,7 @@ class RCon
     RESPONSE_QUEUE_LENGTH = 64
 
     def register_response(packet_fields)
-      $logger.debug { "Registered Response: #{packet_fields.id}" }
+      $logger.debug(:rcon) { "Registered Response for Packet ID #{packet_fields.id}" }
       @response_mutex.synchronize do
         @responses << packet_fields
 
@@ -22,7 +22,7 @@ class RCon
       end
 
       unless results.nil?
-        $logger.debug { "Find Response(#{packet_id}): #{results}" }
+        $logger.debug(:rcon) { "Find Response(#{packet_id}): #{results}" }
       end
 
       results

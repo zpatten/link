@@ -52,7 +52,8 @@ class RCon
   end
 
   def rcon_tag
-    "#{@name}@#{@host}:#{@port}"
+    # "#{@name}@#{@host}:#{@port}"
+    @name
   end
 
   def shutdown!
@@ -73,7 +74,7 @@ class RCon
   end
 
   def conn_manager
-    ThreadPool.thread("#{rcon_tag}-connection-manager") do
+    ThreadPool.thread("conn-#{rcon_tag}") do
       loop do
         RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
           connect! if disconnected?
@@ -86,7 +87,7 @@ class RCon
   end
 
   def poll_send
-    ThreadPool.thread("#{rcon_tag}-send") do
+    ThreadPool.thread("send-#{rcon_tag}") do
     RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
       loop do
         queued_packet = nil
@@ -106,14 +107,14 @@ class RCon
     return if received_packet.nil?
 
     raise "[#{self.id}] Authentication Failed!" if received_packet.id == -1
-    tag = "packet-callback-#{received_packet.id}"
+    tag = "callback-#{received_packet.id}"
     ThreadPool.thread(tag) do
       packet_callback(received_packet)
     end
   end
 
   def poll_recv
-    ThreadPool.thread("#{rcon_tag}-recv") do
+    ThreadPool.thread("recv-#{rcon_tag}") do
     RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
       loop do
         # poll_sleep

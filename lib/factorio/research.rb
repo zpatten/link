@@ -3,7 +3,7 @@ def set_research(host, packet_fields, server)
   unless payload.empty?
     research = JSON.parse(payload)
     unless research.empty?
-      $logger.debug { "[#{server.id}] research: #{PP.singleline_pp(research, "")}" }
+      $logger.debug(:research) { "[#{server.id}] research: #{PP.singleline_pp(research, "")}" }
       command = %(/#{rcon_executor} remote.call('link', 'set_research', '#{research.to_json}'))
       Servers.find(:non_research).each do |server|
         server.rcon_command_nonblock(command, method(:rcon_print))
@@ -16,7 +16,7 @@ def set_current_research(host, packet_fields, server)
   payload = packet_fields.payload
   unless payload.empty?
     current_research = JSON.parse(payload)
-    $logger.debug { "[#{server.id}] current research: #{PP.singleline_pp(current_research, "")}" }
+    $logger.debug(:research) { "[#{server.id}] current research: #{PP.singleline_pp(current_research, "")}" }
     command = %(/#{rcon_executor} remote.call('link', 'set_current_research', '#{current_research.to_json}'))
     Servers.find(:non_research).each do |server|
       server.rcon_command_nonblock(command, method(:rcon_print))

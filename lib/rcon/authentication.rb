@@ -15,7 +15,7 @@ class RCon
 
     def authenticate_callback(host, packet_fields, data)
       @authenticated = true
-      $logger.info { "[#{self.id}] Authenticated to #{host_tag}" }
+      $logger.info(:rcon) { "[#{self.id}] Authenticated to #{host_tag}" }
     end
 
   end

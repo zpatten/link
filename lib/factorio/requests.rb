@@ -3,7 +3,7 @@ def get_requests(host, packet_fields, server)
   unless payload.empty?
     requests = JSON.parse(payload)
     unless requests.empty?
-      $logger.debug { "[#{server.id}] requests: #{PP.singleline_pp(requests, "")}" }
+      $logger.debug(:requests) { "[#{server.id}] requests: #{PP.singleline_pp(requests, "")}" }
       Requests.add(host, requests)
     end
   end
@@ -12,7 +12,7 @@ end
 def fulfillments
   Requests.fulfill do |host,fulfillments|
     s = Servers.find_by_name(host)
-    $logger.debug { "[#{s.id}] fulfillments: #{PP.singleline_pp(fulfillments, "")}" }
+    $logger.debug(:fulfillments) { "[#{s.id}] fulfillments: #{PP.singleline_pp(fulfillments, "")}" }
     command = %(/#{rcon_executor} remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
     s.rcon_command_nonblock(command, method(:rcon_print))
   end
