@@ -8,7 +8,9 @@ def ping(host, packet_fields, started_at)
   server = Servers.find_by_name(host)
   command = %(/#{rcon_executor} remote.call('link', 'rtt', '#{rtt}'))
   server.rcon_command_nonblock(command, method(:rcon_print))
-  $logger.debug(:ping) { "[#{server.id}] rtt: #{(rtt * 1000.0).round(0)}ms" }
+  rtt_ms = (rtt * 1000.0).round(0)
+  server.rtt = rtt_ms
+  $logger.debug(:ping) { "[#{server.id}] rtt: #{rtt_ms}ms" }
 end
 
 # Link Factorio Server Ping (Calculates RTT)

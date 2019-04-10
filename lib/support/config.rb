@@ -29,6 +29,7 @@ class Config
     def method_missing(method_name, *method_args, &block)
       @@config.send(method_name, *method_args, &block)
     end
+
   end
 
   extend ClassMethods

@@ -1,0 +1,14 @@
+%h1 Threads
+
+%table
+  %tr
+    %th Thread ID
+    %th Thread Name
+    %th Thread Status
+  - ThreadPool.threads.each do |thread|
+    - thread_name = thread.thread_variable_get(:name) || "-"
+    %tr
+      %td= thread.object_id
+      %td
+        %pre= thread_name
+      %td= thread.status

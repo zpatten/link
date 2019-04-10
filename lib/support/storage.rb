@@ -54,6 +54,12 @@ class Storage
       storage_clone.delete_if { |n,c| (c == 0) }
     end
 
+    def update_websocket(item_name, item_count)
+      WebServer.settings.storage_sockets.each do |s|
+        s.send({ name: item_name, count: item_count }.to_json)
+      end
+    end
+
     def add(item_name, item_count)
       storage.nil? and load
 
@@ -63,6 +69,7 @@ class Storage
       end
 
       Signals.update_inventory_signals
+      update_websocket(item_name, storage[item_name])
 
       item_count
     end
@@ -83,6 +90,7 @@ class Storage
       end
 
       Signals.update_inventory_signals
+      update_websocket(item_name, storage[item_name])
 
       removed_count
     end

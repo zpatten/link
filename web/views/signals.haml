@@ -1,0 +1,26 @@
+%h1 Signals
+
+Known Network IDs: #{signals.get_network_ids}
+%br
+- signals.get_network_ids.each do |nid|
+  - s = signals.tx(nid, nil, true)
+  Network ID #{nid} - #{s.count} Signals
+  %br
+%hr
+- signals.get_network_ids.each do |nid|
+  - s = signals.tx(nid, nil, true)
+  %h2 Network ID #{nid}
+  %hr
+  - if s.nil?
+    No Signals!
+  - else
+    %table
+      %tr
+        %th Signal Name
+        %th Signal Type
+        %th Signal Count
+      - s.each do |signal|
+        %tr
+          %td= signal["signal"]["name"]
+          %td= signal["signal"]["type"]
+          %td= signal["count"]

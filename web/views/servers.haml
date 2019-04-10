@@ -1,0 +1,20 @@
+%h1 Servers
+
+%table
+  %tr
+    %th ID
+    %th Name
+    %th Host
+    %th Port
+    %th Connected?
+    %th Authenticated?
+    %th RTT
+  - Servers.all.each do |server|
+    %tr
+      %td= server.id
+      %td= server.name
+      %td= server.host
+      %td= server.port
+      %td= server.connected?
+      %td= server.authenticated?
+      %td #{server.rtt} ms

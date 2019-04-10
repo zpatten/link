@@ -1,0 +1,54 @@
+body {
+  font: 16px verdana, helvetica, arial;
+}
+
+table {
+  margin: 4px;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+table, th {
+  border: 2px solid black;
+  padding: 4px;
+}
+
+th {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+tr:nth-child(even) {
+  background-color: #cccccc;
+}
+
+td {
+  padding: 4px;
+}
+
+.header {
+  font-weight: bold;
+  font-size: 32px;
+}
+
+.white {
+  background-color: white;
+}
+
+.align-right {
+  text-align: right;
+}
+
+.fleft {
+  float: left;
+}
+
+.fright {
+  float: right;
+}
+
+.one {
+  width: 1%;
+  white-space: nowrap;
+  border-right: 1px solid black;
+}

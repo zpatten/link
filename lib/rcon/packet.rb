@@ -34,7 +34,7 @@ class RCon
       end
       buffer.rewind
       buffer.read
-    rescue Errno::ESHUTDOWN
+    rescue Errno::ECONNABORTED, Errno::ESHUTDOWN
       # server is shutting down
     end
 
@@ -76,7 +76,7 @@ class RCon
       $logger.debug(:rcon) { %([#{self.id}:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 
       total_sent
-    rescue Errno::ESHUTDOWN
+    rescue Errno::ECONNABORTED, Errno::ESHUTDOWN
       # server is shutting down
     end
 

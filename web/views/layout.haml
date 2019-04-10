@@ -1,0 +1,20 @@
+!!!
+%html
+  %head
+    %title Link
+    %link{ rel: "stylesheet", type: "text/css", href: "/css/style.css"}
+%body
+  %ul
+    %li
+      %a{ href: "/storage", title: "Storage" } Storage
+    %li
+      %a{ href: "/signals", title: "Signals" } Signals
+    %li
+      %a{ href: "/threads", title: "Threads" } Threads
+    %li
+      %a{ href: "/servers", title: "Servers" } Servers
+    %li
+      %a{ href: "/config", title: "Config" } Config
+    %li
+      %a{ href: "/log", title: "Log" } Log
+  = yield

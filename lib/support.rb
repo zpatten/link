@@ -1,5 +1,7 @@
 require 'ostruct'
 
+require_relative "support/logger"
+
 require_relative "support/config"
 require_relative "support/memory_cache"
 require_relative "support/requests"
@@ -26,6 +28,12 @@ class Object
     self
   end
 end
+
+def pp_inline(object)
+  PP.singleline_pp(object, "")
+end
+
+
 
 # Displays RCON response packets for debugging or other uses (i.e. when we do not care about the response)
 def rcon_print(host, packet_fields, data)
@@ -99,6 +107,7 @@ class RescueRetry
         Errno::ECONNREFUSED,
         Errno::ECONNRESET,
         Errno::ENOTSOCK,
+        Errno::EPIPE,
         IOError
       ]
     end

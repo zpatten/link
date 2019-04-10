@@ -129,6 +129,10 @@ class ThreadPool
       @@thread_pool.each { |t| t.terminate }
     end
 
+    def threads
+      @@thread_pool
+    end
+
     def execute
       loop do
         # synchronize do
