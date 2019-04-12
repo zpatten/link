@@ -2,10 +2,12 @@ class ThreadPool
 
   module ClassMethods
 
-    @@thread_pool = Array.new
-    @@thread_pool_mutex = Mutex.new
+    @@metric ||= Metric.new(:uniform_histogram, "threads")
+    @@thread_pool ||= Array.new
+    @@thread_pool_mutex ||= Mutex.new
 
-    @@thread_schedules = Array.new
+    @@thread_schedules ||= Array.new
+
 
     def synchronize(&block)
       @@thread_pool_mutex.synchronize(&block)
@@ -23,15 +25,24 @@ class ThreadPool
       @@thread_schedules
     end
 
+    def metric
+      @@metric
+    end
+
     def thread(name, &block)
       schedule_log(:thread, :starting, name)
+      result = nil
 
       @@thread_pool << Thread.new do
         Thread.current.thread_variable_set(:name, name)
-        block.call
+        result = block.call
         # schedule_log(:thread, :stopped, name)
         Thread.exit
       end
+
+      self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
+
+      result
     end
 
     def register(what, frequency=nil, server=nil, &block)
@@ -50,6 +61,7 @@ class ThreadPool
     def run(schedule)
       schedule_log(:thread, :starting, schedule)
 
+      result = nil
       server = schedule.server
       block  = schedule.block
       args   = [server].compact
@@ -60,12 +72,14 @@ class ThreadPool
           server_ids(server)
         ].compact.join(":")
         Thread.current.thread_variable_set(:name, thread_name)
-        block.call(*args)
+        result = block.call(*args)
         # schedule_log(:thread, :stopped, schedule)
         Thread.exit
       end
 
-      true
+      self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
+
+      result
     end
 
     def server_ids(server)
@@ -172,6 +186,7 @@ class ThreadPool
               name = thread.thread_variable_get(:name) || "<dead>"
               @@thread_pool -= [thread]
               schedule_log(:thread, :exit, name)
+              self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
             end
           end
         end

@@ -21,8 +21,8 @@ class MultiLogger
 end
 
 $logger = MultiLogger.new
-# MultiLogger.add(Logger.new(STDOUT))
-MultiLogger.add(Logger.new("link.log"))
+MultiLogger.add(Logger.new(STDOUT))
+# MultiLogger.add(Logger.new("link.log"))
 
 # $logger = Logger.new(STDOUT)
 $logger.datetime_format = '%Y-%m-%d %H:%M:%S.%6N'

@@ -4,9 +4,19 @@ require_relative "support/logger"
 
 require_relative "support/config"
 require_relative "support/memory_cache"
+require_relative "support/metric"
 require_relative "support/requests"
 require_relative "support/storage"
 require_relative "support/thread_pool"
+
+def platform
+  case RUBY_PLATFORM
+  when /mingw/i
+    :windows
+  when /linux/i
+    :linux
+  end
+end
 
 class OpenStruct
   def count

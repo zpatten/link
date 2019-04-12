@@ -5,9 +5,10 @@
   %tr
     %th{ rowspan: 2 } Item
     %th{ rowspan: 2 } Count
-    %th{ colspan: 3 } Averages
+    %th{ colspan: 4 } Rates
     %th{ rowspan: 2, style: "width: #{@meter_width}px;" } Distribution
   %tr
+    %th.white Mean
     %th.white 1m
     %th.white 5m
     %th.white 15m
@@ -15,10 +16,11 @@
     - item_statistics = @statistics[item_name]
     %tr
       %td.align-right.one= item_name
-      %td.align-right.one{ id: "#{item_name}-count" }= item_count
-      %td.one= (item_statistics.delta_count_1 rescue "-")
-      %td.one= (item_statistics.delta_count_5 rescue "-")
-      %td.one= (item_statistics.delta_count_15 rescue "-")
+      %td.align-right.one{ id: "#{item_name}-count" }= item_count.round
+      %td.one= Storage.metric(item_name).mean_rate(:minutes).round
+      %td.one= Storage.metric(item_name).one_minute_rate(:minutes).round
+      %td.one= Storage.metric(item_name).five_minute_rate(:minutes).round
+      %td.one= Storage.metric(item_name).fifteen_minute_rate(:minutes).round
       %td
         %div.fleft{ style: "width: #{((item_count.to_f / @total_count.to_f) * 100.0).to_i}%; background-color: red;" } &nbsp;
         %div.fright{ style: "width: #{100 - ((item_count.to_f / @total_count.to_f) * 100.0).to_i}%; background-color: green;" } &nbsp;
@@ -27,7 +29,7 @@
   window.onload = function(){
     (function(){
       var show = function(msg){
-        console.log(msg)
+        console.log(msg);
         var item = JSON.parse(msg);
         var el = document.getElementById(item.name + "-count");
         el.innerHTML = item.count;

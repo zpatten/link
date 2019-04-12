@@ -39,6 +39,9 @@ function on_link_init()
   global.link_receiver_combinators = {}
   global.link_transmitter_combinators = {}
 
+  global.link_electrical_providers = {}
+  global.link_electrical_requesters = {}
+
   global.ticks_since_last_link_operation = 0
 
   global.link_command_whitelist = {}

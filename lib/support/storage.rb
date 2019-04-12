@@ -2,6 +2,7 @@ class Storage
 
   module ClassMethods
 
+    @@metric ||= Hash.new
     @@storage = nil
     @@storage_mutex ||= Hash.new
     @@storage_statistics ||= Hash.new
@@ -56,8 +57,12 @@ class Storage
 
     def update_websocket(item_name, item_count)
       WebServer.settings.storage_sockets.each do |s|
-        s.send({ name: item_name, count: item_count }.to_json)
+        s.send({ name: item_name, count: item_count.round }.to_json)
       end
+    end
+
+    def metric(item_name)
+      @@metric[item_name] ||= Metric.new(:meter, "storage-#{item_name}")
     end
 
     def add(item_name, item_count)
@@ -70,6 +75,7 @@ class Storage
 
       Signals.update_inventory_signals
       update_websocket(item_name, storage[item_name])
+      self.metric(item_name).mark(item_count)
 
       item_count
     end
@@ -91,6 +97,7 @@ class Storage
 
       Signals.update_inventory_signals
       update_websocket(item_name, storage[item_name])
+      self.metric(item_name).mark(-item_count)
 
       removed_count
     end

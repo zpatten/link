@@ -108,6 +108,16 @@ function add_link_entity(entity)
       behaviour = entity.get_or_create_control_behavior(),
       link_network_id = parts.link_network_id
     }
+  elseif entity.name == ELECTRICAL_PROVIDER_NAME then
+    if not global.link_electrical_providers then global.link_electrical_providers = {} end
+    global.link_electrical_providers[entity.unit_number] = {
+      entity = entity
+    }
+  elseif entity.name == ELECTRICAL_REQUESTER_NAME then
+    if not global.link_electrical_requesters then global.link_electrical_requesters = {} end
+    global.link_electrical_requesters[entity.unit_number] = {
+      entity = entity
+    }
   end
 end
 
