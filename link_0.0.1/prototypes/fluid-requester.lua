@@ -9,18 +9,22 @@ data:extend{link_requester_fluid_recipe_category}
 
 for _, fluid in pairs(data.raw.fluid) do
   local fluid_recipe = {}
-  fluid_recipe.name = string.format("link-%s", fluid.name)
-  fluid_recipe.type = "recipe"
+  fluid_recipe.category = LINK_FLUID_RECIPE_CATEGORY_NAME
+  fluid_recipe.enabled = true
   fluid_recipe.icon = table.deepcopy(fluid.icon)
   fluid_recipe.icon_size = table.deepcopy(fluid.icon_size)
-  fluid_recipe.category = LINK_FLUID_RECIPE_CATEGORY_NAME
-  fluid_recipe.subgroup = LINK_FLUID_RECIPE_SUBGROUP_NAME
-  fluid_recipe.order = string.format(LINK_FLUID_RECIPE_ORDER, fluid_recipe.name)
-  fluid_recipe.enabled = true
   fluid_recipe.ingredients = {}
+  fluid_recipe.name = string.format("link-%s", fluid.name)
+  fluid_recipe.order = string.format(LINK_FLUID_RECIPE_ORDER, fluid_recipe.name)
   fluid_recipe.results = {
-    { type = "fluid", name = fluid.name, amount = -1 }
+    {
+      type = "fluid",
+      name = fluid.name,
+      amount = -1
+    }
   }
+  fluid_recipe.subgroup = LINK_FLUID_RECIPE_SUBGROUP_NAME
+  fluid_recipe.type = "recipe"
   data:extend{fluid_recipe}
 end
 
@@ -40,15 +44,11 @@ recipe.subgroup = LINK_FLUID_SUBGROUP_NAME
 -- ITEM
 --------------------------------------------------------------------------------
 local item = table.deepcopy(data.raw.item["assembling-machine-3"])
+item.icons = { { icon = item.icon, tint = LINK_TINT } }
 item.name = LINK_FLUID_REQUESTER_NAME
+item.order = string.format(LINK_FLUID_ORDER, item.name)
 item.place_result = LINK_FLUID_REQUESTER_NAME
 item.subgroup = LINK_FLUID_SUBGROUP_NAME
-item.icons = {
-  {
-    icon = item.icon,
-    tint = LINK_TINT
-  }
-}
 
 
 --------------------------------------------------------------------------------
@@ -72,14 +72,14 @@ entity.fluid_boxes = {
   },
   off_when_no_fluid_recipe = false
 }
+entity.animation.layers[1].hr_version.tint = LINK_TINT
+entity.animation.layers[1].tint = LINK_TINT
 entity.minable = { mining_time = 0.5, result = LINK_FLUID_REQUESTER_NAME }
 entity.module_specification = { module_slots = 0 }
 entity.name = LINK_FLUID_REQUESTER_NAME
 entity.order = string.format(LINK_FLUID_ORDER, LINK_FLUID_REQUESTER_NAME)
-entity.animation.layers[1].tint = LINK_TINT
-entity.animation.layers[1].hr_version.tint = LINK_TINT
 
 
 --------------------------------------------------------------------------------
-data:extend{item, entity, recipe}
+data:extend{ recipe, item, entity }
 --------------------------------------------------------------------------------

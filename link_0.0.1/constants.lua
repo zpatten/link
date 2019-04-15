@@ -8,6 +8,9 @@ LINK_CHEST_ORDER = "a-[link-%s]"
 
 LINK_INVENTORY_COMBINATOR_NAME = "link-inventory-combinator"
 LINK_NETWORK_ID_COMBINATOR_NAME = "link-network-id-combinator"
+LINK_COMBINATOR_SUBGROUP_NAME = "link-combinator-subgroup"
+LINK_COMBINATOR_ORDER = "c-[link-%s]"
+
 LINK_RECEIVER_COMBINATOR_NAME = "link-receiver-combinator"
 LINK_TRANSMITTER_COMBINATOR_NAME = "link-transmitter-combinator"
 LINK_SIGNAL_SUBGROUP_NAME = "link-signal-subgroup"
@@ -33,4 +36,4 @@ LINK_FLUID_RECIPE_ORDER = "f-[link-%s]"
 LINK_FLUID_MAX = 25000
 LINK_FLUID_BASE_AREA = LINK_FLUID_MAX / 100
 
-LINK_TINT = { r = 1, g = 0, b = 1 }
+LINK_TINT = { r = 238 / 255, g = 130 / 255, b = 238 / 255 }

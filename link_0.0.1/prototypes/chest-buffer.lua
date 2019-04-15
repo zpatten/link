@@ -13,12 +13,7 @@ recipe.subgroup = LINK_CHEST_SUBGROUP_NAME
 -- ITEM
 --------------------------------------------------------------------------------
 local item = table.deepcopy(data.raw.item["logistic-chest-buffer"])
-item.icons = {
-  {
-    icon = item.icon,
-    tint = LINK_TINT
-  }
-}
+item.icons = { { icon = item.icon, tint = LINK_TINT } }
 item.name = LINK_BUFFER_CHEST_NAME
 item.order = string.format(LINK_CHEST_ORDER, item.name)
 item.place_result = LINK_BUFFER_CHEST_NAME
@@ -29,6 +24,8 @@ item.subgroup = LINK_CHEST_SUBGROUP_NAME
 -- ENTITY
 --------------------------------------------------------------------------------
 local entity = table.deepcopy(data.raw["logistic-container"]["logistic-chest-buffer"])
+entity.animation.layers[1].hr_version.tint = LINK_TINT
+entity.animation.layers[1].tint = LINK_TINT
 entity.inventory = 60
 entity.logistic_slots_count = 18
 entity.minable = { mining_time = 0.5, result = LINK_BUFFER_CHEST_NAME }

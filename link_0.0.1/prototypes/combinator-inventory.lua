@@ -1,31 +1,32 @@
 --------------------------------------------------------------------------------
 -- ITEM RECIPE
 --------------------------------------------------------------------------------
-local recipe = table.deepcopy(data.raw.recipe["storage-tank"])
+local recipe = table.deepcopy(data.raw.recipe["constant-combinator"])
 recipe.enabled = true
-recipe.name = LINK_FLUID_PROVIDER_NAME
-recipe.order = string.format(LINK_FLUID_ORDER, recipe.name)
-recipe.result = LINK_FLUID_PROVIDER_NAME
-recipe.subgroup = LINK_FLUID_SUBGROUP_NAME
+recipe.name = LINK_INVENTORY_COMBINATOR_NAME
+recipe.order = string.format(LINK_COMBINATOR_ORDER, recipe.name)
+recipe.result = LINK_INVENTORY_COMBINATOR_NAME
+recipe.subgroup = LINK_COMBINATOR_SUBGROUP_NAME
 
 
 --------------------------------------------------------------------------------
 -- ITEM
 --------------------------------------------------------------------------------
-local item = table.deepcopy(data.raw.item["storage-tank"])
+local item = table.deepcopy(data.raw.item["constant-combinator"])
 item.icons = { { icon = item.icon, tint = LINK_TINT } }
-item.name = LINK_FLUID_PROVIDER_NAME
-item.order = string.format(LINK_FLUID_ORDER, item.name)
-item.place_result = LINK_FLUID_PROVIDER_NAME
-item.subgroup = LINK_FLUID_SUBGROUP_NAME
+item.name = LINK_INVENTORY_COMBINATOR_NAME
+item.order = string.format(LINK_COMBINATOR_ORDER, item.name)
+item.place_result = LINK_INVENTORY_COMBINATOR_NAME
+item.subgroup = LINK_COMBINATOR_SUBGROUP_NAME
 
 
 --------------------------------------------------------------------------------
 -- ENTITY
 --------------------------------------------------------------------------------
-local entity = table.deepcopy(data.raw["storage-tank"]["storage-tank"])
-entity.minable = { mining_time = 0.5, result = LINK_FLUID_PROVIDER_NAME }
-entity.name = LINK_FLUID_PROVIDER_NAME
+local entity = table.deepcopy(data.raw["constant-combinator"]["constant-combinator"])
+entity.item_slot_count = 1024
+entity.minable = { mining_time = 0.5, result = LINK_INVENTORY_COMBINATOR_NAME }
+entity.name = LINK_INVENTORY_COMBINATOR_NAME
 link_add_tint(entity)
 
 

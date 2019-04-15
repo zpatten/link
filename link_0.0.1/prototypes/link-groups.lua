@@ -11,41 +11,37 @@ local link_groups = {
     type = "item-subgroup",
     name = LINK_CHEST_SUBGROUP_NAME,
     group = LINK_GROUP_NAME,
-    order = "a",
-    -- icon = "__base__/graphics/item-group/production.png",
-    -- icon_size = 64
+    order = "a"
   },
   {
     type = "item-subgroup",
     name = LINK_ELECTRICAL_SUBGROUP,
     group = LINK_GROUP_NAME,
-    order = "b",
-    -- icon = "__base__/graphics/item-group/production.png",
-    -- icon_size = 64
+    order = "b"
   },
   {
     type = "item-subgroup",
     name = LINK_FLUID_RECIPE_SUBGROUP_NAME,
     group = LINK_GROUP_NAME,
-    order = "c",
-    -- icon = "__base__/graphics/item-group/production.png",
-    -- icon_size = 64
+    order = "c"
   },
   {
     type = "item-subgroup",
     name = LINK_FLUID_SUBGROUP_NAME,
     group = LINK_GROUP_NAME,
-    order = "d",
-    -- icon = "__base__/graphics/item-group/production.png",
-    -- icon_size = 64
+    order = "d"
+  },
+  {
+    type = "item-subgroup",
+    name = LINK_COMBINATOR_SUBGROUP_NAME,
+    group = LINK_GROUP_NAME,
+    order = "e"
   },
   {
     type = "item-subgroup",
     name = LINK_SIGNAL_SUBGROUP_NAME,
     group = LINK_GROUP_NAME,
-    order = "e",
-    -- icon = "__base__/graphics/item-group/production.png",
-    -- icon_size = 64
+    order = "f"
   }
 }
 

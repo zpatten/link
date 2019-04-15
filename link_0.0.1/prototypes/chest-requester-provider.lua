@@ -13,12 +13,7 @@ recipe.subgroup = LINK_CHEST_SUBGROUP_NAME
 -- ITEM
 --------------------------------------------------------------------------------
 local item = table.deepcopy(data.raw.item["logistic-chest-requester"])
-item.icons = {
-  {
-    icon = item.icon,
-    tint = LINK_TINT
-  }
-}
+item.icons = { { icon = item.icon, tint = LINK_TINT } }
 item.name = LINK_REQUESTER_PROVIDER_CHEST_NAME
 item.order = string.format(LINK_CHEST_ORDER, item.name)
 item.place_result = LINK_REQUESTER_PROVIDER_CHEST_NAME

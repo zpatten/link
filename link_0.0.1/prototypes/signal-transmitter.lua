@@ -1,31 +1,31 @@
 --------------------------------------------------------------------------------
 -- ITEM RECIPE
 --------------------------------------------------------------------------------
-local recipe = table.deepcopy(data.raw.recipe["storage-tank"])
+local recipe = table.deepcopy(data.raw.recipe["decider-combinator"])
 recipe.enabled = true
-recipe.name = LINK_FLUID_PROVIDER_NAME
-recipe.order = string.format(LINK_FLUID_ORDER, recipe.name)
-recipe.result = LINK_FLUID_PROVIDER_NAME
-recipe.subgroup = LINK_FLUID_SUBGROUP_NAME
+recipe.name = LINK_TRANSMITTER_COMBINATOR_NAME
+recipe.order = string.format(LINK_SIGNAL_ORDER, recipe.name)
+recipe.result = LINK_TRANSMITTER_COMBINATOR_NAME
+recipe.subgroup = LINK_SIGNAL_SUBGROUP_NAME
 
 
 --------------------------------------------------------------------------------
 -- ITEM
 --------------------------------------------------------------------------------
-local item = table.deepcopy(data.raw.item["storage-tank"])
+local item = table.deepcopy(data.raw.item["decider-combinator"])
 item.icons = { { icon = item.icon, tint = LINK_TINT } }
-item.name = LINK_FLUID_PROVIDER_NAME
-item.order = string.format(LINK_FLUID_ORDER, item.name)
-item.place_result = LINK_FLUID_PROVIDER_NAME
-item.subgroup = LINK_FLUID_SUBGROUP_NAME
+item.name = LINK_TRANSMITTER_COMBINATOR_NAME
+item.order = string.format(LINK_SIGNAL_ORDER, item.name)
+item.place_result = LINK_TRANSMITTER_COMBINATOR_NAME
+item.subgroup = LINK_SIGNAL_SUBGROUP_NAME
 
 
 --------------------------------------------------------------------------------
 -- ENTITY
 --------------------------------------------------------------------------------
-local entity = table.deepcopy(data.raw["storage-tank"]["storage-tank"])
-entity.minable = { mining_time = 0.5, result = LINK_FLUID_PROVIDER_NAME }
-entity.name = LINK_FLUID_PROVIDER_NAME
+local entity = table.deepcopy(data.raw["decider-combinator"]["decider-combinator"])
+entity.minable = { mining_time = 0.5, result = LINK_TRANSMITTER_COMBINATOR_NAME }
+entity.name = LINK_TRANSMITTER_COMBINATOR_NAME
 link_add_tint(entity)
 
 
