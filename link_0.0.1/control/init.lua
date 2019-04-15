@@ -42,6 +42,9 @@ function on_link_init()
   global.link_electrical_providers = {}
   global.link_electrical_requesters = {}
 
+  global.link_fluid_providers = {}
+  global.link_fluid_requesters = {}
+
   global.ticks_since_last_link_operation = 0
 
   global.link_command_whitelist = {}

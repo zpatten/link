@@ -28,14 +28,33 @@ function get_link_providables()
     local entity = data.entity
     if entity.valid and not entity.to_be_deconstructed(entity.force) then
       local energy = math.floor(entity.energy)
-      log(string.format("[POWER] Energy: %d", energy))
       if energy > 0 then
-        if not link_providables[item_name] then
-          link_providables[ELECTRICAL_ITEM_NAME] = energy
+        log(string.format("[POWER] Energy: %d", energy))
+        if not link_providables[LINK_ELECTRICAL_ITEM_NAME] then
+          link_providables[LINK_ELECTRICAL_ITEM_NAME] = energy
         else
-          link_providables[ELECTRICAL_ITEM_NAME] = link_providables[ELECTRICAL_ITEM_NAME] + energy
+          link_providables[LINK_ELECTRICAL_ITEM_NAME] = link_providables[LINK_ELECTRICAL_ITEM_NAME] + energy
         end
         entity.energy = entity.energy - energy
+      end
+    end
+  end
+
+  -- FLUID
+  for unit_number, data in pairs(global.link_fluid_providers) do
+    local entity = data.entity
+    if entity and entity.valid then
+      local fluid = entity.fluidbox[1]
+      if fluid then
+        local fluid_amount = math.floor(fluid.amount)
+        log(string.format("[FLUID] Fluid: %s - %d", fluid.name, fluid_amount))
+        if not link_providables[fluid.name] then
+          link_providables[fluid.name] = fluid_amount
+        else
+          link_providables[fluid.name] = link_providables[fluid.name] + fluid_amount
+        end
+        fluid.amount = fluid.amount - fluid_amount
+        entity.fluidbox[1] = fluid
       end
     end
   end
@@ -78,7 +97,36 @@ function get_link_requests()
       local needed_energy = math.floor(buffer_size - energy)
       if needed_energy > 0 then
         if not link_requests[unit_number] then link_requests[unit_number] = {} end
-        link_requests[unit_number][ELECTRICAL_ITEM_NAME] = needed_energy
+        link_requests[unit_number][LINK_ELECTRICAL_ITEM_NAME] = needed_energy
+      end
+    end
+  end
+
+  -- FLUID
+  for unit_number, data in pairs(global.link_fluid_providers) do
+    local entity = data.entity
+    if entity and entity.valid then
+      local recipe = entity.get_recipe()
+      local fluid = entity.fluidbox[1]
+      if fluidbox and recipe then
+        local fluid_name = recipe.products[1].name
+        -- local needed_fluid = LINK_FLUID_MAX -
+
+        -- local fluid = {
+        --   name = fluid_name,
+
+        -- }
+
+
+        local fluid_amount = math.floor(fluid.amount)
+        log(string.format("[FLUID] Fluid: %s - %d", fluid.name, fluid_amount))
+        if not link_providables[fluid.name] then
+          link_providables[fluid.name] = fluid_amount
+        else
+          link_providables[fluid.name] = link_providables[fluid.name] + fluid_amount
+        end
+        fluid.amount = fluid.amount - fluid_amount
+        entity.fluidbox[1] = fluid
       end
     end
   end

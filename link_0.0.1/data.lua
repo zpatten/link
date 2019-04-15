@@ -2,9 +2,11 @@ require "constants"
 require "support"
 require "util"
 
-require "prototypes.active-provider-chest"
-require "prototypes.buffer-chest"
-require "prototypes.requester-provider-chest"
+require "prototypes.link-groups"
+
+require "prototypes.chest-active-provider"
+require "prototypes.chest-buffer"
+require "prototypes.chest-requester-provider"
 
 require "prototypes.signals"
 
