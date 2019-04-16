@@ -24,12 +24,11 @@ item.subgroup = LINK_CHEST_SUBGROUP_NAME
 -- ENTITY
 --------------------------------------------------------------------------------
 local entity = table.deepcopy(data.raw["logistic-container"]["logistic-chest-buffer"])
-entity.animation.layers[1].hr_version.tint = LINK_TINT
-entity.animation.layers[1].tint = LINK_TINT
 entity.inventory = 60
 entity.logistic_slots_count = 18
 entity.minable = { mining_time = 0.5, result = LINK_BUFFER_CHEST_NAME }
 entity.name = LINK_BUFFER_CHEST_NAME
+link_add_tint(entity)
 
 
 --------------------------------------------------------------------------------

@@ -44,6 +44,7 @@ recipe.subgroup = LINK_FLUID_SUBGROUP_NAME
 -- ITEM
 --------------------------------------------------------------------------------
 local item = table.deepcopy(data.raw.item["assembling-machine-3"])
+item.icon = data.raw.item["storage-tank"].icon
 item.icons = { { icon = item.icon, tint = LINK_TINT } }
 item.name = LINK_FLUID_REQUESTER_NAME
 item.order = string.format(LINK_FLUID_ORDER, item.name)
@@ -55,6 +56,7 @@ item.subgroup = LINK_FLUID_SUBGROUP_NAME
 -- ENTITY
 --------------------------------------------------------------------------------
 local entity = table.deepcopy(data.raw["assembling-machine"]["assembling-machine-3"])
+entity.animation.layers = table.deepcopy(data.raw["storage-tank"]["storage-tank"].pictures.picture.sheets)
 entity.crafting_categories = { LINK_FLUID_RECIPE_CATEGORY_NAME }
 entity.fluid_boxes = {
   {
@@ -65,19 +67,32 @@ entity.fluid_boxes = {
     base_level = 1,
     pipe_connections = {
       {
-        position = { 0, 2 },
+        position = { -1, -2 },
+        type = "output"
+      },
+      {
+        position = { 2, 1 },
+        type = "output"
+      },
+      {
+        position = { 1, 2 },
+        type = "output"
+      },
+      {
+        position = { -2, -1 },
         type = "output"
       }
     }
   },
   off_when_no_fluid_recipe = false
 }
-entity.animation.layers[1].hr_version.tint = LINK_TINT
-entity.animation.layers[1].tint = LINK_TINT
 entity.minable = { mining_time = 0.5, result = LINK_FLUID_REQUESTER_NAME }
 entity.module_specification = { module_slots = 0 }
 entity.name = LINK_FLUID_REQUESTER_NAME
 entity.order = string.format(LINK_FLUID_ORDER, LINK_FLUID_REQUESTER_NAME)
+link_add_tint(entity)
+
+log(inspect(entity))
 
 
 --------------------------------------------------------------------------------

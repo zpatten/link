@@ -29,8 +29,7 @@ entity.inventory = 60
 entity.minable = { mining_time = 0.5, result = LINK_ACTIVE_PROVIDER_CHEST_NAME }
 entity.name = LINK_ACTIVE_PROVIDER_CHEST_NAME
 entity.picture = table.deepcopy(data.raw["logistic-container"]["logistic-chest-active-provider"].animation)
-entity.picture.layers[1].hr_version.tint = LINK_TINT
-entity.picture.layers[1].tint = LINK_TINT
+link_add_tint(entity)
 
 
 --------------------------------------------------------------------------------

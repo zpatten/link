@@ -28,6 +28,8 @@ entity.minable = { mining_time = 0.5, result = LINK_FLUID_PROVIDER_NAME }
 entity.name = LINK_FLUID_PROVIDER_NAME
 link_add_tint(entity)
 
+log(inspect(entity))
+
 
 --------------------------------------------------------------------------------
 data:extend{ recipe, item, entity }
