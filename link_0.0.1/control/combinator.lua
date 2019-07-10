@@ -22,7 +22,7 @@ function get_link_transmitter_combinator(force)
       link_signals[entity.unit_number] = {}
       link_signals[entity.unit_number][link_network_id] = behaviour.signals_last_tick
 
-      log(string.format("[COMBINATORS-TX] Processing Network ID: %d", link_network_id))
+      link_log("SIGNALS-TX", string.format("Processing Network ID: %d", link_network_id))
 
       if not force and global.link_previous_signals then
         -- get the current signals
@@ -56,11 +56,11 @@ function get_link_transmitter_combinator(force)
               local previous_signal = previous_signals_map[link_sn(current_signal)]
               if not previous_signal then
                 -- new signal
-                log(string.format("[COMBINATORS-TX] Create Signal: %s (%d)", current_signal.signal.name, current_signal.count))
+                link_log("SIGNALS-TX", string.format("Create Signal: %s (%d)", current_signal.signal.name, current_signal.count))
                 table.insert(unit_signal_delta, current_signal)
               elseif link_sc(current_signal) ~= link_sc(previous_signal) then
                 -- signal count changed
-                log(string.format("[COMBINATORS-TX] Update Signal: %s (%d -> %d)", current_signal.signal.name, previous_signal.count, current_signal.count))
+                link_log("SIGNALS-TX", string.format("Update Signal: %s (%d -> %d)", current_signal.signal.name, previous_signal.count, current_signal.count))
                 table.insert(unit_signal_delta, current_signal)
               end
             end
@@ -70,7 +70,7 @@ function get_link_transmitter_combinator(force)
               local current_signal = current_signals_map[link_sn(previous_signal)]
               if not current_signal then
                 -- signal deleted
-                log(string.format("[COMBINATORS-TX] Delete Signal: %s", previous_signal.signal.name))
+                link_log("SIGNALS-TX", string.format("Delete Signal: %s", previous_signal.signal.name))
                 previous_signal["count"] = 0
                 table.insert(unit_signal_delta, previous_signal)
               end
@@ -103,14 +103,14 @@ function get_link_transmitter_combinator(force)
   if not force and table_count(signal_delta) == 0 then
     -- if this is not a forced refresh and if no signals changed send a NOOP
     rcon.print(game.table_to_json(noop))
-    log("[COMBINATORS-TX] NOOP")
+    link_log("SIGNALS-TX", "NOOP")
   elseif not force and table_count(signal_delta) > 0 then
     -- if this is not a forced refresh and we have a delta send it
-    log("[COMBINATORS-TX] Sending signal deltas.")
+    link_log("SIGNALS-TX", "Sending signal deltas.")
     rcon.print(game.table_to_json(signal_delta))
   else
     -- otherwise send everything
-    log("[COMBINATORS-TX] Sending all signals (forced).")
+    link_log("SIGNALS-TX", "Sending all signals (forced).")
     rcon.print(game.table_to_json(link_signals))
   end
 
@@ -192,7 +192,7 @@ function set_link_receiver_combinator(force, data)
       link_network_id = fetch_circuit_network_id(link_network_id_entity)
       local signals = extract_circuit_network(link_network_id, link_signal_networks)
 
-      log(string.format("[COMBINATORS-RX] Processing Network ID: %d", link_network_id))
+      link_log("SIGNALS-RX", string.format("Processing Network ID: %d", link_network_id))
 
       if force then
         global.rx_signals[link_network_id] = signals
@@ -206,14 +206,14 @@ function set_link_receiver_combinator(force, data)
           local existing_signal = signals_map[s.signal.name]
           if existing_signal then
             if s.count == 0 then
-              log(string.format("[COMBINATORS-RX] Delete Signal: %s", s.signal.name))
+              link_log("SIGNALS-RX", string.format("Delete Signal: %s", s.signal.name))
               existing_signal.count = s.count
             else
-              log(string.format("[COMBINATORS-RX] Update Signal: %s (%d -> %d)", s.signal.name, existing_signal.count, s.count))
+              link_log("SIGNALS-RX", string.format("Update Signal: %s (%d -> %d)", s.signal.name, existing_signal.count, s.count))
               existing_signal.count = s.count
             end
           else
-            log(string.format("[COMBINATORS-RX] Create Signal: %s (%d)", s.signal.name, s.count))
+            link_log("SIGNALS-RX", string.format("Create Signal: %s (%d)", s.signal.name, s.count))
             table.insert(global.rx_signals[link_network_id], s)
           end
         end

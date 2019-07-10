@@ -1,5 +1,11 @@
 inspect = require "inspect"
 
+function link_log(what, message)
+  if global.link_debug then
+    log(string.format("[LINK:%s] %s", what, message))
+  end
+end
+
 -- https://stackoverflow.com/questions/2705793/how-to-get-number-of-entries-in-a-lua-table
 function table_count(t)
   local count = 0

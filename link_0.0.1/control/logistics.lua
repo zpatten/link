@@ -29,7 +29,7 @@ function get_link_providables()
     if entity.valid and not entity.to_be_deconstructed(entity.force) then
       local energy = math.floor(entity.energy)
       if energy > 0 then
-        log(string.format("[POWER] Energy: %d", energy))
+        link_log("POWER", string.format("Energy: %d", energy))
         if not link_providables[LINK_ELECTRICAL_ITEM_NAME] then
           link_providables[LINK_ELECTRICAL_ITEM_NAME] = energy
         else
@@ -47,7 +47,7 @@ function get_link_providables()
       local fluid = entity.fluidbox[1]
       if fluid then
         local fluid_amount = math.floor(fluid.amount)
-        log(string.format("[FLUID] Fluid: %s - %d", fluid.name, fluid_amount))
+        link_log("FLUID", string.format("Fluid: %s - %d", fluid.name, fluid_amount))
         if not link_providables[fluid.name] then
           link_providables[fluid.name] = fluid_amount
         else
@@ -103,23 +103,15 @@ function get_link_requests()
   end
 
   -- FLUID
-  for unit_number, data in pairs(global.link_fluid_providers) do
+  for unit_number, data in pairs(global.link_fluid_requesters) do
     local entity = data.entity
     if entity and entity.valid then
       local recipe = entity.get_recipe()
       local fluid = entity.fluidbox[1]
       if fluidbox and recipe then
         local fluid_name = recipe.products[1].name
-        -- local needed_fluid = LINK_FLUID_MAX -
-
-        -- local fluid = {
-        --   name = fluid_name,
-
-        -- }
-
-
         local fluid_amount = math.floor(fluid.amount)
-        log(string.format("[FLUID] Fluid: %s - %d", fluid.name, fluid_amount))
+        link_log("FLUID", string.format("Fluid: %s - %d", fluid.name, fluid_amount))
         if not link_providables[fluid.name] then
           link_providables[fluid.name] = fluid_amount
         else
@@ -144,6 +136,7 @@ function set_link_fulfillments(data)
       local entity = data.entity
       if entity.valid then
         -- CHESTS
+        link_log("ITEMS", "Received")
         local inventory = data.inventory
         local items_to_insert = {}
         for item_name, item_count in pairs(items) do
@@ -156,7 +149,7 @@ function set_link_fulfillments(data)
       data = global.link_electrical_requesters[tonumber(unit_number)]
       local entity = data.entity
       if entity.valid then
-        log("POWER RX")
+        link_log("POWER", "Received")
         local energy = entity.energy
         for _, provided_energy in pairs(items) do
           if provided_energy and provided_energy > 0 then
