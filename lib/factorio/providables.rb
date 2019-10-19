@@ -13,7 +13,9 @@ end
 
 # Link Factorio Server Get Providables
 ################################################################################
-schedule_server(:providables) do |server|
-  command = %(/#{rcon_executor} remote.call('link', 'get_providables'))
-  server.rcon_command_nonblock(command, method(:get_providables))
+def schedule_server_providables
+  schedule_server(:providables) do |server|
+    command = %(/#{rcon_executor} remote.call('link', 'get_providables'))
+    server.rcon_command_nonblock(command, method(:get_providables))
+  end
 end

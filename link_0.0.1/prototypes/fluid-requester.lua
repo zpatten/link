@@ -20,7 +20,7 @@ for _, fluid in pairs(data.raw.fluid) do
     {
       type = "fluid",
       name = fluid.name,
-      amount = -1
+      amount = 0
     }
   }
   fluid_recipe.subgroup = LINK_FLUID_RECIPE_SUBGROUP_NAME

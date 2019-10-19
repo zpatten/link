@@ -28,7 +28,7 @@ MultiLogger.add(Logger.new(STDOUT))
 $logger.datetime_format = '%Y-%m-%d %H:%M:%S.%6N'
 
 # $logger = Logger.new("link.log")
-$logger.level = (!!ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO)
+$logger.level = ($options[:verbose] ? Logger::DEBUG : Logger::INFO)
 Format = "%s [%s] %s: %s %s\n".freeze
 
 $logger.formatter = proc do |severity, datetime, progname, msg|

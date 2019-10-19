@@ -21,11 +21,13 @@ end
 
 # Link Factorio Server Perform Fulfillments and Get New Requests
 ################################################################################
-schedule_servers(:requests) do |servers|
-  fulfillments
+def schedule_servers_requests
+  schedule_servers(:requests) do |servers|
+    fulfillments
 
-  command = %(/#{rcon_executor} remote.call('link', 'get_requests'))
-  servers.each do |s|
-    s.rcon_command_nonblock(command, method(:get_requests))
+    command = %(/#{rcon_executor} remote.call('link', 'get_requests'))
+    servers.each do |s|
+      s.rcon_command_nonblock(command, method(:get_requests))
+    end
   end
 end

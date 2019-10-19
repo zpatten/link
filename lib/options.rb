@@ -2,25 +2,24 @@ require 'optparse'
 
 $options = Hash.new
 
-OptionParser.new do |opts|
-  opts.banner = "Usage: #{$0} [options]"
+op = OptionParser.new
+op.banner = "Usage: #{$0} [options]"
 
-  opts.on("-v", "--[no-]verbose", FalseClass, "Run verbosely") do |v|
-    options[:verbose] = v
-  end
+op.on("-v", "--[no-]verbose", "Run verbosely") do |v|
+  $options[:verbose] = v
+end
 
-  opts.on("-h", "--help", "Print this help") do
-    puts opts
-    exit
-  end
+op.on("-h", "--help", "Print this help") do
+  puts opts
+  exit
+end
 
-  opts.on("-m", "--master", "Run as master") do
-    $options[:master] = true
-    puts "MASTER!"
-  end
-end.parse!
+op.on("-m", "--master", "Run as master") do
+  $options[:master] = true
+  puts "MASTER!"
+end
+
+op.parse!
 
 p $options
 p ARGV
-
-exit

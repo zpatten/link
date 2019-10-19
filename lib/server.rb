@@ -38,7 +38,29 @@ class Server
 ################################################################################
 
   def method_missing(method_name, *method_args, &block)
-    @details.send(method_name, *method_args, &block)
+    @details[method_name.to_s]
+  end
+
+################################################################################
+
+  def schedule
+    schedule_server_chats
+
+    schedule_server_commands
+    schedule_server_command_whitelist
+
+    schedule_server_id
+
+    schedule_server_ping
+
+    schedule_server_providables
+    schedule_servers_requests
+
+    schedule_server_current_research
+    schedule_server_research
+
+    schedule_server_rx_signals
+    schedule_server_tx_signals
   end
 
 ################################################################################

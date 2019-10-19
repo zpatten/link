@@ -46,16 +46,22 @@ class ThreadPool
     end
 
     def register(what, frequency=nil, server=nil, &block)
-      schedule = OpenStruct.new(
-        what: what,
-        frequency: frequency,
-        server: server,
-        block: block,
-        next_run_at: (Time.now.to_f)
-      )
-      @@thread_schedules << schedule
-      schedule_log(:schedule, :added, schedule)
+      if find_schedule(what, server).nil?
+        schedule = OpenStruct.new(
+          what: what,
+          frequency: frequency,
+          server: server,
+          block: block,
+          next_run_at: Time.now.to_f
+        )
+        @@thread_schedules << schedule
+        schedule_log(:schedule, :added, schedule)
+      end
       # pp @@thread_schedules
+    end
+
+    def find_schedule(what, server)
+      @@thread_schedules.find { |s| s.what == what && s.server == server }
     end
 
     def run(schedule)
@@ -84,7 +90,7 @@ class ThreadPool
 
     def server_ids(server)
       return nil if server.nil? || server.empty?
-      [server].flatten.map(&:id).join(",")
+      [server].flatten.collect { |s| s['id'] }.join(",")
     end
 
     def schedule_log(action, who, schedule)

@@ -22,15 +22,19 @@ end
 
 # Link Factorio Server Command Mirroring
 ################################################################################
-schedule_server(:commands) do |server|
-  command = %(/#{rcon_executor} remote.call('link', 'get_commands'))
-  server.rcon_command_nonblock(command, method(:get_commands))
+def schedule_server_commands
+  schedule_server(:commands) do |server|
+    command = %(/#{rcon_executor} remote.call('link', 'get_commands'))
+    server.rcon_command_nonblock(command, method(:get_commands))
+  end
 end
 
 # Link Factorio Server Set Command Mirroring Whitelist
 ################################################################################
-schedule_server(:command_whitelist) do |server|
-  command_whitelist = Config.server_value(server.name, :command_whitelist)
-  command = %(/#{rcon_executor} remote.call('link', 'set_command_whitelist', '#{command_whitelist.to_json}'))
-  server.rcon_command_nonblock(command, method(:rcon_print))
+def schedule_server_command_whitelist
+  schedule_server(:command_whitelist) do |server|
+    command_whitelist = Config.server_value(server.name, :command_whitelist)
+    command = %(/#{rcon_executor} remote.call('link', 'set_command_whitelist', '#{command_whitelist.to_json}'))
+    server.rcon_command_nonblock(command, method(:rcon_print))
+  end
 end

@@ -1,7 +1,6 @@
 class Signals
   module Support
 
-
     def circuit_network_synchronize(network_id, &block)
       @@circuit_network_mutex ||= Hash.new
       @@circuit_network_mutex[network_id] ||= Mutex.new

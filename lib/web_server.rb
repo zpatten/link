@@ -61,6 +61,15 @@ class WebServer < Sinatra::Application
     haml :servers
   end
 
+  get "/servers/create" do
+    haml "servers/create".to_sym
+  end
+
+  post "/servers/create" do
+    pp params
+    Servers.create(params)
+  end
+
   get "/config" do
     haml :config
   end

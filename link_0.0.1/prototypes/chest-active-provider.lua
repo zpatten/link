@@ -24,11 +24,13 @@ item.subgroup = LINK_CHEST_SUBGROUP_NAME
 --------------------------------------------------------------------------------
 -- ENTITY
 --------------------------------------------------------------------------------
-local entity = table.deepcopy(data.raw.container["steel-chest"])
+-- local entity = table.deepcopy(data.raw.container["steel-chest"])
+local entity = table.deepcopy(data.raw["logistic-container"]["logistic-chest-active-provider"])
+entity.logistic_mode = nil
 entity.inventory = 60
 entity.minable = { mining_time = 0.5, result = LINK_ACTIVE_PROVIDER_CHEST_NAME }
 entity.name = LINK_ACTIVE_PROVIDER_CHEST_NAME
-entity.picture = table.deepcopy(data.raw["logistic-container"]["logistic-chest-active-provider"].animation)
+-- entity.picture = table.deepcopy(data.raw["logistic-container"]["logistic-chest-active-provider"].animation)
 link_add_tint(entity)
 
 

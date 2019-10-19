@@ -17,7 +17,9 @@ end
 
 # Link Factorio Server Chat Mirroring
 ################################################################################
-schedule_server(:chats) do |server|
-  command = %(/#{rcon_executor} remote.call('link', 'get_chats'))
-  server.rcon_command_nonblock(command, method(:get_chats))
+def schedule_server_chats
+  schedule_server(:chats) do |server|
+    command = %(/#{rcon_executor} remote.call('link', 'get_chats'))
+    server.rcon_command_nonblock(command, method(:get_chats))
+  end
 end

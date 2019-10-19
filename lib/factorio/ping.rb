@@ -15,7 +15,9 @@ end
 
 # Link Factorio Server Ping (Calculates RTT)
 ################################################################################
-schedule_server(:ping) do |server|
-  command = %(/#{rcon_executor} remote.call('link', 'ping'))
-  server.rcon_command_nonblock(command, method(:ping), Time.now.to_f)
+def schedule_server_ping
+  schedule_server(:ping) do |server|
+    command = %(/#{rcon_executor} remote.call('link', 'ping'))
+    server.rcon_command_nonblock(command, method(:ping), Time.now.to_f)
+  end
 end

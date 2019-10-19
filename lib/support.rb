@@ -77,7 +77,7 @@ def schedule_server(what, &block)
 
   servers = Servers.find(what)
   servers.each do |server|
-    frequency = Config.server_value(server.name, :scheduler, what)
+    frequency = Config.server_value(server['name'], :scheduler, what)
     schedule_task(what, frequency, server, &block)
   end
 end
@@ -99,6 +99,16 @@ end
 
 def debug?
   !!ENV["DEBUG"]
+end
+
+def generate_port_number
+  port_number = nil
+  loop do
+    port_number = SecureRandom.random_number(65_535 - 1_024) + 1_024
+    existing_port_numbers = Servers.all.collect { |s| s['port'] }.flatten.compact
+    break if !existing_port_numbers.include?(port_number)
+  end
+  port_number
 end
 
 class RescueRetry

@@ -8,6 +8,8 @@ require "pp"
 require "json"
 require "zlib"
 
+require "active_support/core_ext"
+
 ################################################################################
 
 ENV["DEBUG"] = "1"
@@ -19,16 +21,24 @@ Thread.abort_on_exception = true
 
 ################################################################################
 
+require_relative "lib/options"
+
+################################################################################
 
 
 require_relative "lib/support"
 
-Config.load("config.json")
+Config.load
 
 require_relative "lib/servers"
 require_relative "lib/tasks"
 require_relative "lib/factorio"
 require_relative "lib/web_server"
+
+Config.servers.present? and Config.servers.each_pair do |server_name, server_details|
+  Servers.register(server_name, server_details)
+end
+
 
 
 ################################################################################
@@ -53,10 +63,6 @@ at_exit do
   Storage.save
   $logger.close
 end
-
-################################################################################
-
-require_relative "lib/options"
 
 ################################################################################
 
