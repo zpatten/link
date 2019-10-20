@@ -27,6 +27,7 @@ class RCon
 
     @connected     = false
     @authenticated = false
+    @started       = false
 
     @callbacks    = Array.new
     @responses    = Array.new
@@ -39,10 +40,6 @@ class RCon
     @socket_mutex       = Mutex.new
     @socket_read_mutex  = Mutex.new
     @socket_write_mutex = Mutex.new
-
-    conn_manager
-    poll_send
-    poll_recv
   end
 
 ################################################################################
@@ -54,6 +51,19 @@ class RCon
   def rcon_tag
     # "#{@name}@#{@host}:#{@port}"
     @name
+  end
+
+  def started?
+    @started
+  end
+
+  def startup!
+    unless started?
+      @started = true
+      conn_manager
+      poll_send
+      poll_recv
+    end
   end
 
   def shutdown!

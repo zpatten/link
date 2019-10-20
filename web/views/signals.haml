@@ -16,11 +16,11 @@ Known Network IDs: #{signals.get_network_ids}
   - else
     %table
       %tr
-        %th Signal Name
-        %th Signal Type
-        %th Signal Count
+        %th.align-right Signal Name
+        %th.one Signal Type
+        %th.one Signal Count
       - s.each do |signal|
         %tr
-          %td= signal["signal"]["name"]
-          %td= signal["signal"]["type"]
-          %td= signal["count"]
+          %td.align-right= signal["signal"]["name"]
+          %td.one= signal["signal"]["type"]
+          %td.one= signal["count"]

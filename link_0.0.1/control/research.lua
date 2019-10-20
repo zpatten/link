@@ -1,10 +1,18 @@
 function get_link_current_research()
   global.ticks_since_last_link_operation = 0
 
-  local link_current_research = {}
+  local link_current_research = nil
 
-  if game.forces.player.current_research ~= nil then
-    link_current_research.current_research = game.forces.player.current_research.name
+  if game.forces.player.research_queue ~= nil then
+    link_current_research = {
+      research_queue_enabled = false,
+      research_queue = {},
+      research_progress = 0
+    }
+    link_current_research.research_queue_enabled = game.forces.player.research_queue_enabled
+    for _, technology in pairs(game.forces.player.research_queue) do
+      table.insert(link_current_research.research_queue, technology.name)
+    end
     link_current_research.research_progress = game.forces.player.research_progress
   end
 
@@ -16,15 +24,14 @@ function set_link_current_research(data)
 
   local link_current_research = game.json_to_table(data)
 
-  if link_current_research.current_research then
-    if game.forces.player.current_research ~= link_current_research.current_research then
-      game.forces.player.current_research = nil
-
-      game.forces.player.current_research = link_current_research.current_research
-    end
+  if link_current_research.research_queue then
+    game.forces.player.research_queue_enabled = link_current_research.research_queue_enabled
+    game.forces.player.research_queue = link_current_research.research_queue
     game.forces.player.research_progress = link_current_research.research_progress
   else
-    game.forces.player.current_research = nil
+    game.forces.player.research_queue_enabled = link_current_research.research_queue_enabled
+    game.forces.player.research_queue = nil
+    game.forces.player.research_progress = 0
   end
 
   rcon.print("OK")
@@ -51,8 +58,8 @@ function set_link_research(data)
       technology.researched = link_research[technology.name].researched
       technology.level = link_research[technology.name].level
 
-      script.raise_event(defines.events.on_research_finished, {research=technology, by_script=true})
-      game.play_sound({path="utility/research_completed"})
+      -- script.raise_event(defines.events.on_research_finished, {research=technology, by_script=true})
+      -- game.play_sound({path="utility/research_completed"})
     end
   end
 

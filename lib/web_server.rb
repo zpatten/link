@@ -68,6 +68,12 @@ class WebServer < Sinatra::Application
   post "/servers/create" do
     pp params
     Servers.create(params)
+    redirect '/servers'
+  end
+
+  get "/servers/delete/:id" do
+    Servers.delete(params)
+    redirect '/servers'
   end
 
   get "/config" do
@@ -108,8 +114,4 @@ class WebServer < Sinatra::Application
   #   end
   # end
 
-  ThreadPool.thread("sinatra") do
-    run!
-    exit
-  end
 end

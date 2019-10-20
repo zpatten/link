@@ -1,4 +1,7 @@
-File.truncate("link.log", 0)
+begin
+  File.truncate("link.log", 0)
+rescue Errno::EACCES
+end
 
 class MultiLogger
   module ClassMethods
@@ -22,13 +25,12 @@ end
 
 $logger = MultiLogger.new
 MultiLogger.add(Logger.new(STDOUT))
-# MultiLogger.add(Logger.new("link.log"))
+MultiLogger.add(Logger.new("link.log"))
 
 # $logger = Logger.new(STDOUT)
 $logger.datetime_format = '%Y-%m-%d %H:%M:%S.%6N'
 
 # $logger = Logger.new("link.log")
-$logger.level = ($options[:verbose] ? Logger::DEBUG : Logger::INFO)
 Format = "%s [%s] %s: %s %s\n".freeze
 
 $logger.formatter = proc do |severity, datetime, progname, msg|

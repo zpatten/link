@@ -5,7 +5,8 @@ body {
 table {
   margin: 4px;
   border-collapse: collapse;
-  width: 100%;
+  width: 1%;
+  white-space: nowrap;
 }
 
 table, th {
@@ -24,6 +25,10 @@ tr:nth-child(even) {
 
 td {
   padding: 4px;
+  text-align: center;
+  border-right: 1px solid black;
+  border-left: 1px solid black;
+  white-space: nowrap;
 }
 
 .header {
@@ -49,6 +54,7 @@ td {
 
 .one {
   width: 1%;
-  white-space: nowrap;
-  border-right: 1px solid black;
+}
+.wide {
+  width: 100%;
 }

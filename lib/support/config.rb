@@ -8,31 +8,29 @@ class Config
     end
 
     def load
-      @@config = JSON.parse(IO.read(filename)).deep_stringify_keys!
+      @@config = JSON.parse(IO.read(filename))
     end
 
     def save!
-      puts JSON.pretty_generate(@@config)
+      IO.write(filename, JSON.pretty_generate(@@config))
     end
 
     def master_value(*keys)
+      key  = keys.join('-')
       keys = keys.map(&:to_s)
-      $logger.info { "keys = #{keys}" }
+      $logger.debug { "keys=#{keys}" }
       MemoryCache.fetch(key) do
         (@@config.dig('master', *keys) rescue nil)
       end
     end
 
     def server_value(server, *keys)
-      key = [server, *keys].flatten.compact.map(&:to_s).join("_")
-      $logger.info { "key = #{key}" }
+      key    = [server, *keys].flatten.compact.join("-")
+      keys   = keys.map(&:to_s)
       server = server.to_s
-      $logger.info { "server = #{server}" }
-      keys = keys.map(&:to_s)
-      $logger.info { "keys = #{keys}" }
       MemoryCache.fetch(key) do
-        sv = (@@config.dig('servers', server, *keys) rescue nil) #['servers'][server].dig(*keys) rescue nil)
-        mv = (@@config.dig('master', *keys) rescue nil) #['master'].dig(*keys) rescue nil)
+        sv = (@@config.dig('servers', server, *keys) rescue nil)
+        mv = (@@config.dig('master', *keys) rescue nil)
         (sv || mv)
       end
     end
@@ -45,6 +43,10 @@ class Config
       @@config[key] = value
     end
 
+    def to_h
+      @@config
+    end
+
     def method_missing(method_name, *method_args, &block)
       @@config[method_name.to_s]
     end
@@ -52,23 +54,5 @@ class Config
   end
 
   extend ClassMethods
-
-  # def initialize(filename)
-  #   @config = JSON.parse(IO.read(filename)).deep_stringify_keys!
-  #   # @config = deep_ostruct_convert(config)
-  # end
-
-  # # def deep_ostruct_convert(h)
-  # #   h.each do |key, value|
-  # #     if value.is_a?(Hash)
-  # #       h[key] = deep_ostruct_convert(value)
-  # #     end
-  # #   end
-  # #   OpenStruct.new(h)
-  # # end
-
-  # # def method_missing(method_name, *method_args, &block)
-  # #   @config.send(method_name, *method_args, &block)
-  # # end
 
 end

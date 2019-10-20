@@ -4,10 +4,11 @@ function get_link_providables()
   local link_providables = {}
 
   -- CHESTS
+  -- if not global.link_provider_chests then global.link_provider_chests = {} end
   for unit_number, data in pairs(global.link_provider_chests) do
     local entity = data.entity
     local inventory = data.inventory
-    if entity.valid and not entity.to_be_deconstructed(entity.force) then
+    if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
       local items = inventory.get_contents()
       if table_count(items) > 0 then
         for item_name, item_count in pairs(items) do
@@ -23,10 +24,10 @@ function get_link_providables()
   end
 
   -- POWER
-  if not global.link_electrical_providers then global.link_electrical_providers = {} end
+  -- if not global.link_electrical_providers then global.link_electrical_providers = {} end
   for unit_number, data in pairs(global.link_electrical_providers) do
     local entity = data.entity
-    if entity.valid and not entity.to_be_deconstructed(entity.force) then
+    if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
       local energy = math.floor(entity.energy)
       if energy > 0 then
         link_log("POWER", string.format("Energy: %d", energy))
@@ -41,12 +42,13 @@ function get_link_providables()
   end
 
   -- FLUID
+  -- if not global.link_fluid_providers then global.link_fluid_providers = {} end
   for unit_number, data in pairs(global.link_fluid_providers) do
     local entity = data.entity
-    if entity and entity.valid then
+    if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
       local fluid = entity.fluidbox[1]
-      if fluid then
-        local fluid_amount = math.floor(fluid.amount)
+      if fluid and (fluid.amount - 1) > 1 then
+        local fluid_amount = math.floor(fluid.amount - 1)
         link_log("FLUID", string.format("Fluid: %s - %d", fluid.name, fluid_amount))
         if not link_providables[fluid.name] then
           link_providables[fluid.name] = fluid_amount
@@ -65,11 +67,13 @@ end
 function get_link_requests()
   global.ticks_since_last_link_operation = 0
 
-  -- CHESTS
   local link_requests = {}
+
+  -- CHESTS
+  -- if not global.link_requester_chests then global.link_requester_chests = {} end
   for unit_number, data in pairs(global.link_requester_chests) do
     local entity = data.entity
-    if entity.valid and not entity.to_be_deconstructed(entity.force) then
+    if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
       local inventory = data.inventory
       local filter_count = data.filter_count
       for i = 1, filter_count do
@@ -88,10 +92,10 @@ function get_link_requests()
   end
 
   -- POWER
-  if not global.link_electrical_requesters then global.link_electrical_requesters = {} end
+  -- if not global.link_electrical_requesters then global.link_electrical_requesters = {} end
   for unit_number, data in pairs(global.link_electrical_requesters) do
     local entity = data.entity
-    if entity.valid and not entity.to_be_deconstructed(entity.force) then
+    if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
       local buffer_size = entity.electric_buffer_size
       local energy = entity.energy
       local needed_energy = math.floor(buffer_size - energy)
@@ -103,22 +107,20 @@ function get_link_requests()
   end
 
   -- FLUID
+  -- if not global.link_fluid_requesters then global.link_fluid_requesters = {} end
   for unit_number, data in pairs(global.link_fluid_requesters) do
     local entity = data.entity
-    if entity and entity.valid then
+    if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
       local recipe = entity.get_recipe()
-      local fluid = entity.fluidbox[1]
-      if fluidbox and recipe then
+      if recipe then
         local fluid_name = recipe.products[1].name
+        local fluid = entity.fluidbox[1] or { name = fluid_name, amount = 0 }
         local fluid_amount = math.floor(fluid.amount)
-        link_log("FLUID", string.format("Fluid: %s - %d", fluid.name, fluid_amount))
-        if not link_providables[fluid.name] then
-          link_providables[fluid.name] = fluid_amount
-        else
-          link_providables[fluid.name] = link_providables[fluid.name] + fluid_amount
+        local needed_fluid = math.ceil(LINK_FLUID_MAX - fluid_amount)
+        if needed_fluid > 0 then
+          if not link_requests[unit_number] then link_requests[unit_number] = {} end
+          link_requests[unit_number][fluid_name] = needed_fluid
         end
-        fluid.amount = fluid.amount - fluid_amount
-        entity.fluidbox[1] = fluid
       end
     end
   end
@@ -131,11 +133,11 @@ function set_link_fulfillments(data)
 
   local link_fulfillments = game.json_to_table(data)
   for unit_number, items in pairs(link_fulfillments) do
+    -- CHESTS
     local data = global.link_requester_chests[tonumber(unit_number)]
     if data then
       local entity = data.entity
-      if entity.valid then
-        -- CHESTS
+      if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
         link_log("ITEMS", "Received")
         local inventory = data.inventory
         local items_to_insert = {}
@@ -144,16 +146,32 @@ function set_link_fulfillments(data)
           inventory.insert(item_to_insert)
         end
       end
-    else
-      -- POWER
-      data = global.link_electrical_requesters[tonumber(unit_number)]
+    end
+    -- POWER
+    local data = global.link_electrical_requesters[tonumber(unit_number)]
+    if data then
       local entity = data.entity
-      if entity.valid then
+      if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
         link_log("POWER", "Received")
         local energy = entity.energy
         for _, provided_energy in pairs(items) do
           if provided_energy and provided_energy > 0 then
             entity.energy = energy + provided_energy
+          end
+        end
+      end
+    end
+    -- FLUID
+    local data = global.link_fluid_requesters[tonumber(unit_number)]
+    if data then
+      local entity = data.entity
+      if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
+        link_log("FLUID", "Received")
+        for fluid_name, provided_fluid in pairs(items) do
+          local fluid = entity.fluidbox[1] or { name = fluid_name, amount = 0 }
+          if provided_fluid and provided_fluid > 0 then
+            fluid.amount = fluid.amount + provided_fluid
+            entity.fluidbox[1] = fluid
           end
         end
       end

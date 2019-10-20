@@ -52,3 +52,28 @@ function on_link_init()
   add_all_link_entities()
 end
 script.on_init(on_link_init)
+
+function on_player_created(event)
+  local player = game.get_player(event.player_index)
+
+  player.insert{ name = LINK_ACTIVE_PROVIDER_CHEST_NAME, count = 1 }
+  player.insert{ name = LINK_BUFFER_CHEST_NAME, count = 1 }
+  player.insert{ name = LINK_REQUESTER_PROVIDER_CHEST_NAME, count = 1 }
+
+  player.insert{ name = LINK_ELECTRICAL_PROVIDER_NAME, count = 1 }
+  player.insert{ name = LINK_ELECTRICAL_REQUESTER_NAME, count = 1 }
+
+  player.insert{ name = LINK_FLUID_PROVIDER_NAME, count = 1 }
+  player.insert{ name = LINK_FLUID_REQUESTER_NAME, count = 1 }
+
+  player.insert{ name = "substation", count = 1 }
+
+  player.insert{ name = "power-armor-mk2", count = 1 }
+  player.insert{ name = "fusion-reactor-equipment", count = 2 }
+  player.insert{ name = "exoskeleton-equipment", count = 6 }
+  player.insert{ name = "energy-shield-mk2-equipment", count = 3 }
+  player.insert{ name = "night-vision-equipment", count = 1 }
+  player.insert{ name = "belt-immunity-equipment", count = 1 }
+  player.insert{ name = "battery-mk2-equipment", count = 1 }
+end
+script.on_event(defines.events.on_player_created, on_player_created)

@@ -1,5 +1,5 @@
 - config.each_pair do |key, value|
-  - if value.is_a?(OpenStruct)
+  - if value.is_a?(Hash)
     #{("&nbsp;" * ident)}#{key}
     = haml :config_kv, locals: { config: value, ident: ident + 4 }
   - else

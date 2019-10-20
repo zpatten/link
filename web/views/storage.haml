@@ -1,7 +1,7 @@
 %font.header
   Storage
 
-%table
+%table.wide
   %tr
     %th{ rowspan: 2 } Item
     %th{ rowspan: 2 } Count
@@ -12,7 +12,7 @@
     %th.white 1m
     %th.white 5m
     %th.white 15m
-  - @storage.each do |item_name, item_count|
+  - @storage.sort.each do |item_name, item_count|
     - item_statistics = @statistics[item_name]
     %tr
       %td.align-right.one= item_name

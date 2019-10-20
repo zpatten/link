@@ -1,15 +1,12 @@
 %h1 Servers
 
-%ul
-  %li
-    %a{ href: "/servers/create", title: "Create Server" } Create Server
-
 %table
   %tr
     %th ID
     %th Name
     %th Host
-    %th Port
+    %th Client Port
+    %th Factorio Port
     %th Connected?
     %th Authenticated?
     %th RTT
@@ -18,7 +15,8 @@
       %td= server.id
       %td= server.name
       %td= server.host
-      %td= server.port
+      %td= server.client_port
+      %td= server.factorio_port
       %td= server.connected?
       %td= server.authenticated?
       %td #{server.rtt} ms

@@ -4,7 +4,7 @@ class Server
 
 ################################################################################
 
-  attr_reader :name, :host, :port, :password, :rcon
+  attr_reader :name, :host, :factorio_port, :client_port, :client_password, :rcon, :details
   attr_accessor :rtt
 
 ################################################################################
@@ -13,14 +13,15 @@ class Server
     @name = name
     @details = details
     @host = details["host"]
-    @port = details["port"]
-    @password = details["password"]
+    @factorio_port = details["factorio_port"]
+    @client_port = details["client_port"]
+    @client_password = details["client_password"]
     @research = details["research"]
     @chats = details["chats"]
     @commands = details["commands"]
     @command_whitelist = details["command_whitelist"]
 
-    @rcon = RCon.new(name, host, port, password)
+    @rcon = RCon.new(name, host, client_port, client_password)
   end
 
 ################################################################################
@@ -32,7 +33,7 @@ class Server
 ################################################################################
 
   def host_tag
-    "#{@name}@#{@host}:#{@port}"
+    "#{@name}@#{@host}:#{@client_port}"
   end
 
 ################################################################################
@@ -43,27 +44,45 @@ class Server
 
 ################################################################################
 
-  def schedule
-    schedule_server_chats
+  def to_h
+    { self.name => self.details }
+  end
 
-    schedule_server_commands
-    schedule_server_command_whitelist
+  def server_path
+    File.expand_path(File.join(LINK_ROOT, 'servers', self.name))
+  end
 
-    schedule_server_id
-
-    schedule_server_ping
-
-    schedule_server_providables
-    schedule_servers_requests
-
-    schedule_server_current_research
-    schedule_server_research
-
-    schedule_server_rx_signals
-    schedule_server_tx_signals
+  def save_path
+    File.join(self.server_path, 'saves', "#{self.name}.zip")
   end
 
 ################################################################################
+
+  def start!
+    factorio_bin = File.join(Servers.factorio_path, 'bin', 'x64', 'factorio.exe')
+    config_path = File.join(self.server_path, 'config.ini')
+    settings_path = File.join(self.server_path, 'server-settings.json')
+    map_gen_path = File.join(self.server_path, 'map-gen-settings.json')
+
+    FileUtils.cp_r(Servers.factorio_mods, self.server_path)
+
+    command = Array.new
+    command << factorio_bin
+    command << %(--config #{config_path})
+    command << %(--port #{self.factorio_port})
+    command << %(--rcon-password #{self.client_password})
+    command << %(--rcon-port #{self.client_port})
+    command << %(--server-settings #{settings_path})
+    if File.exists?(self.save_path)
+      command << %(--start-server #{self.save_path})
+    else
+      command << %(--create #{self.save_path})
+      command << %(--map-gen-settings #{map_gen_path})
+    end
+    command = command.flatten.compact.join(' ')
+
+    Kernel.exec(command)
+  end
 
   def shutdown!
     @rcon.shutdown!
@@ -96,6 +115,7 @@ class Server
   end
 
   def unavailable?
+    @rcon.startup! unless @rcon.started?
     @rcon.unavailable?
   end
 

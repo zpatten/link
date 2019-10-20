@@ -46,22 +46,17 @@ class ThreadPool
     end
 
     def register(what, frequency=nil, server=nil, &block)
-      if find_schedule(what, server).nil?
-        schedule = OpenStruct.new(
-          what: what,
-          frequency: frequency,
-          server: server,
-          block: block,
-          next_run_at: Time.now.to_f
-        )
-        @@thread_schedules << schedule
-        schedule_log(:schedule, :added, schedule)
-      end
-      # pp @@thread_schedules
-    end
+      schedule = OpenStruct.new(
+        what: what,
+        frequency: frequency,
+        server: server,
+        block: block,
+        next_run_at: Time.now.to_f
+      )
+      @@thread_schedules << schedule
+      schedule_log(:schedule, :added, schedule)
 
-    def find_schedule(what, server)
-      @@thread_schedules.find { |s| s.what == what && s.server == server }
+      true
     end
 
     def run(schedule)
@@ -155,49 +150,47 @@ class ThreadPool
 
     def execute
       loop do
-        # synchronize do
-          @@thread_schedules.each do |schedule|
-            if schedule.next_run_at <= Time.now.to_f
-              if schedule.server.nil?
-                run(schedule) unless Servers.unavailable?
-              else
-                unless [schedule.server].flatten.map(&:unavailable?).all?(true)
-                  run(schedule)
-                end
+        @@thread_schedules.each do |schedule|
+          if schedule.next_run_at <= Time.now.to_f
+            if schedule.server.nil?
+              run(schedule) unless Servers.unavailable?
+            else
+              unless [schedule.server].flatten.map(&:unavailable?).all?(true)
+                run(schedule)
               end
-
-              schedule_next_run(schedule)
-              schedule_log(:thread, :scheduled, schedule)
             end
-          end
 
-          @@thread_pool.each do |thread|
-            case thread.status
-            when "aborting"
-              # $logger.debug { ("=" * 80) }
-              # $logger.debug { "[THREAD] Thread Aborting: #{thread}" }
-              # $logger.debug { ("=" * 80) }
-              thread.terminate
-              @@thread_pool -= [thread]
-
-            when "sleep"
-              # $logger.debug { ("=" * 80) }
-              # $logger.debug { "[THREAD] Thread Sleeping: #{thread.thread_variable_get(:name)}" }
-              # $logger.debug { ("=" * 80) }
-              #sleep SLEEP_TIME
-              Thread.pass
-              thread.wakeup if thread.status == "sleep"
-
-            when false
-              name = thread.thread_variable_get(:name) || "<dead>"
-              @@thread_pool -= [thread]
-              schedule_log(:thread, :exit, name)
-              self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
-            end
+            schedule_next_run(schedule)
+            schedule_log(:thread, :scheduled, schedule)
           end
         end
-        sleep SLEEP_TIME
-      # end
+
+        @@thread_pool.each do |thread|
+          case thread.status
+          when "aborting"
+            # $logger.debug { ("=" * 80) }
+            # $logger.debug { "[THREAD] Thread Aborting: #{thread}" }
+            # $logger.debug { ("=" * 80) }
+            thread.terminate
+            @@thread_pool -= [thread]
+
+          when "sleep"
+            # $logger.debug { ("=" * 80) }
+            # $logger.debug { "[THREAD] Thread Sleeping: #{thread.thread_variable_get(:name)}" }
+            # $logger.debug { ("=" * 80) }
+            #sleep SLEEP_TIME
+            Thread.pass
+            thread.wakeup if thread.status == "sleep"
+
+          when false
+            name = thread.thread_variable_get(:name) || "<dead>"
+            @@thread_pool -= [thread]
+            schedule_log(:thread, :exit, name)
+            self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
+          end
+        end
+      end
+      sleep SLEEP_TIME
     end
   end
 

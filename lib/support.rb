@@ -105,7 +105,7 @@ def generate_port_number
   port_number = nil
   loop do
     port_number = SecureRandom.random_number(65_535 - 1_024) + 1_024
-    existing_port_numbers = Servers.all.collect { |s| s['port'] }.flatten.compact
+    existing_port_numbers = Servers.all.collect { |s| [s['factorio_port'], s['client_port']] }.flatten.compact
     break if !existing_port_numbers.include?(port_number)
   end
   port_number
@@ -148,8 +148,8 @@ class RescueRetry
         # sleep_for = 60 if sleep_for > 60
 
         # let the user know what is going on
-        $logger.fatal { "Exception: #{e.full_message}" }
-        $logger.fatal { "Sleeping for #{sleep_for} seconds then retrying...  (Attempt #{attempts} of #{max_attempts})" }
+        $logger.fatal(:exception) { "Exception: #{e.full_message}" }
+        $logger.fatal(:exception) { "Sleeping for #{sleep_for} seconds then retrying...  (Attempt #{attempts} of #{max_attempts})" }
 
         # if we exceed the max attempts throw the exception
         raise e if ((max_attempts != -1) && (attempts > max_attempts))
