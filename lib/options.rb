@@ -38,6 +38,14 @@ op.on("--add=NAME,[TYPE]", "Add a server") do |list|
   exit
 end
 
+op.on("--remove=NAME", "Remove a server") do |name|
+  params = {
+    name: name
+  }
+  Servers.destroy(params)
+  exit
+end
+
 op.parse!
 
 p $options

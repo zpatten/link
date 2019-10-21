@@ -1,6 +1,7 @@
 *.zip
 *.json
 *.bat
+*.log
 
 factorio/
 servers/

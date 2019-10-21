@@ -68,6 +68,15 @@ class Servers
       File.expand_path(File.join(LINK_ROOT, Config['factorio_save']))
     end
 
+    def destroy(params)
+      server_name = params[:name]
+      if (server = Servers.find_by_name(server_name))
+        FileUtils.rm_rf(server.server_path)
+      end
+      Config['servers'].delete(server_name)
+      Config.save!
+    end
+
     def create(params)
       require 'zip'
 

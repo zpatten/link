@@ -10,7 +10,7 @@ class RCon
     def build_packet(payload, type=PACKET_TYPE_COMMAND)
       packet_fields = OpenStruct.new(
         length: (BASE_PACKET_LENGTH + payload.bytesize),
-        id: SecureRandom.random_number(4_294_967_295),
+        id: SecureRandom.random_number((2**32) - 1),
         type: type,
         payload: payload
       )

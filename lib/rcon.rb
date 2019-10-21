@@ -85,30 +85,30 @@ class RCon
 
   def conn_manager
     ThreadPool.thread("conn-#{rcon_tag}") do
-      loop do
-        RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
+      RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
+        loop do
           connect! if disconnected?
-        end
-        authenticate if unauthenticated?
+          authenticate if unauthenticated?
 
-        Thread.stop while connected?
+          Thread.stop while connected?
+        end
       end
     end
   end
 
   def poll_send
     ThreadPool.thread("send-#{rcon_tag}") do
-    RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
-      loop do
-        queued_packet = nil
+      RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
         loop do
-          queued_packet = get_queued_packet
-          break unless queued_packet.nil?
-          Thread.stop
+          queued_packet = nil
+          loop do
+            queued_packet = get_queued_packet
+            break unless queued_packet.nil?
+            Thread.stop
+          end
+          send_packet(queued_packet.packet_fields)
         end
-        send_packet(queued_packet.packet_fields)
       end
-    end
     end
   end
 
@@ -125,14 +125,14 @@ class RCon
 
   def poll_recv
     ThreadPool.thread("recv-#{rcon_tag}") do
-    RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
-      loop do
-        # poll_sleep
+      RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
+        loop do
+          # poll_sleep
 
-        receive_packet
-        Thread.stop
+          receive_packet
+          Thread.stop
+        end
       end
-    end
     end
   end
 

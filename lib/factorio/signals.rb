@@ -23,7 +23,7 @@ def set_receiver_combinator(host, packet_fields, server)
       networks = Hash.new
       network_ids.each do |network_id|
         # signals to transmit to receivers
-        network_signals = Signals.tx(network_id, server)
+        network_signals = Signals.tx(network_id, server, true)
 
         unless network_signals.nil? || network_signals.empty?
           networks[network_id] = network_signals
