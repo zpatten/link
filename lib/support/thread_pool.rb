@@ -2,7 +2,8 @@ class ThreadPool
 
   module ClassMethods
 
-    @@metric ||= Metric.new(:uniform_histogram, "threads")
+    @@metric ||= $thread_pool_metric
+#Metric.new(:uniform_histogram, "threads")
     @@thread_pool ||= Array.new
     @@thread_pool_mutex ||= Mutex.new
 
@@ -40,7 +41,9 @@ class ThreadPool
         Thread.exit
       end
 
-      self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
+      #self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
+      self.metric.set(@@thread_pool.count)
+      Prometheus::Client::Push.new('link', 'master', 'http://127.0.0.1:9091').add($prometheus)
 
       result
     end
@@ -78,7 +81,9 @@ class ThreadPool
         Thread.exit
       end
 
-      self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
+      #self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
+      self.metric.set(@@thread_pool.count)
+      Prometheus::Client::Push.new('link', 'master', 'http://127.0.0.1:9091').add($prometheus)
 
       result
     end
@@ -186,7 +191,9 @@ class ThreadPool
             name = thread.thread_variable_get(:name) || "<dead>"
             @@thread_pool -= [thread]
             schedule_log(:thread, :exit, name)
-            self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
+            #self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
+            self.metric.set(@@thread_pool.count)
+            Prometheus::Client::Push.new('link', 'master', 'http://127.0.0.1:9091').add($prometheus)
           end
         end
       end

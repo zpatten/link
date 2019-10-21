@@ -48,40 +48,54 @@ class Server
     { self.name => self.details }
   end
 
-  def server_path
+  def path
     File.expand_path(File.join(LINK_ROOT, 'servers', self.name))
   end
 
-  def save_path
-    File.join(self.server_path, 'saves', "#{self.name}.zip")
+  def config_path
+    File.expand_path(File.join(self.path, 'config'))
+  end
+
+  def mods_path
+    File.expand_path(File.join(self.path, 'mods'))
+  end
+
+  def saves_path
+    File.expand_path(File.join(self.path, 'saves'))
+  end
+
+  def save_file
+    File.expand_path(File.join(self.server_saves_path, "#{self.name}.zip"))
   end
 
 ################################################################################
 
   def start!
-    factorio_bin = File.join(Servers.factorio_path, 'bin', 'x64', 'factorio.exe')
-    config_path = File.join(self.server_path, 'config.ini')
-    settings_path = File.join(self.server_path, 'server-settings.json')
-    map_gen_path = File.join(self.server_path, 'map-gen-settings.json')
-
-    FileUtils.cp_r(Servers.factorio_mods, self.server_path)
+    FileUtils.cp_r(Servers.factorio_mods, self.path)
 
     command = Array.new
-    command << factorio_bin
-    command << %(--config #{config_path})
-    command << %(--port #{self.factorio_port})
-    command << %(--rcon-password #{self.client_password})
-    command << %(--rcon-port #{self.client_port})
-    command << %(--server-settings #{settings_path})
-    if File.exists?(self.save_path)
-      command << %(--start-server #{self.save_path})
-    else
-      command << %(--create #{self.save_path})
-      command << %(--map-gen-settings #{map_gen_path})
-    end
+    command << %(sudo)
+    command << %(docker run)
+    command << %(--rm)
+    command << %(--detach)
+    command << %(--name="#{self.name}")
+    command << %(--network=host)
+    command << %(-e PUID="$(id -u)")
+    command << %(-e PGID="$(id -g)")
+    command << %(-e RUN_CHOWN="false")
+    command << %(-e FACTORIO_PORT="#{self.factorio_port}")
+    command << %(-e FACTORIO_RCON_PORT="#{self.client_port}")
+    command << %(-e FACTORIO_RCON_PASSWORD="#{self.client_password}")
+    command << %(--volume=#{self.config_path}:/opt/factorio/config)
+    command << %(--volume=#{self.mods_path}:/opt/factorio/mods)
+    command << %(--volume=#{self.saves_path}:/opt/factorio/saves)
+    command << Config['factorio_docker_image']
     command = command.flatten.compact.join(' ')
 
-    Kernel.exec(command)
+    # $logger.info {%(chcon -Rt svirt_sandbox_file_t #{self.server_path})}
+    system %(/usr/bin/env chcon -Rt svirt_sandbox_file_t #{self.path})
+    puts "command=#{command}"
+    system command
   end
 
   def shutdown!

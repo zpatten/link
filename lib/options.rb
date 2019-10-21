@@ -25,6 +25,7 @@ op.on("--start=NAME", "Start a server") do |name|
   $logger.close
   server = Servers.find_by_name(name)
   server.start!
+  exit
 end
 
 op.on("--add=NAME,[TYPE]", "Add a server") do |list|
@@ -48,5 +49,5 @@ end
 
 op.parse!
 
-p $options
-p ARGV
+# p $options
+# p ARGV

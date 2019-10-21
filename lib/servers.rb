@@ -60,10 +60,6 @@ class Servers
       File.expand_path(File.join(LINK_ROOT, 'servers', name))
     end
 
-    def factorio_zip
-      File.expand_path(File.join(LINK_ROOT, Config['factorio_zip']))
-    end
-
     def factorio_save
       File.expand_path(File.join(LINK_ROOT, Config['factorio_save']))
     end
@@ -78,8 +74,6 @@ class Servers
     end
 
     def create(params)
-      require 'zip'
-
       server_name = params[:name]
       server_type = params[:type]
       server_details = {
@@ -94,19 +88,12 @@ class Servers
       Config['servers'] ||= Hash.new
       Config['servers'].merge!(server.to_h)
 
-      Zip.on_exists_proc = true
-      Zip::File.open(factorio_zip) do |zip_file|
-        zip_file.each do |entry|
-          trimmed_path = File.join(factorio_path, entry.name.split(File::SEPARATOR)[1..-1])
-          next if File.exists?(trimmed_path)
-          puts "Extract: #{trimmed_path}"
-          FileUtils.mkdir_p(File.dirname(trimmed_path))
-          entry.extract(trimmed_path)
-        end
-      end
-
       autoplace_off = { frequency: 0, size: 0, richness: 0 }
       autoplace_on  = { frequency: 2, size: 2, richness: 2 }
+
+      FileUtils.mkdir_p(File.dirname(server.config_path))
+      FileUtils.mkdir_p(File.dirname(server.mods_path))
+      FileUtils.mkdir_p(File.dirname(server.saves_path))
 
       map_gen_settings_json = {
         water: 0,
@@ -128,8 +115,7 @@ class Servers
           richness: 0
         }
       }
-      map_gen_settings_path = File.join(server.server_path, 'map-gen-settings.json')
-      FileUtils.mkdir_p(File.dirname(map_gen_settings_path))
+      map_gen_settings_path = File.join(server.config_path, 'map-gen-settings.json')
       IO.write(map_gen_settings_path, JSON.pretty_generate(map_gen_settings_json))
 
       config_json = {
@@ -155,36 +141,20 @@ class Servers
         'maximum_segment_size' => 300,
         'maximum_segment_size_peer_count' => 20
       }
-      config_json_path = File.join(server.server_path, 'server-settings.json')
-      FileUtils.mkdir_p(File.dirname(config_json_path))
+      config_json_path = File.join(server.config_path, 'server-settings.json')
       IO.write(config_json_path, JSON.pretty_generate(config_json))
 
-      config_ini = <<-CONFIG_INI
-[path]
-read-data=#{File.join(factorio_path, 'data')}
-write-data=#{server.server_path}
-CONFIG_INI
-      config_ini_path = File.join(server.server_path, 'config.ini')
-      FileUtils.mkdir_p(File.dirname(config_ini_path))
-      IO.write(config_ini_path, config_ini)
-
       if server_type.nil?
-        FileUtils.mkdir_p(File.dirname(server.save_path))
         FileUtils.cp(factorio_save, server.save_path)
       end
 
-      server_adminlist_path = File.join(server.server_path, 'server-adminlist.json')
-      FileUtils.mkdir_p(File.dirname(server_adminlist_path))
+      server_adminlist_path = File.join(server.config_path, 'server-adminlist.json')
       IO.write(server_adminlist_path, JSON.pretty_generate(Config.server_value(server.name, :admins)))
 
-      FileUtils.cp_r(factorio_mods, server.server_path)
+      FileUtils.cp_r(factorio_mods, server.save_file)
 
       Config.save!
       $logger.info(:servers) { "Created server #{server_name}" }
-
-      unless server_type.nil?
-        server.start!
-      end
     end
 
 ################################################################################

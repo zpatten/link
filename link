@@ -10,6 +10,13 @@ require "pp"
 require "json"
 require "zlib"
 
+require 'prometheus/client'
+require 'prometheus/client/push'
+$prometheus = Prometheus::Client.registry
+$thread_pool_metric = Prometheus::Client::Gauge.new(:thread_count, docstring: '...')
+$prometheus.register($thread_pool_metric)
+Prometheus::Client::Push.new('link', 'master', 'http://127.0.0.1:9091').add($prometheus)
+
 # require "active_support/core_ext"
 
 ################################################################################
@@ -45,6 +52,10 @@ $logger.level = Logger::INFO
 end
 
 require_relative "lib/options"
+# server = Servers.find_by_name('test')
+# server.start!
+# exit
+
 
 ################################################################################
 

@@ -1,6 +1,6 @@
 begin
   File.truncate("link.log", 0)
-rescue Errno::EACCES
+rescue Errno::EACCES, Errno::ENOENT
 end
 
 class MultiLogger
@@ -23,9 +23,11 @@ class MultiLogger
   end
 end
 
-$logger = MultiLogger.new
-MultiLogger.add(Logger.new(STDOUT))
-MultiLogger.add(Logger.new("link.log"))
+# $logger = MultiLogger.new
+# MultiLogger.add(Logger.new(STDOUT))
+# MultiLogger.add(Logger.new("link.log"))
+
+$logger = Logger.new(STDOUT)
 
 # $logger = Logger.new(STDOUT)
 $logger.datetime_format = '%Y-%m-%d %H:%M:%S.%6N'
@@ -38,13 +40,13 @@ $logger.formatter = proc do |severity, datetime, progname, msg|
   thread_name = Thread.current.thread_variable_get(:name) || "main"
   datetime = Time.now.utc.strftime('%Y-%m-%d %H:%M:%S.%6N')
   message = Format % [severity[0..0], datetime, thread_name, progname, msg]
-  if defined?(WebServer)
-    # EM.next_tick do
-      WebServer.settings.sockets.each do |s|
-        s.send(message)
-      end
-    # end
-  end
+  # if defined?(WebServer)
+  #   # EM.next_tick do
+  #     WebServer.settings.sockets.each do |s|
+  #       s.send(message)
+  #     end
+  #   # end
+  # end
   message
   # "#{datetime}: #{msg}\n"
 end
