@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "factorio/chats"
 require_relative "factorio/commands"
 require_relative "factorio/id"

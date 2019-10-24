@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Requests
 
   module ClassMethods
@@ -74,7 +76,8 @@ class Requests
           end
           item_ratios[item_name] = item_ratio
         end
-        $logger.debug { "Item Ratios: #{PP.singleline_pp(item_ratios, "")}" }
+        # $logger.debug { "Item Ratios: #{PP.singleline_pp(item_ratios, "")}" }
+        $logger.debug { "Item Ratios: #{item_ratios.ai}" }
         item_ratios
       end
     end

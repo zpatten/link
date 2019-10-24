@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RCon
   module Responses
 
@@ -5,27 +7,16 @@ class RCon
 
     def register_response(packet_fields)
       $logger.debug(:rcon) { "Registered Response for Packet ID #{packet_fields.id}" }
-      # @response_mutex.synchronize do
-        @responses << packet_fields
-
-        if @responses.count > RESPONSE_QUEUE_LENGTH
-          @responses = @responses[-RESPONSE_QUEUE_LENGTH, RESPONSE_QUEUE_LENGTH]
-        end
-      # end
+      @responses[packet_fields.id] = packet_fields
+      $logger.debug(:rcon) { "Registered Response Count is #{@responses.count}" }
 
       true
     end
 
     def find_response(packet_id)
-      # results = @response_mutex.synchronize do
-      results = @responses.find { |r| r.id == packet_id }
-      # end
-
-      unless results.nil?
-        $logger.debug(:rcon) { "Find Response(#{packet_id}): #{results}" }
-      end
-
-      results
+      Thread.stop while (response = @responses.delete(pc.id)).nil?
+      $logger.debug(:rcon) { "Find Response(#{packet_id}): #{response}" }
+      response
     end
 
   end

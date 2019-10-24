@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RCon
   module Connection
 
@@ -8,7 +10,7 @@ class RCon
     end
 
     def connected?
-      !!@connected && !!@socket && !@socket.closed?
+      !@socket.nil? && !@socket.closed? && @connected
     end
 
     def disconnected?
@@ -16,27 +18,29 @@ class RCon
     end
 
     def connect!
-      # RescueRetry.attempt(max_attempts: -1) do
-        $logger.info(:rcon) { "[#{self.id}] Attempting connection to #{host_tag}" }
+      $logger.info(:rcon) { "[#{self.id}] Attempting connection to #{host_tag}" }
 
-        @socket = @socket_mutex.synchronize { TCPSocket.new(@host, @port) }
+      @socket = @socket_mutex.synchronize { TCPSocket.new(@host, @port) }
 
-        unless @socket.nil? || @socket.closed?
-          @connected = true
-          @authenticated = false
-          $logger.info(:rcon) { "[#{self.id}] Connected to #{host_tag}" }
-          true
-        else
-          false
-        end
-      # end
+      unless @socket.nil? || @socket.closed?
+        @authenticated = false
+        @connected     = true
+        @shutdown      = false
+
+        $logger.info(:rcon) { "[#{self.id}] Connected to #{host_tag}" }
+
+        true
+      else
+        false
+      end
     end
 
     def disconnect!
-      @connected     = false
       @authenticated = false
+      @connected     = false
+      @shutdown      = true
 
-      if !!@socket && !@socket.closed?
+      if !@socket.nil? && !@socket.closed?
         @socket_mutex.synchronize { @socket.shutdown }
         $logger.info(:rcon) { "[#{self.id}] Disconnected from #{host_tag}" }
       end

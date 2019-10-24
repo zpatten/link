@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RCon
   module Packet
 
@@ -22,16 +24,14 @@ class RCon
       return nil if disconnected?
 
       buffer = StringIO.new
-      # @socket_write_mutex.synchronize do
-        while buffer.length < length do
-          data = socket.recv_nonblock(length, 0, nil, exception: false)
-          if data == :wait_readable
-            IO.select([socket])
-            next
-          end
-          buffer.write(data)
+      while buffer.length < length do
+        data = socket.recv_nonblock(length, 0, nil, exception: false)
+        if data == :wait_readable
+          IO.select([socket])
+          next
         end
-      # end
+        buffer.write(data)
+      end
       buffer.rewind
       buffer.read
     rescue Errno::ECONNABORTED, Errno::ESHUTDOWN
@@ -74,12 +74,10 @@ class RCon
       buffer.write(encoded_packet)
 
       total_sent = 0
-      # @socket_read_mutex.synchronize do
-        begin
-          buffer.seek(total_sent)
-          total_sent += socket.send(buffer.read, 0)
-        end while total_sent < buffer.length
-      # end
+      begin
+        buffer.seek(total_sent)
+        total_sent += socket.send(buffer.read, 0)
+      end while total_sent < buffer.length
 
       $logger.debug(:rcon) { %([#{self.id}:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 

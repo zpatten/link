@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "signals/receive"
 require_relative "signals/support"
 require_relative "signals/transmit"
@@ -74,16 +76,21 @@ $tx_signals_initalized ||= Hash.new
 
 # def schedule_server_tx_signals
 def schedule_server_signals
-  schedule_servers(:signals) do |server|
+  schedule_servers(:signals, parallel: false) do |servers|
     command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
-    server.rcon_command_nonblock(command, method(:set_receiver_combinator))
-
-    command = if $tx_signals_initalized[server.name].nil?
-      $tx_signals_initalized[server.name] = true
-      %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', true))
-    else
-      %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator'))
+    servers.each do |server|
+      server.rcon_command_nonblock(command, method(:set_receiver_combinator))
     end
-    server.rcon_command_nonblock(command, method(:get_transmitter_combinator))
+
+    # command = if $tx_signals_initalized[server.name].nil?
+    #   $tx_signals_initalized[server.name] = true
+    #   %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', true))
+    # else
+    #   %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator'))
+    # end
+    command = %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', true))
+    servers.each do |server|
+      server.rcon_command_nonblock(command, method(:get_transmitter_combinator))
+    end
   end
 end

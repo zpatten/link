@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 def get_chats(host, packet_fields, data)
   payload = packet_fields.payload
   unless payload.empty?

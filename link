@@ -1,23 +1,29 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
+Thread.current.name = 'main'
 require 'rubygems'
 require 'bundler/setup'
 
 ################################################################################
 
-require "logger"
-require "pp"
-require "json"
-require "zlib"
+require 'json'
+require 'logger'
+require 'ostruct'
+require 'pp'
+require 'securerandom'
+require 'socket'
+require 'zlib'
+require 'awesome_print'
+
 
 require 'prometheus/client'
 require 'prometheus/client/push'
 $prometheus = Prometheus::Client.registry
 $thread_pool_metric = Prometheus::Client::Gauge.new(:thread_count, docstring: '...')
 $prometheus.register($thread_pool_metric)
-Prometheus::Client::Push.new('link', 'master', 'http://127.0.0.1:9091').add($prometheus)
 
-# require "active_support/core_ext"
+# require 'active_support/core_ext'
 
 ################################################################################
 
@@ -29,43 +35,28 @@ Thread.abort_on_exception = true
 
 ################################################################################
 
-require_relative "lib/support/config"
-Config.load
-
-################################################################################
-
-require_relative "lib/support"
-require_relative "lib/servers"
-require_relative "lib/tasks"
-require_relative "lib/factorio"
-require_relative "lib/web_server"
+require_relative 'lib/support'
+require_relative 'lib/servers'
+require_relative 'lib/tasks'
+require_relative 'lib/factorio'
+require_relative 'lib/web_server'
 
 $logger.level = Logger::INFO
 
 ################################################################################
 
-%w( INT ).each do |signal|
-  Signal.trap(signal) do
-    $stderr.puts "Caught Signal: #{signal}"
-    exit
-  end
-end
-
-require_relative "lib/options"
-# server = Servers.find_by_name('test')
-# server.start!
-# exit
-
-################################################################################
+trap_signals
 
 at_exit do
-  $stderr.puts "Shutting down!"
-  ThreadPool.shutdown!
+  $logger.fatal(:at_exit) { 'Shutting down!' }
   Servers.shutdown!
   Storage.save
   $logger.close
-  exit!
 end
+
+################################################################################
+
+require_relative 'lib/options'
 
 ################################################################################
 
@@ -76,12 +67,10 @@ schedule_server_command_whitelist
 schedule_server_commands
 schedule_server_current_research
 schedule_server_id
-schedule_server_ping
-# schedule_server_providables
-schedule_server_research
-# schedule_server_rx_signals
-schedule_server_signals
 schedule_server_logistics
+schedule_server_ping
+schedule_server_research
+schedule_server_signals
 schedule_task_prometheus
 schedule_task_statistics
 

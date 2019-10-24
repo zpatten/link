@@ -1,4 +1,4 @@
-require 'ostruct'
+# frozen_string_literal: true
 
 class Config
 
@@ -56,3 +56,5 @@ class Config
   extend ClassMethods
 
 end
+
+Config.load

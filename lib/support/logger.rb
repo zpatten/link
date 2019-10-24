@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 begin
   File.truncate("link.log", 0)
 rescue Errno::EACCES, Errno::ENOENT

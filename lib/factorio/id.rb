@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Link Factorio Server ID
 ################################################################################
 def schedule_server_id

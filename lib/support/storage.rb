@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Storage
 
   module ClassMethods
@@ -14,9 +16,9 @@ class Storage
     end
 
     def storage_synchronize_all(&block)
-      # @@storage_mutex.values.map(&:lock)
+      @@storage_mutex.values.map(&:lock)
       block.call
-      # @@storage_mutex.values.map(&:unlock)
+      @@storage_mutex.values.map(&:unlock)
     end
 
     def storage

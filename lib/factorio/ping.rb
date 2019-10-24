@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # RTT
 def ping(host, packet_fields, started_at)
   # Calculate the RTT based on how much time passed from the start of the inital

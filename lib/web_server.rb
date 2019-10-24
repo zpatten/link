@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'thin'
 require 'sinatra'
 require 'sinatra/custom_logger'
@@ -8,11 +10,12 @@ require 'sinatra-websocket'
 class WebServer < Sinatra::Application
   enable :logging
   set :logger, $logger
-  set :server, :thin
+  set :server, :puma
   set :port, 4242
   set :bind, "0.0.0.0"
   set :sockets, []
   set :storage_sockets, []
+  set :threaded, true
 
   set :views, File.join(Dir.pwd, "web", "views")
   set :public_folder, File.join(Dir.pwd, "web", "static")

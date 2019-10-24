@@ -4,10 +4,11 @@
     %th Thread ID
     %th Thread Name
     %th Thread Status
-  - ThreadPool.threads.each do |thread|
-    - thread_name = thread.thread_variable_get(:name) || "-"
+    %th Thread Priority
+  - ThreadPool.thread_group.list.each do |thread|
     %tr
       %td= thread.object_id
       %td.align-left
-        %pre= thread_name
+        %pre= thread.name
       %td= thread.status
+      %td= thread.priority

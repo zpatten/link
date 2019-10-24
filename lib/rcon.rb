@@ -1,6 +1,4 @@
-require 'socket'
-require 'securerandom'
-require 'ostruct'
+# frozen_string_literal: true
 
 require_relative "rcon/authentication"
 require_relative "rcon/callback"
@@ -28,9 +26,10 @@ class RCon
     @connected     = false
     @authenticated = false
     @started       = false
+    @shutdown      = false
 
     @callbacks    = Hash.new
-    @responses    = Array.new
+    @responses    = Hash.new
     # @packet_queue = Array.new
     @packet_queue = ::Queue.new
 
@@ -38,6 +37,7 @@ class RCon
     # @callback_mutex = Mutex.new
     # @response_mutex = Mutex.new
 
+    @socket = nil
     @socket_mutex       = Mutex.new
     # @socket_read_mutex  = Mutex.new
     # @socket_write_mutex = Mutex.new
@@ -68,8 +68,13 @@ class RCon
   end
 
   def shutdown!
+    @shutdown = true
     disconnect!
     true
+  end
+
+  def shutdown?
+    @shutdown
   end
 
   def available?
@@ -93,9 +98,10 @@ class RCon
     ThreadPool.thread("#{rcon_tag}-manager") do
       RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
         loop do
-          connect! if disconnected?
-          authenticate if connected? && unauthenticated?
+          connect! if disconnected? && !shutdown?
+          authenticate if connected? && unauthenticated? && !shutdown?
 
+          break if shutdown?
           Thread.stop while connected?
         end
       end
@@ -103,18 +109,12 @@ class RCon
   end
 
   def poll_send
-    ThreadPool.thread("#{rcon_tag}-send") do
+    ThreadPool.thread("#{rcon_tag}-send", priority: 1) do
       RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
         loop do
-          send_packet(get_queued_packet.packet_fields) while connected?
-          # while connected? do
-          #   queued_packet = nil
-          #   loop do
-          #     queued_packet = get_queued_packet
-          #     break unless queued_packet.nil?
-          #   end
-          #   send_packet(queued_packet.packet_fields)
-          # end
+          send_packet(get_queued_packet.packet_fields) while connected? && !shutdown?
+
+          break if shutdown?
           Thread.stop
         end
       end
@@ -122,10 +122,12 @@ class RCon
   end
 
   def poll_recv
-    ThreadPool.thread("#{rcon_tag}-recv") do
+    ThreadPool.thread("#{rcon_tag}-recv", priority: 1) do
       RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
         loop do
-          receive_packet while connected?
+          receive_packet while connected? && !shutdown?
+
+          break if shutdown?
           Thread.stop
         end
       end

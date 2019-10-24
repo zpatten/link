@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "rcon"
 
 class Server
@@ -32,9 +34,6 @@ class Server
   end
 
 ################################################################################
-
-  def schedule
-  end
 
   def id
     Zlib::crc32(@name.to_s)
@@ -156,28 +155,21 @@ class Server
   end
 
   def unavailable?
-    # @rcon.startup! unless @rcon.started?
     @rcon.unavailable?
   end
 
 ################################################################################
 
   def rcon_command_nonblock(command, callback, data=nil)
-    # return if unavailable?
-    startup! if unavailable?
+    return if unavailable?
     data = self if data.nil?
     @rcon.enqueue_packet(command, callback, data)
   end
 
   def rcon_command(command)
-    # return if unavailable?
-    startup! if unavailable?
+    return if unavailable?
     packet_fields = @rcon.enqueue_packet(command)
-    # response = nil
-    sleep SLEEP_TIME while (response = @rcon.find_response(packet_fields.id)).nil?
-    # loop do
-    #   break unless response.nil?
-    # end
+    response = @rcon.find_response(packet_fields.id)
     response.payload.strip
   end
 

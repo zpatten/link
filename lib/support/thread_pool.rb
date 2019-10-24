@@ -1,26 +1,16 @@
+# frozen_string_literal: true
+
 class ThreadPool
 
   module ClassMethods
 
+    @@thread_group = ThreadGroup.new
     @@metric ||= $thread_pool_metric
-#Metric.new(:uniform_histogram, "threads")
-    @@thread_pool ||= Array.new
-    @@thread_pool_mutex ||= Mutex.new
+    @@thread_schedules ||= ThreadSafeArray.new
 
-    @@thread_schedules ||= Array.new
-
-
-    def synchronize(&block)
-      @@thread_pool_mutex.synchronize(&block)
+    def thread_group
+      @@thread_group
     end
-
-    def thread_pool
-      @@thread_pool
-    end
-
-    # def thread_pool<<(value)
-    #   @@thread_pool << value
-    # end
 
     def thread_schedules
       @@thread_schedules
@@ -30,30 +20,30 @@ class ThreadPool
       @@metric
     end
 
-    def thread(name, &block)
+    def thread(name, options={}, &block)
       schedule_log(:thread, :starting, name)
-      result = nil
 
-      @@thread_pool << Thread.new do
-        Thread.current.thread_variable_set(:name, name)
-        result = block.call
-        # schedule_log(:thread, :stopped, name)
-        Thread.exit
+      thread = Thread.new do
+        trap_signals
+        block.call
       end
+      thread.name     = name
+      thread.priority = options.fetch(:priority, 0)
+      @@thread_group.add(thread)
 
-      #self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
-      self.metric.set(@@thread_pool.count)
+      self.metric.set(@@thread_group.list.count)
 
-      result
+      thread
     end
 
-    def register(what, parallel=false, &block)
+    def register(what, parallel: false, **options, &block)
       schedule = OpenStruct.new(
-        what: what,
-        frequency: Config.master_value(:scheduler, what),
-        parallel: parallel,
         block: block,
-        next_run_at: Time.now.to_f
+        frequency: Config.master_value(:scheduler, what),
+        next_run_at: Time.now.to_f,
+        options: options,
+        parallel: parallel,
+        what: what
       )
       @@thread_schedules << schedule
       schedule_log(:scheduler, :added, schedule)
@@ -62,20 +52,21 @@ class ThreadPool
     end
 
     def run_thread(schedule, *args)
-      Thread.new do
+      thread = Thread.new do
+        trap_signals
         schedule_log(:thread, :started, schedule, Thread.current)
-
-        thread_name = [
-          server_names(*args),
-          schedule.what.to_s
-        ].compact.join(":")
-        Thread.current.thread_variable_set(:name, thread_name)
 
         schedule.block.call(*args)
 
         schedule_log(:thread, :stopping, schedule, Thread.current)
-        Thread.exit
       end
+        thread_name = [
+          server_names(*args),
+          schedule.what.to_s
+        ].compact.join(":")
+      thread.name = thread_name
+      thread.priority = schedule.options.fetch(:priority, 0)
+      @@thread_group.add(thread)
     end
 
     def run(schedule)
@@ -85,18 +76,18 @@ class ThreadPool
       what     = schedule.what
 
       servers  = Servers.find(what)
+      [servers].flatten.compact.map(&:startup!)
 
       if parallel
         servers.each do |server|
-          next if server.unavailable?
-          @@thread_pool << run_thread(schedule, server)
+          # next if server.unavailable?
+          run_thread(schedule, server)
         end
       else
-        @@thread_pool << run_thread(schedule, servers)
+        run_thread(schedule, servers)
       end
 
-      #self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
-      self.metric.set(@@thread_pool.count)
+      self.metric.set(@@thread_group.list.count)
 
       true
     end
@@ -144,7 +135,7 @@ class ThreadPool
 
     def log
       $logger.info { ("=" * 80) }
-      @@thread_pool.each do |thread|
+      @@thread_group.list.each do |thread|
         name = (thread.thread_variable_get(:name) || "<starting>")
         $logger.debug { "[THREAD] #{name}: #{thread.status}" }
       end
@@ -154,21 +145,15 @@ class ThreadPool
     def display
       puts "\e[H"
       puts "\e[2J"
-      @@thread_pool.each do |thread|
+      @@thread_group.list.each do |thread|
         name = (thread.thread_variable_get(:name) || "<starting>")
         puts "[THREAD] #{name}: #{thread.status}"
       end
     end
 
     def shutdown!
-      # disable schedules
       @@thread_schedules = Array.new
-      # stop threads
-      @@thread_pool.each { |t| t.terminate }
-    end
-
-    def threads
-      @@thread_pool
+      @@thread_group.list.map(&:exit)
     end
 
     def execute
@@ -177,45 +162,16 @@ class ThreadPool
           if schedule.next_run_at <= Time.now.to_f
             run(schedule)
             schedule_next_run(schedule)
-            # if schedule.server.nil?
-            #    unless Servers.unavailable?
-            # else
-            #   unless [schedule.server].flatten.map(&:unavailable?).all?(true)
-            #     run(schedule)
-            #   end
-            # end
-
           end
         end
 
-        @@thread_pool.each do |thread|
-          case thread.status
-          when "aborting"
-            # $logger.debug { ("=" * 80) }
-            # $logger.debug { "[THREAD] Thread Aborting: #{thread}" }
-            # $logger.debug { ("=" * 80) }
-            thread.terminate
-            @@thread_pool -= [thread]
-
-          when "sleep"
-            # $logger.debug { ("=" * 80) }
-            # $logger.debug { "[THREAD] Thread Sleeping: #{thread.thread_variable_get(:name)}" }
-            # $logger.debug { ("=" * 80) }
-            #sleep SLEEP_TIME
-            Thread.pass
-            thread.wakeup if thread.status == "sleep"
-
-          when false
-            name = thread.thread_variable_get(:name) || "<dead>"
-            @@thread_pool -= [thread]
-            schedule_log(:thread, :exit, name)
-            #self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
-            self.metric.set(@@thread_pool.count)
-          end
+        @@thread_group.list.each do |thread|
+          thread.wakeup if thread.status == 'sleep'
         end
+        self.metric.set(@@thread_group.list.count)
       end
-      sleep SLEEP_TIME
     end
+
   end
 
   extend ClassMethods

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 def set_research(host, packet_fields, server)
   payload = packet_fields.payload
   unless payload.empty?

@@ -1,6 +1,6 @@
-require 'optparse'
+# frozen_string_literal: true
 
-$options = Hash.new
+require 'optparse'
 
 op = OptionParser.new
 op.banner = "Usage: #{$0} [options]"
@@ -15,9 +15,8 @@ op.on("-h", "--help", "Print this help") do
 end
 
 op.on("-m", "--master", "Run as master") do
-  ThreadPool.thread("sinatra") do
+  thread = ThreadPool.thread("sinatra", priority: -100) do
     WebServer.run!
-    exit
   end
 end
 
@@ -35,7 +34,6 @@ end
 
 op.on("--add=NAME,[TYPE]", "Add a server") do |list|
   name, type = list.split(',')
-  $options[:add] = true
   params = {
     name: name,
     type: type
@@ -53,6 +51,3 @@ op.on("--remove=NAME", "Remove a server") do |name|
 end
 
 op.parse!
-
-# p $options
-# p ARGV

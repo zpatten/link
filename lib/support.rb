@@ -1,4 +1,16 @@
-require 'ostruct'
+# frozen_string_literal: true
+
+class ThreadSafeArray
+  def initialize
+    @array = Array.new
+    @mutex = Mutex.new
+  end
+
+  def method_missing(method_name, *method_args, &block)
+    @mutex.synchronize { @array.send(method_name, *method_args, &block) }
+  end
+end
+
 
 require_relative "support/logger"
 
@@ -63,34 +75,14 @@ def rcon_redirect(host, packet_fields, (player_index, command, origin_host))
   origin.rcon_command_nonblock(command, method(:rcon_print))
 end
 
-def schedule_task(what, parallel=false, &block)
+def schedule_task(what, parallel: false, **options, &block)
   $logger.info(:scheduler) { "Scheduling #{what}..." }
-  # frequency = Config.master_value(:scheduler, what)
-  # frequency = if frequency.nil?
-  #   Config.master_value(:scheduler, what)
-  # else
-  #   frequency
-  # end
-  ThreadPool.register(what, parallel, &block)
+  ThreadPool.register(what, parallel: parallel, **options, &block)
 end
 
-def schedule_servers(what, parallel: true, &block)
-  schedule_task(what, parallel, &block)
-
-  # servers = Servers.find(what)
-  # servers.each do |server|
-  #   frequency = Config.server_value(server['name'], :scheduler, what)
-  #   schedule_task(what, frequency, &block)
-  # end
+def schedule_servers(what, parallel: true, **options, &block)
+  schedule_task(what, parallel: parallel, priority: 2, **options, &block)
 end
-
-# def schedule_servers(what, &block)
-#   $logger.info { "Scheduling #{what}..." }
-
-#   servers = Servers.find(what)
-#   frequency = Config.master_value(:scheduler, what)
-#   schedule_task(what, frequency, servers, &block)
-# end
 
 # RCON Executor
 # Switch between using 'c' or 'silent-command' depending on the debug flag.
@@ -101,6 +93,15 @@ end
 
 def debug?
   !!ENV["DEBUG"]
+end
+
+def trap_signals
+  %w( INT TERM QUIT ).each do |signal|
+    Signal.trap(signal) do
+      $stderr.puts "[#{Thread.current.name}] Caught Signal: #{signal}"
+      exit
+    end
+  end
 end
 
 def generate_port_number
@@ -130,7 +131,8 @@ class RescueRetry
         Errno::ECONNRESET,
         Errno::ENOTSOCK,
         Errno::EPIPE,
-        IOError
+        IOError,
+        Net::OpenTimeout
       ]
     end
 
