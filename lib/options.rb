@@ -22,9 +22,14 @@ op.on("-m", "--master", "Run as master") do
 end
 
 op.on("--start=NAME", "Start a server") do |name|
-  $logger.close
   server = Servers.find_by_name(name)
   server.start!
+  exit
+end
+
+op.on("--stop=NAME", "Stop a server") do |name|
+  server = Servers.find_by_name(name)
+  server.stop!
   exit
 end
 

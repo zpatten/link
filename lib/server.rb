@@ -4,27 +4,37 @@ class Server
 
 ################################################################################
 
-  attr_reader :name, :host, :factorio_port, :client_port, :client_password, :rcon, :details
   attr_accessor :rtt
+  attr_reader :client_password
+  attr_reader :client_port
+  attr_reader :details
+  attr_reader :factorio_port
+  attr_reader :host
+  attr_reader :name
+  attr_reader :rcon
 
 ################################################################################
 
   def initialize(name, details)
-    @name = name
-    @details = details
-    @host = details["host"]
-    @factorio_port = details["factorio_port"]
-    @client_port = details["client_port"]
-    @client_password = details["client_password"]
-    @research = details["research"]
-    @chats = details["chats"]
-    @commands = details["commands"]
-    @command_whitelist = details["command_whitelist"]
+    @name              = name
+    @details           = details
+    @active            = details['active']
+    @chats             = details['chats']
+    @client_password   = details['client_password']
+    @client_port       = details['client_port']
+    @command_whitelist = details['command_whitelist']
+    @commands          = details['commands']
+    @factorio_port     = details['factorio_port']
+    @host              = details['host']
+    @research          = details['research']
 
-    @rcon = RCon.new(name, host, client_port, client_password)
+    @rcon = RCon.new(@name, @host, @client_port, @client_password)
   end
 
 ################################################################################
+
+  def schedule
+  end
 
   def id
     Zlib::crc32(@name.to_s)
@@ -80,12 +90,12 @@ class Server
     command << %(--detach)
     command << %(--name="#{self.name}")
     command << %(--network=host)
-    command << %(-e PUID="$(id -u)")
-    command << %(-e PGID="$(id -g)")
-    command << %(-e RUN_CHOWN="false")
     command << %(-e FACTORIO_PORT="#{self.factorio_port}")
-    command << %(-e FACTORIO_RCON_PORT="#{self.client_port}")
     command << %(-e FACTORIO_RCON_PASSWORD="#{self.client_password}")
+    command << %(-e FACTORIO_RCON_PORT="#{self.client_port}")
+    command << %(-e PGID="$(id -g)")
+    command << %(-e PUID="$(id -u)")
+    command << %(-e RUN_CHOWN="false")
     command << %(--volume=#{self.config_path}:/opt/factorio/config)
     command << %(--volume=#{self.mods_path}:/opt/factorio/mods)
     command << %(--volume=#{self.saves_path}:/opt/factorio/saves)
@@ -96,6 +106,23 @@ class Server
     system %(/usr/bin/env chcon -Rt svirt_sandbox_file_t #{self.path})
     puts "command=#{command}"
     system command
+  end
+
+  def stop!
+    command = Array.new
+    command << %(sudo)
+    command << %(docker stop)
+    command << self.name
+    command = command.flatten.compact.join(' ')
+
+    $logger.info(:server) { "command=#{command}" }
+    system command
+  end
+
+################################################################################
+
+  def startup!
+    @rcon.startup!
   end
 
   def shutdown!
@@ -129,30 +156,28 @@ class Server
   end
 
   def unavailable?
-    @rcon.startup! unless @rcon.started?
+    # @rcon.startup! unless @rcon.started?
     @rcon.unavailable?
   end
 
 ################################################################################
 
-  def rcon
-    @rcon
-  end
-
   def rcon_command_nonblock(command, callback, data=nil)
-    return if unavailable?
+    # return if unavailable?
+    startup! if unavailable?
     data = self if data.nil?
     @rcon.enqueue_packet(command, callback, data)
   end
 
   def rcon_command(command)
-    return if unavailable?
+    # return if unavailable?
+    startup! if unavailable?
     packet_fields = @rcon.enqueue_packet(command)
-    response = nil
-    loop do
-      Thread.stop if (response = @rcon.find_response(packet_fields.id)).nil?
-      break unless response.nil?
-    end
+    # response = nil
+    sleep SLEEP_TIME while (response = @rcon.find_response(packet_fields.id)).nil?
+    # loop do
+    #   break unless response.nil?
+    # end
     response.payload.strip
   end
 

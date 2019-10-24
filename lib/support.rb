@@ -63,32 +63,34 @@ def rcon_redirect(host, packet_fields, (player_index, command, origin_host))
   origin.rcon_command_nonblock(command, method(:rcon_print))
 end
 
-def schedule_task(what, frequency=nil, server=nil, &block)
-  frequency = if frequency.nil?
-    Config.master_value(:scheduler, what)
-  else
-    frequency
-  end
-  ThreadPool.register(what, frequency, server, &block)
+def schedule_task(what, parallel=false, &block)
+  $logger.info(:scheduler) { "Scheduling #{what}..." }
+  # frequency = Config.master_value(:scheduler, what)
+  # frequency = if frequency.nil?
+  #   Config.master_value(:scheduler, what)
+  # else
+  #   frequency
+  # end
+  ThreadPool.register(what, parallel, &block)
 end
 
-def schedule_server(what, &block)
-  $logger.info { "Scheduling #{what}..." }
+def schedule_servers(what, parallel: true, &block)
+  schedule_task(what, parallel, &block)
 
-  servers = Servers.find(what)
-  servers.each do |server|
-    frequency = Config.server_value(server['name'], :scheduler, what)
-    schedule_task(what, frequency, server, &block)
-  end
+  # servers = Servers.find(what)
+  # servers.each do |server|
+  #   frequency = Config.server_value(server['name'], :scheduler, what)
+  #   schedule_task(what, frequency, &block)
+  # end
 end
 
-def schedule_servers(what, &block)
-  $logger.info { "Scheduling #{what}..." }
+# def schedule_servers(what, &block)
+#   $logger.info { "Scheduling #{what}..." }
 
-  servers = Servers.find(what)
-  frequency = Config.master_value(:scheduler, what)
-  schedule_task(what, frequency, servers, &block)
-end
+#   servers = Servers.find(what)
+#   frequency = Config.master_value(:scheduler, what)
+#   schedule_task(what, frequency, servers, &block)
+# end
 
 # RCON Executor
 # Switch between using 'c' or 'silent-command' depending on the debug flag.
@@ -143,8 +145,10 @@ class RescueRetry
       begin
         block.call
       rescue *rescue_exceptions => e
+
         # calculate how long to sleep for; make sure we at most retry every minute
         # sleep_for = (3 * attempts)
+        # sleep_for = attempts**2
         # sleep_for = 60 if sleep_for > 60
 
         # let the user know what is going on
@@ -159,6 +163,7 @@ class RescueRetry
 
         # sleep before we try again
         sleep sleep_for
+
         attempts += 1
         retry
       end

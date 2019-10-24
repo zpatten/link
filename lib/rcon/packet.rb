@@ -22,7 +22,7 @@ class RCon
       return nil if disconnected?
 
       buffer = StringIO.new
-      @socket_write_mutex.synchronize do
+      # @socket_write_mutex.synchronize do
         while buffer.length < length do
           data = socket.recv_nonblock(length, 0, nil, exception: false)
           if data == :wait_readable
@@ -31,7 +31,7 @@ class RCon
           end
           buffer.write(data)
         end
-      end
+      # end
       buffer.rewind
       buffer.read
     rescue Errno::ECONNABORTED, Errno::ESHUTDOWN
@@ -57,6 +57,14 @@ class RCon
       packet_fields
     end
 
+    def receive_packet
+      received_packet = recv_packet
+      return if received_packet.nil?
+
+      raise "[#{self.id}] Authentication Failed!" if received_packet.id == -1
+      packet_callback(received_packet)
+    end
+
     def send_packet(packet_fields)
       return nil if disconnected?
 
@@ -66,12 +74,12 @@ class RCon
       buffer.write(encoded_packet)
 
       total_sent = 0
-      @socket_read_mutex.synchronize do
+      # @socket_read_mutex.synchronize do
         begin
           buffer.seek(total_sent)
           total_sent += socket.send(buffer.read, 0)
         end while total_sent < buffer.length
-      end
+      # end
 
       $logger.debug(:rcon) { %([#{self.id}:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 

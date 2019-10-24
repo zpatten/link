@@ -56,15 +56,15 @@ require_relative "lib/options"
 # server.start!
 # exit
 
-
 ################################################################################
 
 at_exit do
   $stderr.puts "Shutting down!"
-  Servers.shutdown!
   ThreadPool.shutdown!
+  Servers.shutdown!
   Storage.save
   $logger.close
+  exit!
 end
 
 ################################################################################
@@ -77,14 +77,14 @@ schedule_server_commands
 schedule_server_current_research
 schedule_server_id
 schedule_server_ping
-schedule_server_providables
+# schedule_server_providables
 schedule_server_research
-schedule_server_rx_signals
-schedule_server_tx_signals
-schedule_servers_requests
+# schedule_server_rx_signals
+schedule_server_signals
+schedule_server_logistics
+schedule_task_prometheus
 schedule_task_statistics
 
 ThreadPool.execute
 
 ################################################################################
-

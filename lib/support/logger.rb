@@ -16,9 +16,16 @@ class MultiLogger
   end
   extend ClassMethods
 
+  def mutex(logger)
+    @logger_mutex ||= Hash.new
+    @logger_mutex[logger] ||= Mutex.new
+  end
+
   def method_missing(method_name, *method_args, &block)
     self.class.loggers.each do |logger|
-      logger.send(method_name, *method_args, &block)
+      # mutex(logger.to_s).synchronize do
+        logger.send(method_name, *method_args, &block)
+      # end
     end
   end
 end

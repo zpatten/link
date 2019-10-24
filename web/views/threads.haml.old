@@ -1,0 +1,45 @@
+/ - chart_data = Array.new
+/ - now = Time.now.utc.to_f
+/ - ThreadPool.metric.values.each_with_index do |v, i|
+/   - chart_data << "[new Date(#{((now - i.to_f) * 1000.0).to_i}),#{v}]"
+/ %script{ type: "text/javascript", src: "https://www.gstatic.com/charts/loader.js" }
+/ :javascript
+/   google.charts.load('current', {'packages':['line']});
+/   google.charts.setOnLoadCallback(drawChart);
+
+/   function drawChart() {
+/     var data = new google.visualization.DataTable();
+/     data.addColumn('datetime', 'Date');
+/     data.addColumn('number', 'Value');
+/     data.addRows([#{chart_data.reverse.join(',')}]);
+
+/     var options = {
+/       title: 'Thread Count',
+/       subtitle: 'running threads',
+/       width: 900,
+/       height: 500
+/     };
+
+/     var chart = new google.charts.Line(document.getElementById('linechart_material'));
+
+/     chart.draw(data, google.charts.Line.convertOptions(options));
+/   }
+
+/ %div#linechart_material{ style: "width: 900px; height: 500px" }
+
+%h1 Threads
+
+/ = ThreadPool.metric.values
+
+%table
+  %tr
+    %th Thread ID
+    %th Thread Name
+    %th Thread Status
+  - ThreadPool.threads.each do |thread|
+    - thread_name = thread.thread_variable_get(:name) || "-"
+    %tr
+      %td= thread.object_id
+      %td
+        %pre= thread_name
+      %td= thread.status

@@ -43,71 +43,89 @@ class ThreadPool
 
       #self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
       self.metric.set(@@thread_pool.count)
-      Prometheus::Client::Push.new('link', 'master', 'http://127.0.0.1:9091').add($prometheus)
 
       result
     end
 
-    def register(what, frequency=nil, server=nil, &block)
+    def register(what, parallel=false, &block)
       schedule = OpenStruct.new(
         what: what,
-        frequency: frequency,
-        server: server,
+        frequency: Config.master_value(:scheduler, what),
+        parallel: parallel,
         block: block,
         next_run_at: Time.now.to_f
       )
       @@thread_schedules << schedule
-      schedule_log(:schedule, :added, schedule)
+      schedule_log(:scheduler, :added, schedule)
 
       true
+    end
+
+    def run_thread(schedule, *args)
+      Thread.new do
+        schedule_log(:thread, :started, schedule, Thread.current)
+
+        thread_name = [
+          server_names(*args),
+          schedule.what.to_s
+        ].compact.join(":")
+        Thread.current.thread_variable_set(:name, thread_name)
+
+        schedule.block.call(*args)
+
+        schedule_log(:thread, :stopping, schedule, Thread.current)
+        Thread.exit
+      end
     end
 
     def run(schedule)
       schedule_log(:thread, :starting, schedule)
 
-      result = nil
-      server = schedule.server
-      block  = schedule.block
-      args   = [server].compact
+      parallel = schedule.parallel
+      what     = schedule.what
 
-      @@thread_pool << Thread.new do
-        thread_name = [
-          schedule.what.to_s,
-          server_ids(server)
-        ].compact.join(":")
-        Thread.current.thread_variable_set(:name, thread_name)
-        result = block.call(*args)
-        # schedule_log(:thread, :stopped, schedule)
-        Thread.exit
+      servers  = Servers.find(what)
+
+      if parallel
+        servers.each do |server|
+          next if server.unavailable?
+          @@thread_pool << run_thread(schedule, server)
+        end
+      else
+        @@thread_pool << run_thread(schedule, servers)
       end
 
       #self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
       self.metric.set(@@thread_pool.count)
-      Prometheus::Client::Push.new('link', 'master', 'http://127.0.0.1:9091').add($prometheus)
 
-      result
+      true
     end
 
-    def server_ids(server)
-      return nil if server.nil? || server.empty?
-      [server].flatten.collect { |s| s['id'] }.join(",")
+    def server_names(*args)
+      return nil if args.nil? || args.empty?
+      args = [args].flatten.compact
+      if args.count == 0
+        nil
+      else
+        args.collect { |s| s.name }.join(",")
+      end
     end
 
-    def schedule_log(action, who, schedule)
+    def schedule_log(action, who, schedule, thread=nil)
       unless schedule.is_a?(String)
         who = who.to_s.capitalize
         action = action.to_s.downcase
         what = schedule.what.to_s.downcase
         next_run_at = schedule.next_run_at
         frequency = schedule.frequency
-        server = schedule.server
+        parallel = schedule.parallel
         block = schedule.block
 
-        id = "server:#{server_ids(server)}" unless server.nil?
         log_fields = [
+          (thread.nil? ? nil : "thread_id:#{thread.object_id}"),
           "next_run_at:#{next_run_at}",
           "frequency:#{frequency}",
-          id,
+          "parallel:#{parallel}",
           "block:#{block}"
         ].compact.join(", ")
         $logger.debug(:thread) { "#{who} #{action} #{what}: #{log_fields}" }
@@ -121,6 +139,7 @@ class ThreadPool
       frequency   = schedule.frequency
       next_run_at = (now + (frequency - (now % frequency)))
       schedule.next_run_at = next_run_at
+      schedule_log(:thread, :scheduled, schedule)
     end
 
     def log
@@ -144,7 +163,6 @@ class ThreadPool
     def shutdown!
       # disable schedules
       @@thread_schedules = Array.new
-      sleep 3
       # stop threads
       @@thread_pool.each { |t| t.terminate }
     end
@@ -157,16 +175,16 @@ class ThreadPool
       loop do
         @@thread_schedules.each do |schedule|
           if schedule.next_run_at <= Time.now.to_f
-            if schedule.server.nil?
-              run(schedule) unless Servers.unavailable?
-            else
-              unless [schedule.server].flatten.map(&:unavailable?).all?(true)
-                run(schedule)
-              end
-            end
-
+            run(schedule)
             schedule_next_run(schedule)
-            schedule_log(:thread, :scheduled, schedule)
+            # if schedule.server.nil?
+            #    unless Servers.unavailable?
+            # else
+            #   unless [schedule.server].flatten.map(&:unavailable?).all?(true)
+            #     run(schedule)
+            #   end
+            # end
+
           end
         end
 
@@ -193,7 +211,6 @@ class ThreadPool
             schedule_log(:thread, :exit, name)
             #self.metric.update(@@thread_pool.count) unless (self.metric.values.first == @@thread_pool.count)
             self.metric.set(@@thread_pool.count)
-            Prometheus::Client::Push.new('link', 'master', 'http://127.0.0.1:9091').add($prometheus)
           end
         end
       end

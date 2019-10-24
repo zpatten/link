@@ -6,17 +6,20 @@ class RCon
       unless callback.nil?
         register_packet_callback(packet_fields.id, callback, data)
       end
-      @queue_mutex.synchronize { @packet_queue << OpenStruct.new(packet_fields: packet_fields) }
+      @packet_queue << OpenStruct.new(packet_fields: packet_fields)
+      # @queue_mutex.synchronize { @packet_queue << OpenStruct.new(packet_fields: packet_fields) }
       packet_fields
     end
 
     def get_queued_packet
-      @queue_mutex.synchronize { @packet_queue.shift }
+      @packet_queue.shift
+      # @queue_mutex.synchronize { @packet_queue.shift }
     end
 
-    def packet_queue_count
-      @queue_mutex.synchronize { @packet_queue.count }
-    end
+    # def packet_queue_count
+    #   @packet_queue.size
+    #   # @queue_mutex.synchronize { @packet_queue.count }
+    # end
 
   end
 end

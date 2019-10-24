@@ -21,54 +21,56 @@ class Servers
     def find(what)
       what = what.to_sym
       case what
-      when :commands, :chats, :ping, :command_whitelist, :providables, :requests, :tx_signals, :rx_signals, :id
+      when :commands, :chats, :ping, :command_whitelist, :logistics, :signals, :id
         all.select { |s| !!Config.server_value(s.name, what) }
       when :research, :current_research
         all.select { |s| !!Config.server_value(s.name, :research) }
       when :non_research
         all.select { |s| !(!!Config.server_value(s.name, :research)) }
       else
-        raise "INVALID FIND: #{what.inspect}"
+        nil
       end
     end
 
 ################################################################################
 
     def all
-      @@servers ||= begin
-        servers = Array.new
-        Config.servers.each_pair do |server_name, server_details|
+      @@servers ||= Hash.new
+      Config.servers.each_pair do |server_name, server_details|
+        if @@servers[server_name].nil?
           server = Server.new(server_name, server_details)
-          servers << server
-          $logger.info { "[#{server.id}] Loaded server #{server.host_tag}" }
+          @@servers[server_name] = server
+          $logger.info(:servers) { "[#{server.id}] Loaded server #{server.host_tag}" }
         end
-        servers
       end
+      @@servers.values
     end
 
 ################################################################################
-
-    def factorio_path
-      File.expand_path(File.join(LINK_ROOT, 'factorio'))
-    end
 
     def factorio_mods
       File.expand_path(File.join(LINK_ROOT, 'mods'))
     end
 
-    def server_path(name)
-      File.expand_path(File.join(LINK_ROOT, 'servers', name))
+    def factorio_saves
+      File.expand_path(File.join(LINK_ROOT, 'saves'))
     end
 
-    def factorio_save
-      File.expand_path(File.join(LINK_ROOT, Config['factorio_save']))
-    end
-
-    def destroy(params)
+    def delete(params)
       server_name = params[:name]
       if (server = Servers.find_by_name(server_name))
-        FileUtils.rm_rf(server.server_path)
+        server.stop!
+
+        sleep(1)
+
+        FileUtils.cp_r(
+          server.save_file,
+          File.join(factorio_saves, File.basename(server.save_file))
+        )
+
+        FileUtils.rm_rf(server.path)
       end
+      @@servers.delete(server_name)
       Config['servers'].delete(server_name)
       Config.save!
     end
@@ -151,7 +153,7 @@ class Servers
       server_adminlist_path = File.join(server.config_path, 'server-adminlist.json')
       IO.write(server_adminlist_path, JSON.pretty_generate(Config.server_value(server.name, :admins)))
 
-      FileUtils.cp_r(factorio_mods, server.save_file)
+      FileUtils.cp_r(factorio_mods, server.path)
 
       Config.save!
       $logger.info(:servers) { "Created server #{server_name}" }

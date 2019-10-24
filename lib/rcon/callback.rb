@@ -2,14 +2,18 @@ class RCon
   module Callback
 
     def register_packet_callback(packet_id, callback, data=nil)
-      @callback_mutex.synchronize { @callbacks << OpenStruct.new(id: packet_id, callback: callback, data: data) }
+      # @callback_mutex.synchronize { @callbacks[packet_id] = OpenStruct.new(id: packet_id, callback: callback, data: data) }
+      @callbacks[packet_id] = OpenStruct.new(id: packet_id, callback: callback, data: data)
     end
 
     def packet_callback(packet_fields)
-      pc = @callback_mutex.synchronize { @callbacks.select { |cb| cb.id == packet_fields.id }.first }
-      unless pc.nil?
-        pc.callback.call(@name, packet_fields, pc.data)
-        @callback_mutex.synchronize { @callbacks.delete(pc) }
+      # pc = @callback_mutex.synchronize { @callbacks[packet_fields.id] }
+      unless (pc = @callbacks[packet_fields.id]).nil?
+        tag = "#{rcon_tag}-callback-#{pc.id}"
+        ThreadPool.thread(tag) do
+          pc.callback.call(@name, packet_fields, pc.data)
+        end
+        @callbacks.delete(pc.id)
       end
     end
 

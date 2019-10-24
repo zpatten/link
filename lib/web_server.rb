@@ -10,7 +10,7 @@ class WebServer < Sinatra::Application
   set :logger, $logger
   set :server, :thin
   set :port, 4242
-  # set :bind, "127.0.0.1"
+  set :bind, "0.0.0.0"
   set :sockets, []
   set :storage_sockets, []
 
