@@ -4,11 +4,10 @@ class Storage
 
   module ClassMethods
 
-    @@metric ||= Hash.new
     @@storage = nil
+    @@storage_delta ||= Hash.new
     @@storage_mutex ||= Hash.new
     @@storage_statistics ||= Hash.new
-
 
     def storage_synchronize(item_name, &block)
       @@storage_mutex[item_name] ||= Mutex.new
@@ -63,10 +62,6 @@ class Storage
       end
     end
 
-    def metric(item_name)
-      @@metric[item_name] ||= Metric.new(:meter, "storage-#{item_name}")
-    end
-
     def add(item_name, item_count)
       storage.nil? and load
 
@@ -77,7 +72,6 @@ class Storage
 
       Signals.update_inventory_signals
       update_websocket(item_name, storage[item_name])
-      self.metric(item_name).mark(item_count)
 
       item_count
     end
@@ -99,7 +93,6 @@ class Storage
 
       Signals.update_inventory_signals
       update_websocket(item_name, storage[item_name])
-      self.metric(item_name).mark(-item_count)
 
       removed_count
     end
@@ -113,31 +106,37 @@ class Storage
     end
 
     def format_delta_count(delta_count)
-      if delta_count > 0
+      if delta_count.nil?
+        '-'
+      elsif delta_count > 0
         "+#{delta_count}"
       elsif delta_count == 0
-        "-"
+        '-'
       else
         delta_count.to_s
       end
     end
 
-    def delta_averages(item_name, delta_count)
-      @@previous_storage_deltas ||= Hash.new { |h,k| h[k] = Array.new }
-
-      @@previous_storage_deltas[item_name] << delta_count
-
-      rindex_15 = [@@previous_storage_deltas[item_name].count, 15].min
-      @@previous_storage_deltas[item_name] = @@previous_storage_deltas[item_name][-(rindex_15),15]
-      delta_count_15 = format_delta_count(@@previous_storage_deltas[item_name].sum.div(rindex_15))
-
-      rindex_5 = [@@previous_storage_deltas[item_name].count, 5].min
-      delta_count_5 = format_delta_count(@@previous_storage_deltas[item_name][-(rindex_5),5].sum.div(rindex_5))
-
-      delta_count_1 = format_delta_count(delta_count)
-
-      [delta_count_1, delta_count_5, delta_count_15]
+    def deltas
+      @@storage_delta
     end
+
+    # def delta_averages(item_name, delta_count)
+    #   @@previous_storage_deltas ||= Hash.new { |h,k| h[k] = Array.new }
+
+    #   @@previous_storage_deltas[item_name] << delta_count
+
+    #   rindex_15 = [@@previous_storage_deltas[item_name].count, 15].min
+    #   @@previous_storage_deltas[item_name] = @@previous_storage_deltas[item_name][-(rindex_15),15]
+    #   delta_count_15 = format_delta_count(@@previous_storage_deltas[item_name].sum.div(rindex_15))
+
+    #   rindex_5 = [@@previous_storage_deltas[item_name].count, 5].min
+    #   delta_count_5 = format_delta_count(@@previous_storage_deltas[item_name][-(rindex_5),5].sum.div(rindex_5))
+
+    #   delta_count_1 = format_delta_count(delta_count)
+
+    #   [delta_count_1, delta_count_5, delta_count_15]
+    # end
 
     def statistics
       deep_clone(@@storage_statistics)
@@ -158,21 +157,21 @@ class Storage
 
         @@previous_storage = storage.clone
 
-        if storage_delta.keys.count > 0
+        # if storage_delta.keys.count > 0
 
-          storage_delta.each do |item_name, delta_count|
-            storage_count = storage[item_name]
-            delta_count_1, delta_count_5, delta_count_15 = delta_averages(item_name, delta_count)
-            next if delta_count_15 == "-" && storage_count == 0
+        #   storage_delta.each do |item_name, delta_count|
+        #     storage_count = storage[item_name]
+        #     delta_count_1, delta_count_5, delta_count_15 = delta_averages(item_name, delta_count)
+        #     next if delta_count_15 == "-" && storage_count == 0
 
-            @@storage_statistics[item_name] = OpenStruct.new(
-              delta_count: delta_count,
-              delta_count_1: delta_count_1,
-              delta_count_5: delta_count_5,
-              delta_count_15: delta_count_15
-            )
-          end
-        end
+        #     @@storage_statistics[item_name] = OpenStruct.new(
+        #       delta_count: delta_count,
+        #       delta_count_1: delta_count_1,
+        #       delta_count_5: delta_count_5,
+        #       delta_count_15: delta_count_15
+        #     )
+        #   end
+        # end
       end
 
       @@storage_statistics

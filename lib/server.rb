@@ -39,6 +39,28 @@ class Server
     Zlib::crc32(@name.to_s)
   end
 
+  def update_websocket
+    WebServer.settings.server_sockets.each do |s|
+      s.send({
+        name: @name,
+        connected: connected?,
+        authenticated: authenticated?,
+        available: available?,
+        rtt: @rtt.nil? ? '-' : "#{@rtt} ms"
+      }.to_json)
+    end
+  end
+
+  def rtt
+    @rtt
+  end
+
+  def rtt=(value)
+    @rtt = value
+    update_websocket
+    @rtt
+  end
+
 ################################################################################
 
   def host_tag

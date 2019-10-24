@@ -16,7 +16,7 @@ class RCon
         type: type,
         payload: payload
       )
-      $logger.debug(:rcon) { "#{self.id}: Built Packet ID #{packet_fields.id}" }
+      $logger.debug(:rcon) { "[#{rcon_tag}] Built Packet ID #{packet_fields.id}" }
       packet_fields
     end
 
@@ -52,7 +52,7 @@ class RCon
 
       buffer.rewind
       packet_fields = decode_packet(buffer.read)
-      $logger.debug(:rcon) { %([#{self.id}:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
+      $logger.debug(:rcon) { %([#{rcon_tag}:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
       register_response(packet_fields)
       packet_fields
     end
@@ -61,7 +61,7 @@ class RCon
       received_packet = recv_packet
       return if received_packet.nil?
 
-      raise "[#{self.id}] Authentication Failed!" if received_packet.id == -1
+      raise "[#{rcon_tag}] Authentication Failed!" if received_packet.id == -1
       packet_callback(received_packet)
     end
 
@@ -79,7 +79,7 @@ class RCon
         total_sent += socket.send(buffer.read, 0)
       end while total_sent < buffer.length
 
-      $logger.debug(:rcon) { %([#{self.id}:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
+      $logger.debug(:rcon) { %([#{rcon_tag}:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 
       total_sent
     rescue Errno::ECONNABORTED, Errno::ESHUTDOWN

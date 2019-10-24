@@ -19,10 +19,10 @@
       %td= server.host
       %td= server.client_port
       %td= server.factorio_port
-      %td= server.connected?
-      %td= server.authenticated?
-      %td= server.available?
-      %td
+      %td{ id: "#{server.name}-connected" }= server.connected?
+      %td{ id: "#{server.name}-authenticated" }= server.authenticated?
+      %td{ id: "#{server.name}-available" }= server.available?
+      %td{ id: "#{server.name}-rtt" }
         - if server.rtt.nil?
           \-
         - else
@@ -35,3 +35,24 @@
           %a{ href: "/servers/stop/#{server.name}", title: "Stop Server '#{server.name}'" } STOP
           |
         %a{ href: "/servers/delete/#{server.name}", title: "Delete Server '#{server.name}'" } DELETE
+
+:javascript
+  window.onload = function(){
+    (function(){
+      var show = function(msg){
+        console.log(msg);
+        var server = JSON.parse(msg);
+        var el = document.getElementById(server.name + "-connected");
+        el.innerHTML = server.connected;
+        var el = document.getElementById(server.name + "-authenticated");
+        el.innerHTML = server.authenticated;
+        var el = document.getElementById(server.name + "-available");
+        el.innerHTML = server.available;
+        var el = document.getElementById(server.name + "-rtt");
+        el.innerHTML = server.rtt;
+      };
+
+      var ws       = new WebSocket("ws://" + window.location.host + window.location.pathname);
+      ws.onmessage = function(m) { show(m.data); };
+    })();
+  }

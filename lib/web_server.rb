@@ -10,12 +10,15 @@ require 'sinatra-websocket'
 class WebServer < Sinatra::Application
   enable :logging
   set :logger, $logger
-  set :server, :puma
+  # set :server, :puma
+  set :server, :thin
   set :port, 4242
   set :bind, "0.0.0.0"
   set :sockets, []
-  set :storage_sockets, []
   set :threaded, true
+
+  set :storage_sockets, []
+  set :server_sockets, []
 
   set :views, File.join(Dir.pwd, "web", "views")
   set :public_folder, File.join(Dir.pwd, "web", "static")
@@ -47,7 +50,6 @@ class WebServer < Sinatra::Application
         ws.onclose do
           settings.storage_sockets.delete(ws)
         end
-
       end
     end
   end
@@ -57,12 +59,24 @@ class WebServer < Sinatra::Application
   end
 
   get "/threads" do
-    @threads = Thread.list.sort_by { |t| t.nil? ? '' : t.name }
+    @threads = Thread.list.sort_by { |t| t.nil? ? '' : (t.name.nil? ? '' : t.name) }
     haml :threads
   end
 
   get "/servers" do
-    haml :servers
+    if !request.websocket?
+      haml :servers
+    else
+      request.websocket do |ws|
+        ws.onopen do
+          settings.server_sockets << ws
+        end
+
+        ws.onclose do
+          settings.server_sockets.delete(ws)
+        end
+      end
+    end
   end
 
   get '/servers/start/:name' do
@@ -105,18 +119,12 @@ class WebServer < Sinatra::Application
     else
       request.websocket do |ws|
         ws.onopen do
-          ws.send("Hello World!")
           settings.sockets << ws
         end
-
-        # ws.onmessage do |msg|
-        #   EM.next_tick { settings.sockets.each { |s| s.send(msg) } }
-        # end
 
         ws.onclose do
           settings.sockets.delete(ws)
         end
-
       end
     end
   end

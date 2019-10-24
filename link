@@ -71,7 +71,7 @@ schedule_server_logistics
 schedule_server_ping
 schedule_server_research
 schedule_server_signals
-# schedule_task_prometheus
+schedule_task_prometheus
 schedule_task_statistics
 
 ThreadPool.execute
