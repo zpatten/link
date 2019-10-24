@@ -5,7 +5,8 @@
     %th Thread Name
     %th Thread Status
     %th Thread Priority
-  - ThreadPool.thread_group.list.each do |thread|
+  / - ThreadPool.thread_group.list.each do |thread|
+  - @threads.each do |thread|
     %tr
       %td= thread.object_id
       %td.align-left

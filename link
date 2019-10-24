@@ -31,7 +31,7 @@ SLEEP_TIME = 0.0001
 LINK_ROOT = Dir.pwd
 
 STDOUT.sync = true
-Thread.abort_on_exception = true
+# Thread.abort_on_exception = true
 
 ################################################################################
 
@@ -71,7 +71,7 @@ schedule_server_logistics
 schedule_server_ping
 schedule_server_research
 schedule_server_signals
-schedule_task_prometheus
+# schedule_task_prometheus
 schedule_task_statistics
 
 ThreadPool.execute

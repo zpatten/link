@@ -10,7 +10,12 @@ class RCon
     end
 
     def connected?
-      !@socket.nil? && !@socket.closed? && @connected
+      return false if @socket.nil?
+
+      @socket.remote_address
+      true
+    rescue Errno::ENOTCONN
+      false
     end
 
     def disconnected?
@@ -22,11 +27,7 @@ class RCon
 
       @socket = @socket_mutex.synchronize { TCPSocket.new(@host, @port) }
 
-      unless @socket.nil? || @socket.closed?
-        @authenticated = false
-        @connected     = true
-        @shutdown      = false
-
+      if connected?
         $logger.info(:rcon) { "[#{self.id}] Connected to #{host_tag}" }
 
         true
@@ -36,14 +37,12 @@ class RCon
     end
 
     def disconnect!
-      @authenticated = false
-      @connected     = false
-      @shutdown      = true
-
-      if !@socket.nil? && !@socket.closed?
+      if connected?
         @socket_mutex.synchronize { @socket.shutdown }
         $logger.info(:rcon) { "[#{self.id}] Disconnected from #{host_tag}" }
       end
+
+      @authenticated = false
     end
 
   end

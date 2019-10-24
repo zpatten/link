@@ -57,6 +57,7 @@ class WebServer < Sinatra::Application
   end
 
   get "/threads" do
+    @threads = Thread.list.sort_by { |t| t.nil? ? '' : t.name }
     haml :threads
   end
 
@@ -64,17 +65,32 @@ class WebServer < Sinatra::Application
     haml :servers
   end
 
+  get '/servers/start/:name' do
+    server = Servers.find_by_name(params[:name])
+    server.start!
+    server.startup!
+    sleep 1 while server.unavailable?
+    redirect '/servers'
+  end
+
+  get '/servers/stop/:name' do
+    server = Servers.find_by_name(params[:name])
+    server.shutdown!
+    server.stop!
+    sleep 1 while server.available?
+    redirect '/servers'
+  end
+
   get "/servers/create" do
-    haml "servers/create".to_sym
+    haml :"servers/create"
   end
 
   post "/servers/create" do
-    pp params
     Servers.create(params)
     redirect '/servers'
   end
 
-  get "/servers/delete/:id" do
+  get "/servers/delete/:name" do
     Servers.delete(params)
     redirect '/servers'
   end

@@ -4,7 +4,7 @@ class RCon
   module Authentication
 
     def authenticated?
-      !!@authenticated
+      @authenticated
     end
 
     def unauthenticated?

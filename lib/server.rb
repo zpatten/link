@@ -53,6 +53,17 @@ class Server
 
 ################################################################################
 
+  def running!(running=false)
+    Config.servers[@name]['running'] = running
+    Config.save!
+  end
+
+  def running?
+    !!Config.servers[@name]['running']
+  end
+
+################################################################################
+
   def to_h
     { self.name => self.details }
   end
@@ -62,19 +73,19 @@ class Server
   end
 
   def config_path
-    File.expand_path(File.join(self.path, 'config'))
+    File.join(self.path, 'config')
   end
 
   def mods_path
-    File.expand_path(File.join(self.path, 'mods'))
+    File.join(self.path, 'mods')
   end
 
   def saves_path
-    File.expand_path(File.join(self.path, 'saves'))
+    File.join(self.path, 'saves')
   end
 
   def save_file
-    File.expand_path(File.join(self.server_saves_path, "#{self.name}.zip"))
+    File.join(self.saves_path, "#{self.name}.zip")
   end
 
 ################################################################################
@@ -105,9 +116,14 @@ class Server
     system %(/usr/bin/env chcon -Rt svirt_sandbox_file_t #{self.path})
     puts "command=#{command}"
     system command
+
+    running!(true)
   end
 
   def stop!
+    running!(false)
+
+    shutdown!
     command = Array.new
     command << %(sudo)
     command << %(docker stop)
@@ -126,6 +142,7 @@ class Server
 
   def shutdown!
     @rcon.shutdown!
+    self.rtt = nil
   end
 
 ################################################################################

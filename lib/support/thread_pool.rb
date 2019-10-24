@@ -76,7 +76,8 @@ class ThreadPool
       what     = schedule.what
 
       servers  = Servers.find(what)
-      [servers].flatten.compact.map(&:startup!)
+      # [servers].flatten.compact.map(&:startup!)
+      servers.delete_if { |server| server.unavailable? } unless servers.nil?
 
       if parallel
         servers.each do |server|
@@ -133,23 +134,23 @@ class ThreadPool
       schedule_log(:thread, :scheduled, schedule)
     end
 
-    def log
-      $logger.info { ("=" * 80) }
-      @@thread_group.list.each do |thread|
-        name = (thread.thread_variable_get(:name) || "<starting>")
-        $logger.debug { "[THREAD] #{name}: #{thread.status}" }
-      end
-      $logger.info { ("=" * 80) }
-    end
+    # def log
+    #   $logger.info { ("=" * 80) }
+    #   @@thread_group.list.each do |thread|
+    #     name = (thread.thread_variable_get(:name) || "<starting>")
+    #     $logger.debug { "[THREAD] #{name}: #{thread.status}" }
+    #   end
+    #   $logger.info { ("=" * 80) }
+    # end
 
-    def display
-      puts "\e[H"
-      puts "\e[2J"
-      @@thread_group.list.each do |thread|
-        name = (thread.thread_variable_get(:name) || "<starting>")
-        puts "[THREAD] #{name}: #{thread.status}"
-      end
-    end
+    # def display
+    #   puts "\e[H"
+    #   puts "\e[2J"
+    #   @@thread_group.list.each do |thread|
+    #     name = (thread.thread_variable_get(:name) || "<starting>")
+    #     puts "[THREAD] #{name}: #{thread.status}"
+    #   end
+    # end
 
     def shutdown!
       @@thread_schedules = Array.new
@@ -165,9 +166,11 @@ class ThreadPool
           end
         end
 
-        @@thread_group.list.each do |thread|
-          thread.wakeup if thread.status == 'sleep'
-        end
+        # @@thread_group.list.each do |thread|
+        #   thread.wakeup if thread.status == 'sleep'
+        # end
+        Thread.pass
+
         self.metric.set(@@thread_group.list.count)
       end
     end

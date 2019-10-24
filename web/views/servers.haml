@@ -9,7 +9,9 @@
     %th Factorio Port
     %th Connected?
     %th Authenticated?
+    %th Available?
     %th RTT
+    %th Actions
   - Servers.all.each do |server|
     %tr
       %td= server.id
@@ -19,4 +21,17 @@
       %td= server.factorio_port
       %td= server.connected?
       %td= server.authenticated?
-      %td #{server.rtt} ms
+      %td= server.available?
+      %td
+        - if server.rtt.nil?
+          \-
+        - else
+          #{server.rtt} ms
+      %td
+        - if server.unavailable?
+          %a{ href: "/servers/start/#{server.name}", title: "Start Server '#{server.name}'" } START
+          |
+        - if server.available?
+          %a{ href: "/servers/stop/#{server.name}", title: "Stop Server '#{server.name}'" } STOP
+          |
+        %a{ href: "/servers/delete/#{server.name}", title: "Delete Server '#{server.name}'" } DELETE

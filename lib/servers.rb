@@ -60,21 +60,24 @@ class Servers
 
     def delete(params)
       server_name = params[:name]
-      if (server = Servers.find_by_name(server_name))
+      if (server = @@servers.delete(server_name))
+        Config['servers'].delete(server_name)
+        Config.save!
+
         server.stop!
 
         sleep(1)
 
-        FileUtils.cp_r(
-          server.save_file,
-          File.join(factorio_saves, File.basename(server.save_file))
-        )
+        begin
+          FileUtils.cp_r(
+            server.save_file,
+            File.join(factorio_saves, File.basename(server.save_file))
+          )
+        rescue Errno::ENOENT
+        end
 
-        FileUtils.rm_rf(server.path)
+        # FileUtils.rm_rf(server.path)
       end
-      @@servers.delete(server_name)
-      Config['servers'].delete(server_name)
-      Config.save!
     end
 
     def create(params)
@@ -89,15 +92,12 @@ class Servers
       }
       server = Server.new(server_name, server_details)
 
-      Config['servers'] ||= Hash.new
-      Config['servers'].merge!(server.to_h)
-
       autoplace_off = { frequency: 0, size: 0, richness: 0 }
       autoplace_on  = { frequency: 2, size: 2, richness: 2 }
 
-      FileUtils.mkdir_p(File.dirname(server.config_path))
-      FileUtils.mkdir_p(File.dirname(server.mods_path))
-      FileUtils.mkdir_p(File.dirname(server.saves_path))
+      FileUtils.mkdir_p(server.config_path)
+      FileUtils.mkdir_p(server.mods_path)
+      FileUtils.mkdir_p(server.saves_path)
 
       map_gen_settings_json = {
         water: 0,
@@ -157,6 +157,8 @@ class Servers
 
       FileUtils.cp_r(factorio_mods, server.path)
 
+      Config['servers'] ||= Hash.new
+      Config['servers'].merge!(server.to_h)
       Config.save!
       $logger.info(:servers) { "Created server #{server_name}" }
     end

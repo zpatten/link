@@ -15,32 +15,25 @@ class RCon
   include RCon::Queue
   include RCon::Responses
 
-  attr_reader :thread
-
   def initialize(name, host, port, password)
-    @name     = name
-    @host     = host
-    @port     = port
-    @password = password
+    @name           = name
+    @host           = host
+    @port           = port
+    @password       = password
 
-    @connected     = false
-    @authenticated = false
-    @started       = false
-    @shutdown      = false
+    @authenticated  = false
 
-    @callbacks    = Hash.new
-    @responses    = Hash.new
-    # @packet_queue = Array.new
-    @packet_queue = ::Queue.new
+    @manager_thread = nil
+    @manager_mutex = Mutex.new
+    @socket_rx_thread    = nil
+    @socket_tx_thread    = nil
 
-    # @queue_mutex    = Mutex.new
-    # @callback_mutex = Mutex.new
-    # @response_mutex = Mutex.new
+    @callbacks      = Hash.new
+    @responses      = Hash.new
+    @packet_queue   = ::Queue.new
 
-    @socket = nil
-    @socket_mutex       = Mutex.new
-    # @socket_read_mutex  = Mutex.new
-    # @socket_write_mutex = Mutex.new
+    @socket         = nil
+    @socket_mutex   = Mutex.new
   end
 
 ################################################################################
@@ -54,28 +47,7 @@ class RCon
     @name
   end
 
-  def started?
-    @started
-  end
-
-  def startup!
-    unless started?
-      @started = true
-      conn_manager
-      poll_send
-      poll_recv
-    end
-  end
-
-  def shutdown!
-    @shutdown = true
-    disconnect!
-    true
-  end
-
-  def shutdown?
-    @shutdown
-  end
+################################################################################
 
   def available?
     (connected? && authenticated?)
@@ -85,53 +57,73 @@ class RCon
     (disconnected? || unauthenticated?)
   end
 
-  def on_exception(e)
-    $logger.fatal(:rcon) { "Caught Exception #{e}; will disconnect if connected!" }
-    disconnect! if connected?
+################################################################################
+
+  def startup!
+    return if !@manager_thread.nil? && @manager_thread.alive?
+    @manager_mutex.synchronize do
+      @manager_thread = ThreadPool.thread("#{rcon_tag}-connect") do
+        while disconnected? do
+          begin
+            connect!
+            break if connected?
+          rescue Errno::ECONNABORTED, Errno::ECONNREFUSED, Errno::ECONNRESET => e
+            $logger.fatal(:rcon) { "[#{rcon_tag}] Caught Exception: #{e.message}" }
+            sleep 3
+          end
+        end
+        socket_tx_thread
+        socket_rx_thread
+        authenticate if connected? && unauthenticated?
+      rescue => e
+        $logger.fatal(:rcon) { "[#{rcon_tag}] Caught Exception: #{e.full_message}" }
+        shutdown!
+      end
+    end
+  end
+
+  def shutdown!
+    disconnect!
+
+    @manager_thread && @manager_thread.kill
+    @socket_rx_thread && @socket_rx_thread.kill
+    @socket_tx_thread && @socket_tx_thread.kill
+
+    @manager_thread = nil
+    @socket_rx_thread    = nil
+    @socket_tx_thread    = nil
+
+    @authenticated = false
 
     true
-  rescue
-    false
   end
 
-  def conn_manager
-    ThreadPool.thread("#{rcon_tag}-manager") do
-      RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
-        loop do
-          connect! if disconnected? && !shutdown?
-          authenticate if connected? && unauthenticated? && !shutdown?
+################################################################################
 
-          break if shutdown?
-          Thread.stop while connected?
-        end
-      end
+  def socket_tx_thread
+    return if !@socket_tx_thread.nil? && @socket_tx_thread.alive?
+    @socket_tx_thread = ThreadPool.thread("#{rcon_tag}-socket-tx", priority: 1) do
+      send_packet(get_queued_packet.packet_fields) while connected?
+    rescue Errno::EPIPE
+      startup!
+    rescue => e
+      $logger.fatal(:rcon) { "[#{rcon_tag}] Caught Exception: #{e.full_message}" }
+      shutdown!
     end
   end
 
-  def poll_send
-    ThreadPool.thread("#{rcon_tag}-send", priority: 1) do
-      RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
-        loop do
-          send_packet(get_queued_packet.packet_fields) while connected? && !shutdown?
-
-          break if shutdown?
-          Thread.stop
-        end
-      end
+  def socket_rx_thread
+    return if !@socket_rx_thread.nil? && @socket_rx_thread.alive?
+    @socket_rx_thread = ThreadPool.thread("#{rcon_tag}-socket-rx", priority: 1) do
+      receive_packet while connected?
+    rescue Errno::EPIPE
+      startup!
+    rescue => e
+      $logger.fatal(:rcon) { "[#{rcon_tag}] Caught Exception: #{e.full_message}" }
+      shutdown!
     end
   end
 
-  def poll_recv
-    ThreadPool.thread("#{rcon_tag}-recv", priority: 1) do
-      RescueRetry.attempt(max_attempts: -1, on_exception: method(:on_exception)) do
-        loop do
-          receive_packet while connected? && !shutdown?
-
-          break if shutdown?
-          Thread.stop
-        end
-      end
-    end
-  end
+################################################################################
 
 end
