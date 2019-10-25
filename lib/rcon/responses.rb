@@ -14,7 +14,7 @@ class RCon
     end
 
     def find_response(packet_id)
-      Thread.stop while (response = @responses.delete(pc.id)).nil?
+      Thread.stop while (response = @responses.delete(packet_id)).nil?
       $logger.debug(:rcon) { "[#{rcon_tag}] Find Response(#{packet_id}): #{response}" }
       response
     end

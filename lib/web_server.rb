@@ -59,7 +59,8 @@ class WebServer < Sinatra::Application
   end
 
   get "/threads" do
-    @threads = Thread.list.sort_by { |t| t.nil? ? '' : (t.name.nil? ? '' : t.name) }
+    @threads = Thread.list.dup.delete_if { |t| t.nil? || t.name.nil? }
+    @threads = @threads.sort_by { |t| t.name }
     haml :threads
   end
 

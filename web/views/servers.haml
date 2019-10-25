@@ -1,4 +1,5 @@
 %h1 Servers
+%a{ href: '/servers/create', title: 'Create Server' } CREATE SERVER
 
 %table
   %tr
@@ -34,7 +35,7 @@
         - if server.available?
           %a{ href: "/servers/stop/#{server.name}", title: "Stop Server '#{server.name}'" } STOP
           |
-        %a{ href: "/servers/delete/#{server.name}", title: "Delete Server '#{server.name}'" } DELETE
+        %a{ href: "/servers/delete/#{server.name}", title: "Delete Server '#{server.name}'", onclick: "return confirm('WARNING: Are you sure you want to delete the server \\'#{server.name}\\'?')" } DELETE
 
 :javascript
   window.onload = function(){

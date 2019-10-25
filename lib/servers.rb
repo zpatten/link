@@ -60,24 +60,50 @@ class Servers
 
     def delete(params)
       server_name = params[:name]
-      if (server = @@servers.delete(server_name))
-        Config['servers'].delete(server_name)
-        Config.save!
-
+      if (server = find_by_name(server_name))
         server.stop!
+
+        Config.servers.delete(server_name)
+        Config.save!
+        @@servers.delete(server_name)
 
         sleep(1)
 
-        begin
+        if File.exists?(server.save_file)
+          begin
+            FileUtils.mkdir_p(factorio_saves)
+          rescue Errno::ENOENT
+          end
+
           FileUtils.cp_r(
             server.save_file,
-            File.join(factorio_saves, File.basename(server.save_file))
+            File.join(factorio_saves, "#{server_name}.zip")
           )
-        rescue Errno::ENOENT
         end
 
         # FileUtils.rm_rf(server.path)
       end
+    end
+
+    def server_create_types
+      types = Array.new
+      types += server_types
+      types += server_saves
+      types
+    end
+
+    def server_saves
+      begin
+        FileUtils.mkdir_p(factorio_saves)
+      rescue Errno::ENOENT
+      end
+
+      save_files = Dir.glob(File.join(factorio_saves, '*.zip'), File::FNM_CASEFOLD)
+      save_files.collect { |save_file| File.basename(save_file) }
+    end
+
+    def server_types
+      %w( coal stone copper-ore iron-ore uranium-ore crude-oil )
     end
 
     def create(params)
@@ -148,8 +174,11 @@ class Servers
       config_json_path = File.join(server.config_path, 'server-settings.json')
       IO.write(config_json_path, JSON.pretty_generate(config_json))
 
-      if server_type.nil?
-        FileUtils.cp(factorio_save, server.save_path)
+      if server_saves.include?(server_type)
+        factorio_save = File.join(factorio_saves, server_type)
+        $logger.info { "factorio_save=#{factorio_save}" }
+        $logger.info { "server.save_path=#{server.save_file}" }
+        FileUtils.cp(factorio_save, server.save_file)
       end
 
       server_adminlist_path = File.join(server.config_path, 'server-adminlist.json')

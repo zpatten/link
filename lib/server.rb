@@ -76,8 +76,11 @@ class Server
 ################################################################################
 
   def running!(running=false)
-    Config.servers[@name]['running'] = running
-    Config.save!
+    unless Config.servers[@name].nil?
+      Config.servers[@name]['running'] = running
+      Config.save!
+    end
+    running
   end
 
   def running?
@@ -107,7 +110,7 @@ class Server
   end
 
   def save_file
-    File.join(self.saves_path, "#{self.name}.zip")
+    File.join(self.saves_path, "save.zip")
   end
 
 ################################################################################
