@@ -99,7 +99,13 @@ class Servers
       end
 
       save_files = Dir.glob(File.join(factorio_saves, '*.zip'), File::FNM_CASEFOLD)
-      save_files.collect { |save_file| File.basename(save_file) }
+      save_files.collect do |save_file|
+        {
+          file: File.basename(save_file),
+          size: File.size(save_file),
+          time: File.mtime(save_file)
+        }
+      end
     end
 
     def server_types

@@ -1,9 +1,7 @@
 source 'https://rubygems.org'
 
-# gem 'activesupport'
 gem 'eventmachine'
 gem 'haml'
-gem 'ruby-metrics'
 gem 'sinatra'
 gem 'sinatra-contrib'
 gem 'sinatra-websocket'

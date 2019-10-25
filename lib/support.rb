@@ -55,7 +55,15 @@ def pp_inline(object)
   PP.singleline_pp(object, "")
 end
 
+def filesize(size)
+  units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'Pib', 'EiB']
 
+  return '0.0 B' if size == 0
+  exp = (Math.log(size) / Math.log(1024)).to_i
+  exp = 6 if exp > 6
+
+  '%.1f %s' % [size.to_f / 1024 ** exp, units[exp]]
+end
 
 # Displays RCON response packets for debugging or other uses (i.e. when we do not care about the response)
 def rcon_print(host, packet_fields, data)

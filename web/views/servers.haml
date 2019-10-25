@@ -8,6 +8,7 @@
     %th Host
     %th Client Port
     %th Factorio Port
+    %th Research?
     %th Connected?
     %th Authenticated?
     %th Available?
@@ -20,6 +21,7 @@
       %td= server.host
       %td= server.client_port
       %td= server.factorio_port
+      %td= server.research
       %td{ id: "#{server.name}-connected" }= server.connected?
       %td{ id: "#{server.name}-authenticated" }= server.authenticated?
       %td{ id: "#{server.name}-available" }= server.available?
