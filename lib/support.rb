@@ -52,7 +52,7 @@ class Object
 end
 
 def pp_inline(object)
-  PP.singleline_pp(object, "")
+  object.ai
 end
 
 def filesize(size)

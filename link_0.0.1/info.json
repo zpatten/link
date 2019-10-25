@@ -1,0 +1,11 @@
+{
+  "name": "link",
+  "version": "0.0.1",
+  "title": "Link",
+  "author": "Zachary Patten",
+  "contact": "",
+  "homepage": "https://github.com/zpatten/link",
+  "factorio_version": "0.17",
+  "dependencies": ["base >= 0.17"],
+  "description": "Links Factorio worlds together for gigabase building."
+}

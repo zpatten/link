@@ -180,7 +180,7 @@ class Servers
       config_json_path = File.join(server.config_path, 'server-settings.json')
       IO.write(config_json_path, JSON.pretty_generate(config_json))
 
-      if server_saves.include?(server_type)
+      if server_saves.collect { |save| save[:file] }.include?(server_type)
         factorio_save = File.join(factorio_saves, server_type)
         $logger.info { "factorio_save=#{factorio_save}" }
         $logger.info { "server.save_path=#{server.save_file}" }

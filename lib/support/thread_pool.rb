@@ -134,24 +134,6 @@ class ThreadPool
       schedule_log(:thread, :scheduled, schedule)
     end
 
-    # def log
-    #   $logger.info { ("=" * 80) }
-    #   @@thread_group.list.each do |thread|
-    #     name = (thread.thread_variable_get(:name) || "<starting>")
-    #     $logger.debug { "[THREAD] #{name}: #{thread.status}" }
-    #   end
-    #   $logger.info { ("=" * 80) }
-    # end
-
-    # def display
-    #   puts "\e[H"
-    #   puts "\e[2J"
-    #   @@thread_group.list.each do |thread|
-    #     name = (thread.thread_variable_get(:name) || "<starting>")
-    #     puts "[THREAD] #{name}: #{thread.status}"
-    #   end
-    # end
-
     def shutdown!
       @@thread_schedules = Array.new
       @@thread_group.list.map(&:exit)
@@ -164,12 +146,10 @@ class ThreadPool
             run(schedule)
             schedule_next_run(schedule)
           end
+          Thread.pass
         end
 
-        # @@thread_group.list.each do |thread|
-        #   thread.wakeup if thread.status == 'sleep'
-        # end
-        Thread.pass
+        sleep SLEEP_TIME
 
         self.metric.set(@@thread_group.list.count)
       end

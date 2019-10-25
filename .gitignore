@@ -1,8 +1,8 @@
-*.zip
-*.tar*
-*.json
-*.bat
+config.json
+storage.json
 *.log
 
-factorio/
+mods/
+saves/
 servers/
+tmp/
