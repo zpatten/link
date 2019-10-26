@@ -55,7 +55,7 @@ class Signals
             signal_data = {
               "signal-link-epoch" => nil,
               "signal-link-network-id" => network_id,
-              "signal-link-source-id" => server.id
+              "signal-link-source-id" => server.network_id
             }
             signals = scrub_signals(signals, signal_data)
           end
@@ -65,8 +65,6 @@ class Signals
 
           # update the signals
           update_signals(network_id, unit_number, signals)
-
-          # IO.write("signals.json", JSON.pretty_generate(signal_networks))
 
           signals
         end

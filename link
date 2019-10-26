@@ -62,17 +62,17 @@ require_relative 'lib/options'
 
 Requests.reset
 
-schedule_server_chats
-schedule_server_command_whitelist
-schedule_server_commands
-schedule_server_current_research
-schedule_server_id
-schedule_server_logistics
-schedule_server_ping
-schedule_server_research
+# schedule_server_chats
+# schedule_server_command_whitelist
+# schedule_server_commands
+# schedule_server_current_research
+# schedule_server_id
+# schedule_server_logistics
+# schedule_server_ping
+# schedule_server_research
 schedule_server_signals
-schedule_task_prometheus
-schedule_task_statistics
+# schedule_task_prometheus
+# schedule_task_statistics
 
 ThreadPool.execute
 

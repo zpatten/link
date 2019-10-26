@@ -15,7 +15,7 @@ class MemoryCache
     def fetch(key, options={}, &block)
       value = nil
       if (value = read(key, options)).nil?
-        $logger.debug(:cache) { "Fetch: #{key}#{options.empty? ? "" : "(#{options})"}" }
+        # $logger.debug(:cache) { "Fetch: #{key}#{options.empty? ? "" : "(#{options})"}" }
         return nil if !block_given?
         value = block.call
         write(key, value, options)
@@ -33,15 +33,15 @@ class MemoryCache
 
       unless cache_item.nil?
         if expired?(cache_item[:expires_at])
-          $logger.debug(:cache) { "Expired: #{key}" }
+          # $logger.debug(:cache) { "Expired: #{key}" }
           delete(key, options)
         else
-          $logger.debug(:cache) { "Read-Hit: #{key}" }
+          # $logger.debug(:cache) { "Read-Hit: #{key}" }
           value = (cache_item[:value] == :nil ? nil : cache_item[:value])
           return deep_clone(value)
         end
       end
-      $logger.debug(:cache) { "Miss: #{key}" }
+      # $logger.debug(:cache) { "Miss: #{key}" }
 
       nil
     end
@@ -50,7 +50,7 @@ class MemoryCache
       expires_in = (options.delete(:expires_in) || -1)
       expires_at = (expires_in == -1 ? -1 : (Time.now.to_i + expires_in))
 
-      $logger.debug(:cache) { "Write: #{key}#{options.empty? ? "" : "(#{options})"}" }
+      # $logger.debug(:cache) { "Write: #{key}#{options.empty? ? "" : "(#{options})"}" }
 
       value = :nil if value.nil?
 
@@ -71,7 +71,7 @@ class MemoryCache
         $_memory_cache_store.delete(key)
       end
 
-      $logger.debug(:cache) { "Deleted: #{key}" }
+      # $logger.debug(:cache) { "Deleted: #{key}" }
     end
 
     def expired?(expires_at)

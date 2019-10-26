@@ -1,49 +1,67 @@
 
-function calculate_position(entity, offset)
+function calculate_position(entity)
   local p_network_id, p_lamp, search_area
 
-  local x = entity.position.x
-  local y = entity.position.y
-  local rotation = entity.direction
+  local offset_map = {}
+  offset_map[LINK_RECEIVER_COMBINATOR_NAME] = {}
 
-  if entity.direction == 0 then -- South-North
-    p_network_id = { x + offset, y - 1 }
-    p_lamp = { x - 1 - offset, y - 1}
-    search_area = { { x - 1 + offset, y - 1 }, { x + 1 + offset, y } }
-  elseif entity.direction == 2 then -- West-East
-    p_network_id = { x, y + offset }
-    p_lamp = { x, y - 1 + offset}
-    search_area = { { x, y - 1 + offset }, { x + 1, y + 1 + offset } }
-  elseif entity.direction == 4 then -- North-South
-    p_network_id = { x - 1 - offset, y }
-    p_lamp = { x - offset, y}
-    search_area = { { x - 1 - offset, y }, { x + 1 - offset, y + 1 } }
-  elseif entity.direction == 6 then -- East-West
-    p_network_id = { x - 1, y - 1 - offset }
-    p_lamp = { x - 1, y - offset}
-    search_area = { { x - 1, y - 1 - offset }, { x, y + 1 - offset } }
-  end
+  offset_map[LINK_RECEIVER_COMBINATOR_NAME][0] = { x = 1, y = 0 }
+  offset_map[LINK_RECEIVER_COMBINATOR_NAME][2] = { x = 0, y = 1 }
+  offset_map[LINK_RECEIVER_COMBINATOR_NAME][4] = { x = -1, y = 0 }
+  offset_map[LINK_RECEIVER_COMBINATOR_NAME][6] = { x = 0, y = -1 }
+
+  offset_map[LINK_TRANSMITTER_COMBINATOR_NAME] = {}
+  offset_map[LINK_TRANSMITTER_COMBINATOR_NAME][0] = { x = 1, y = 0 }
+  offset_map[LINK_TRANSMITTER_COMBINATOR_NAME][2] = { x = -1, y = 1 }
+  offset_map[LINK_TRANSMITTER_COMBINATOR_NAME][4] = { x = -1, y = -1 }
+  offset_map[LINK_TRANSMITTER_COMBINATOR_NAME][6] = { x = 0, y = -1 }
+
+  p_network_id = {
+    entity.position.x + offset_map[entity.name][entity.direction].x,
+    entity.position.y + offset_map[entity.name][entity.direction].y
+  }
+
+  -- if entity.direction == 0 then -- South-North
+  --   p_network_id = {
+  --     x + offset_map[entity.name][entity.direction].x,
+  --     y + offset_map[entity.name][entity.direction].x
+  --   }
+  --   -- p_lamp = { x - 1 - offset, y - 1}
+  --   -- search_area = { { x - 1 + offset, y - 1 }, { x + 1 + offset, y } }
+  -- elseif entity.direction == 2 then -- West-East
+  --   p_network_id = { x, y - offset_map[entity.name][entity.direction] }
+  --   -- p_lamp = { x, y - 1 + offset}
+  --   -- search_area = { { x, y - 1 + offset }, { x + 1, y + 1 + offset } }
+  -- elseif entity.direction == 4 then -- North-South
+  --   p_network_id = { x - offset_map[entity.name][entity.direction], y }
+  --   -- p_lamp = { x - offset, y}
+  --   -- search_area = { { x, y - offset }, { x + 1 - offset, y + 1 } }
+  -- elseif entity.direction == 6 then -- East-West
+  --   p_network_id = { x, y + offset_map[entity.name][entity.direction] }
+  --   -- p_lamp = { x - 1, y - offset}
+  --   -- search_area = { { x - 1, y - 1 - offset }, { x, y + 1 - offset } }
+  -- end
 
   return {
     p_lamp = p_lamp,
-    p_network_id = p_network_id,
-    rotation = rotation,
-    search_area = search_area
+    p_network_id = p_network_id
   }
 end
 
-function create_combinator(entity, offset)
-  local position = calculate_position(entity, offset)
+function create_combinator(entity)
+  local position = calculate_position(entity)
 
   local link_network_id = entity.surface.create_entity{
     name = LINK_NETWORK_ID_COMBINATOR_NAME,
     position = position.p_network_id,
-    force = entity.force
+    force = entity.force,
+    direction = entity.direction
   }
 
   link_network_id.operable = true
   link_network_id.minable = false
   link_network_id.destructible = false
+  link_network_id.rotatable = false
 
   return {
     link_network_id = link_network_id
@@ -89,16 +107,18 @@ function add_link_entity(entity)
   elseif entity.name == LINK_RECEIVER_COMBINATOR_NAME then
     game.print(string.format("add_link_entity(LINK_RECEIVER_COMBINATOR_NAME): %d", entity.unit_number))
     entity.operable = false
-    local parts = create_combinator(entity, 0)
+    entity.rotatable = false
+    local parts = create_combinator(entity)
     global.link_receiver_combinators[entity.unit_number] = {
       entity = entity,
       behaviour = entity.get_or_create_control_behavior(),
       link_network_id = parts.link_network_id
     }
   elseif entity.name == LINK_TRANSMITTER_COMBINATOR_NAME then
-    entity.operable = false
-    local parts = create_combinator(entity, 1)
     game.print(string.format("add_link_entity(LINK_TRANSMITTER_COMBINATOR_NAME): %d", entity.unit_number))
+    entity.operable = false
+    entity.rotatable = false
+    local parts = create_combinator(entity)
     local behavior = entity.get_or_create_control_behavior()
     local parameters = {
       first_signal = { type = "virtual", name = "signal-each" },
@@ -161,6 +181,8 @@ function remove_link_entity(entity)
     global.link_receiver_combinators[entity.unit_number] = nil
   elseif entity.name == LINK_TRANSMITTER_COMBINATOR_NAME then
     game.print(string.format("remove_link_entity(LINK_TRANSMITTER_COMBINATOR_NAME): %d", entity.unit_number))
+    data = global.link_transmitter_combinators[entity.unit_number]
+    destroy_combinator(data)
     global.link_transmitter_combinators[entity.unit_number] = nil
   elseif entity.name == LINK_ELECTRICAL_PROVIDER_NAME then
     game.print(string.format("remove_link_entity(LINK_ELECTRICAL_PROVIDER_NAME): %d", entity.unit_number))

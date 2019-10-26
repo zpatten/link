@@ -105,7 +105,7 @@ class Servers
           size: File.size(save_file),
           time: File.mtime(save_file)
         }
-      end
+      end.sort_by { |save_file| save_file[:time] }.reverse
     end
 
     def server_types

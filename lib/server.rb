@@ -39,6 +39,10 @@ class Server
     Zlib::crc32(@name.to_s)
   end
 
+  def network_id
+    [self.id].pack("L").unpack("l").first
+  end
+
   def update_websocket
     WebServer.settings.server_sockets.each do |s|
       s.send({

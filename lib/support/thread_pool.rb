@@ -52,6 +52,12 @@ class ThreadPool
     end
 
     def run_thread(schedule, *args)
+      thread_name = [
+        server_names(*args),
+        schedule.what.to_s
+      ].compact.join(":")
+      return if @@thread_group.list.map(&:name).compact.include?(thread_name)
+
       thread = Thread.new do
         trap_signals
         schedule_log(:thread, :started, schedule, Thread.current)
@@ -60,24 +66,19 @@ class ThreadPool
 
         schedule_log(:thread, :stopping, schedule, Thread.current)
       end
-        thread_name = [
-          server_names(*args),
-          schedule.what.to_s
-        ].compact.join(":")
       thread.name = thread_name
       thread.priority = schedule.options.fetch(:priority, 0)
       @@thread_group.add(thread)
     end
 
     def run(schedule)
-      schedule_log(:thread, :starting, schedule)
-
       parallel = schedule.parallel
       what     = schedule.what
 
       servers  = Servers.find(what)
       # [servers].flatten.compact.map(&:startup!)
       servers.delete_if { |server| server.unavailable? } unless servers.nil?
+      return if servers.nil? || servers.count == 0
 
       if parallel
         servers.each do |server|
@@ -131,7 +132,7 @@ class ThreadPool
       frequency   = schedule.frequency
       next_run_at = (now + (frequency - (now % frequency)))
       schedule.next_run_at = next_run_at
-      schedule_log(:thread, :scheduled, schedule)
+      # schedule_log(:thread, :scheduled, schedule)
     end
 
     def shutdown!

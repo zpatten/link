@@ -20,7 +20,7 @@ def set_receiver_combinator(host, packet_fields, server)
   unless payload.empty?
     network_ids = JSON.parse(payload)
     unless network_ids.empty?
-      $logger.debug(:signals_rx) { "[#{server.id}] Transmitting signals for circuit networks: #{pp_inline(network_ids)}" }
+      $logger.debug(:signals_rx) { "[#{server.id}] Transmitting signals for circuit networks: #{network_ids.ai}" }
 
       networks = Hash.new
       network_ids.each do |network_id|
@@ -61,7 +61,7 @@ def get_transmitter_combinator(host, packet_fields, server)
     unless unit_networks_list.empty?
       if unit_networks_list["noop"].nil?
         network_ids = unit_networks_list.values.map(&:keys).flatten.uniq.sort
-        $logger.debug(:combinator_tx) { "[#{server.id}] Received signals for circuit networks: #{pp_inline(network_ids)}" }
+        $logger.debug(:combinator_tx) { "[#{server.id}] Received signals for circuit networks: #{network_ids.ai}" }
         # signals received from transmitters
         Signals.rx(unit_networks_list, server)
       else
@@ -88,9 +88,11 @@ def schedule_server_signals
     # else
     #   %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator'))
     # end
-    command = %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', true))
     servers.each do |server|
+      force = ($tx_signals_initalized[server.name] != true)
+      command = %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', #{force}))
       server.rcon_command_nonblock(command, method(:get_transmitter_combinator))
+      $tx_signals_initalized[server.name] = true
     end
   end
 end

@@ -5,7 +5,7 @@ class Requests
   module ClassMethods
 
     def reset
-      @@requests ||= Hash.new
+      @@requests = Hash.new
 
       @@count_fractionals = nil
 

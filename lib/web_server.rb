@@ -96,6 +96,17 @@ class WebServer < Sinatra::Application
     redirect '/servers'
   end
 
+  get '/servers/restart/:name' do
+    server = Servers.find_by_name(params[:name])
+    server.shutdown!
+    server.stop!
+    sleep 1
+    server.start!
+    server.startup!
+    sleep 1 while server.unavailable?
+    redirect '/servers'
+  end
+
   get "/servers/create" do
     haml :"servers/create"
   end

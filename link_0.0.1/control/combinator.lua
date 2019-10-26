@@ -157,19 +157,19 @@ function fetch_circuit_network_id(entity)
     if behaviour and behaviour.valid then
       link_network_id_signal = behaviour.get_signal(1)
       if link_network_id_signal then
-        return link_network_id_signal.count
+        return tostring(link_network_id_signal.count)
       end
     end
   end
 
-  return 0
+  return tostring(0)
 end
 
 function scrub_signals(signals)
   local s = {}
 
   for _, signal in pairs(signals) do
-    if signal.count > 0 then
+    if signal.count ~= 0 then
       signal.index = #s+1
       s[#s+1] = signal
     end
@@ -178,8 +178,8 @@ function scrub_signals(signals)
   return s
 end
 
-function set_link_receiver_combinator(force, data)
-  local link_signal_networks = game.json_to_table(data)
+function set_link_receiver_combinator(force, json)
+  local link_signal_networks = game.json_to_table(json)
 
   if not global.rx_signals then global.rx_signals = {} end
 
@@ -194,7 +194,7 @@ function set_link_receiver_combinator(force, data)
 
       link_log("SIGNALS-RX", string.format("Processing Network ID: %d", link_network_id))
 
-      if force then
+      if force or not global.rx_signals[link_network_id] then
         global.rx_signals[link_network_id] = signals
       else
         local signals_map = {}
@@ -279,8 +279,8 @@ function link_lookup_item_type(item_name)
   rcon.print("")
 end
 
-function set_link_inventory_combinator(data)
-  local storage = game.json_to_table(data)
+function set_link_inventory_combinator(json)
+  local storage = game.json_to_table(json)
   local signals = {}
 
 

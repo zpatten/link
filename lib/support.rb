@@ -106,7 +106,11 @@ end
 def trap_signals
   %w( INT TERM QUIT ).each do |signal|
     Signal.trap(signal) do
-      $stderr.puts "[#{Thread.current.name}] Caught Signal: #{signal}"
+      if Thread.current.name.nil?
+        $stderr.puts "[#{Process.pid}] Caught Signal: #{signal}"
+      else
+        $stderr.puts "[#{Thread.current.name}] Caught Signal: #{signal}"
+      end
       exit
     end
   end
