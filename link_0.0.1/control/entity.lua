@@ -21,27 +21,6 @@ function calculate_position(entity)
     entity.position.y + offset_map[entity.name][entity.direction].y
   }
 
-  -- if entity.direction == 0 then -- South-North
-  --   p_network_id = {
-  --     x + offset_map[entity.name][entity.direction].x,
-  --     y + offset_map[entity.name][entity.direction].x
-  --   }
-  --   -- p_lamp = { x - 1 - offset, y - 1}
-  --   -- search_area = { { x - 1 + offset, y - 1 }, { x + 1 + offset, y } }
-  -- elseif entity.direction == 2 then -- West-East
-  --   p_network_id = { x, y - offset_map[entity.name][entity.direction] }
-  --   -- p_lamp = { x, y - 1 + offset}
-  --   -- search_area = { { x, y - 1 + offset }, { x + 1, y + 1 + offset } }
-  -- elseif entity.direction == 4 then -- North-South
-  --   p_network_id = { x - offset_map[entity.name][entity.direction], y }
-  --   -- p_lamp = { x - offset, y}
-  --   -- search_area = { { x, y - offset }, { x + 1 - offset, y + 1 } }
-  -- elseif entity.direction == 6 then -- East-West
-  --   p_network_id = { x, y + offset_map[entity.name][entity.direction] }
-  --   -- p_lamp = { x - 1, y - offset}
-  --   -- search_area = { { x - 1, y - 1 - offset }, { x, y + 1 - offset } }
-  -- end
-
   return {
     p_lamp = p_lamp,
     p_network_id = p_network_id
@@ -97,6 +76,34 @@ function add_link_entity(entity)
       entity = entity,
       inventory = entity.get_inventory(defines.inventory.chest)
     }
+  elseif entity.name == LINK_STORAGE_CHEST_NAME then
+    game.print(string.format("add_link_entity(LINK_STORAGE_CHEST_NAME): %d", entity.unit_number))
+    global.link_provider_chests[entity.unit_number] = {
+      entity = entity,
+      inventory = entity.get_inventory(defines.inventory.chest)
+    }
+  elseif entity.name == LINK_ELECTRICAL_PROVIDER_NAME then
+    game.print(string.format("add_link_entity(LINK_ELECTRICAL_PROVIDER_NAME): %d", entity.unit_number))
+    if not global.link_electrical_providers then global.link_electrical_providers = {} end
+    global.link_electrical_providers[entity.unit_number] = {
+      entity = entity
+    }
+  elseif entity.name == LINK_ELECTRICAL_REQUESTER_NAME then
+    game.print(string.format("add_link_entity(LINK_ELECTRICAL_REQUESTER_NAME): %d", entity.unit_number))
+    if not global.link_electrical_requesters then global.link_electrical_requesters = {} end
+    global.link_electrical_requesters[entity.unit_number] = {
+      entity = entity
+    }
+  elseif entity.name == LINK_FLUID_PROVIDER_NAME then
+    game.print(string.format("add_link_entity(LINK_FLUID_PROVIDER_NAME): %d", entity.unit_number))
+    global.link_fluid_providers[entity.unit_number] = {
+      entity = entity
+    }
+  elseif entity.name == LINK_FLUID_REQUESTER_NAME then
+    game.print(string.format("add_link_entity(LINK_FLUID_REQUESTER_NAME): %d", entity.unit_number))
+    global.link_fluid_requesters[entity.unit_number] = {
+      entity = entity
+    }
   elseif entity.name == LINK_INVENTORY_COMBINATOR_NAME then
     game.print(string.format("add_link_entity(LINK_INVENTORY_COMBINATOR_NAME): %d", entity.unit_number))
     entity.operable = false
@@ -132,28 +139,6 @@ function add_link_entity(entity)
       behaviour = entity.get_or_create_control_behavior(),
       link_network_id = parts.link_network_id
     }
-  elseif entity.name == LINK_ELECTRICAL_PROVIDER_NAME then
-    game.print(string.format("add_link_entity(LINK_ELECTRICAL_PROVIDER_NAME): %d", entity.unit_number))
-    if not global.link_electrical_providers then global.link_electrical_providers = {} end
-    global.link_electrical_providers[entity.unit_number] = {
-      entity = entity
-    }
-  elseif entity.name == LINK_ELECTRICAL_REQUESTER_NAME then
-    game.print(string.format("add_link_entity(LINK_ELECTRICAL_REQUESTER_NAME): %d", entity.unit_number))
-    if not global.link_electrical_requesters then global.link_electrical_requesters = {} end
-    global.link_electrical_requesters[entity.unit_number] = {
-      entity = entity
-    }
-  elseif entity.name == LINK_FLUID_PROVIDER_NAME then
-    game.print(string.format("add_link_entity(LINK_FLUID_PROVIDER_NAME): %d", entity.unit_number))
-    global.link_fluid_providers[entity.unit_number] = {
-      entity = entity
-    }
-  elseif entity.name == LINK_FLUID_REQUESTER_NAME then
-    game.print(string.format("add_link_entity(LINK_FLUID_REQUESTER_NAME): %d", entity.unit_number))
-    global.link_fluid_requesters[entity.unit_number] = {
-      entity = entity
-    }
   end
 end
 
@@ -171,6 +156,21 @@ function remove_link_entity(entity)
   elseif entity.name == LINK_REQUESTER_PROVIDER_CHEST_NAME then
     game.print(string.format("remove_link_entity(LINK_REQUESTER_PROVIDER_CHEST_NAME): %d", entity.unit_number))
     global.link_provider_chests[entity.unit_number] = nil
+  elseif entity.name == LINK_STORAGE_CHEST_NAME then
+    game.print(string.format("remove_link_entity(LINK_STORAGE_CHEST_NAME): %d", entity.unit_number))
+    global.link_provider_chests[entity.unit_number] = nil
+  elseif entity.name == LINK_ELECTRICAL_PROVIDER_NAME then
+    game.print(string.format("remove_link_entity(LINK_ELECTRICAL_PROVIDER_NAME): %d", entity.unit_number))
+    global.link_electrical_providers[entity.unit_number] = nil
+  elseif entity.name == LINK_ELECTRICAL_REQUESTER_NAME then
+    game.print(string.format("remove_link_entity(LINK_ELECTRICAL_REQUESTER_NAME): %d", entity.unit_number))
+    global.link_electrical_requesters[entity.unit_number] = nil
+  elseif entity.name == LINK_FLUID_PROVIDER_NAME then
+    game.print(string.format("remove_link_entity(LINK_FLUID_PROVIDER_NAME): %d", entity.unit_number))
+    global.link_fluid_providers[entity.unit_number] = nil
+  elseif entity.name == LINK_FLUID_REQUESTER_NAME then
+    game.print(string.format("remove_link_entity(LINK_FLUID_REQUESTER_NAME): %d", entity.unit_number))
+    global.link_fluid_requesters[entity.unit_number] = nil
   elseif entity.name == LINK_INVENTORY_COMBINATOR_NAME then
     game.print(string.format("remove_link_entity(LINK_INVENTORY_COMBINATOR_NAME): %d", entity.unit_number))
     global.link_inventory_combinators[entity.unit_number] = nil
@@ -184,18 +184,6 @@ function remove_link_entity(entity)
     data = global.link_transmitter_combinators[entity.unit_number]
     destroy_combinator(data)
     global.link_transmitter_combinators[entity.unit_number] = nil
-  elseif entity.name == LINK_ELECTRICAL_PROVIDER_NAME then
-    game.print(string.format("remove_link_entity(LINK_ELECTRICAL_PROVIDER_NAME): %d", entity.unit_number))
-    global.link_electrical_providers[entity.unit_number] = nil
-  elseif entity.name == LINK_ELECTRICAL_REQUESTER_NAME then
-    game.print(string.format("remove_link_entity(LINK_ELECTRICAL_REQUESTER_NAME): %d", entity.unit_number))
-    global.link_electrical_requesters[entity.unit_number] = nil
-  elseif entity.name == LINK_FLUID_PROVIDER_NAME then
-    game.print(string.format("remove_link_entity(LINK_FLUID_PROVIDER_NAME): %d", entity.unit_number))
-    global.link_fluid_providers[entity.unit_number] = nil
-  elseif entity.name == LINK_FLUID_REQUESTER_NAME then
-    game.print(string.format("remove_link_entity(LINK_FLUID_REQUESTER_NAME): %d", entity.unit_number))
-    global.link_fluid_requesters[entity.unit_number] = nil
   end
 end
 
@@ -203,7 +191,12 @@ function add_all_link_entities()
   local names = {
     LINK_ACTIVE_PROVIDER_CHEST_NAME,
     LINK_BUFFER_CHEST_NAME,
-    REQUESTER_CHEST_NAME,
+    LINK_REQUESTER_PROVIDER_CHEST_NAME,
+    LINK_STORAGE_CHEST_NAME,
+    LINK_ELECTRICAL_PROVIDER_NAME,
+    LINK_ELECTRICAL_REQUESTER_NAME,
+    LINK_FLUID_PROVIDER_NAME,
+    LINK_FLUID_REQUESTER_NAME,
     LINK_INVENTORY_COMBINATOR_NAME,
     LINK_RECEIVER_COMBINATOR_NAME,
     LINK_TRANSMITTER_COMBINATOR_NAME

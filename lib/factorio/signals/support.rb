@@ -61,7 +61,7 @@ class Signals
     end
 
     def get_signal(signals, signal_name)
-      signals.select { |s| s["signal"]["name"] == signal_name }.first
+      signals.find { |s| s["signal"]["name"] == signal_name }
     end
 
     def sort_signals!(signals)

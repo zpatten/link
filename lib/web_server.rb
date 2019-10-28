@@ -98,12 +98,16 @@ class WebServer < Sinatra::Application
 
   get '/servers/restart/:name' do
     server = Servers.find_by_name(params[:name])
-    server.shutdown!
-    server.stop!
-    sleep 1
-    server.start!
-    server.startup!
+    server.restart!
     sleep 1 while server.unavailable?
+    redirect '/servers'
+  end
+
+  get '/servers/restart-all' do
+    Servers.all.each do |server|
+      server.restart!
+      sleep 1 while server.unavailable?
+    end
     redirect '/servers'
   end
 

@@ -119,6 +119,16 @@ class Server
 
 ################################################################################
 
+  def restart!
+    self.shutdown!
+    self.stop!
+    sleep 1
+    self.start!
+    self.startup!
+  end
+
+################################################################################
+
   def start!
     FileUtils.cp_r(Servers.factorio_mods, self.path)
 

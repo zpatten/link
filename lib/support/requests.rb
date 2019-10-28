@@ -39,20 +39,26 @@ class Requests
       end
     end
 
-    def all
+    def requests
       @@requests
     end
 
     def unfulfilled
-      return Array.new if @@requests.nil?
+      return Hash.new if self.requests.nil?
 
       MemoryCache.fetch("requests-unfulfilled") do
-        @@requests.select { |host,data| !data[:fulfilled] }.collect { |host,data| [host, data[:requests]] }
+        r = self.requests.select do |host, data|
+          !data[:fulfilled]
+        end
+        r.reduce(Hash.new) do |hash, (host, data)|
+          hash[host] = data[:requests]
+          hash
+        end
       end
     end
 
     def item_totals
-      return Hash.new if @@requests.nil?
+      return Hash.new if self.requests.nil?
 
       MemoryCache.fetch("requests-item-totals") do
         item_totals = Hash.new
@@ -64,7 +70,7 @@ class Requests
     end
 
     def item_ratios
-      return Hash.new if @@requests.nil?
+      return Hash.new if self.requests.nil?
 
       MemoryCache.fetch("requests-item-ratios") do
         item_ratios = Hash.new
@@ -76,8 +82,7 @@ class Requests
           end
           item_ratios[item_name] = item_ratio
         end
-        # $logger.debug { "Item Ratios: #{item_ratios.ai}" }
-        $logger.debug { "Item Ratios: #{item_ratios.ai}" }
+        $logger.debug(:logistics) { "Item Ratios: #{item_ratios.ai}" }
         item_ratios
       end
     end
@@ -124,15 +129,15 @@ class Requests
     end
 
     def fulfillments
-      return Hash.new if @@requests.nil?
+      return Hash.new if self.requests.nil?
 
       MemoryCache.fetch("requests-fulfillments") do
         fulfillments_totals = Hash.new
         fulfillments_by_host = Hash.new
 
-        self.unfulfilled.each do |host,requests|
-          requests.each do |unit_number,item_counts|
-            item_counts.each do |item_name,item_count|
+        self.unfulfilled.each do |host, requests|
+          requests.each do |unit_number, item_counts|
+            item_counts.each do |item_name, item_count|
 
               actual_count = self.count_to_fulfill(item_name, item_count)
               if actual_count > 0
@@ -155,16 +160,16 @@ class Requests
     def fulfill(&block)
       items_to_remove = if self.can_fulfill_none?
         # we can not fulfill anything; noop
-        $logger.debug { "Nothing to fulfill" }
+        $logger.debug(:logistics) { "NOOP" }
         {}
       elsif self.can_fulfill_all?
         # fast fulfillment
         #
         # if we can fulfill all requests, skip calculating and just send the same response back we received
-        $logger.debug { "Fast fulfillment" }
+        $logger.debug(:logistics) { "Fast Fulfillment: #{self.unfulfilled.ai}" }
 
         # fulfill requests
-        self.unfulfilled.each do |host,fulfillments|
+        self.unfulfilled.each do |host, fulfillments|
           block.call(host, fulfillments)
           self.mark_as_fulfilled(host)
         end
@@ -175,9 +180,9 @@ class Requests
         # slow fulfillment
         #
         # since some requests can not be fulfilled, calculate the ratios and distribute the items accordingly
-        $logger.debug { "Slow fulfillment" }
+        $logger.debug(:logistics) { "Slow Fulfillment: #{self.fulfillments.ai}" }
 
-        self.fulfillments.each do |host,fulfillments|
+        self.fulfillments.each do |host, fulfillments|
           block.call(host, fulfillments)
           self.mark_as_fulfilled(host)
         end
@@ -187,10 +192,20 @@ class Requests
       end
 
       # update storage and sync it to disk
-      items_to_remove.each do |item_name,item_count|
+      items_to_remove.each do |item_name, item_count|
         Storage.remove(item_name, item_count)
       end
       Storage.save
+    end
+
+    def process
+      $logger.debug(:logistics) { "Requests: #{self.unfulfilled.ai}" }
+      self.fulfill do |host, fulfillments|
+        server = Servers.find_by_name(host)
+        command = %(/#{rcon_executor} remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
+        server.rcon_command_nonblock(command, method(:rcon_print))
+      end
+      self.reset
     end
 
   end

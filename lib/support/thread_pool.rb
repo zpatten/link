@@ -59,6 +59,7 @@ class ThreadPool
       return if @@thread_group.list.map(&:name).compact.include?(thread_name)
 
       thread = Thread.new do
+        Thread.current[:started_at] = Time.now.to_f
         trap_signals
         schedule_log(:thread, :started, schedule, Thread.current)
 
@@ -76,13 +77,11 @@ class ThreadPool
       what     = schedule.what
 
       servers  = Servers.find(what)
-      # [servers].flatten.compact.map(&:startup!)
       servers.delete_if { |server| server.unavailable? } unless servers.nil?
       return if servers.nil? || servers.count == 0
 
       if parallel
         servers.each do |server|
-          # next if server.unavailable?
           run_thread(schedule, server)
         end
       else
@@ -141,6 +140,7 @@ class ThreadPool
     end
 
     def execute
+      last_checked_threads_at = Time.now.to_f
       loop do
         @@thread_schedules.each do |schedule|
           if schedule.next_run_at <= Time.now.to_f
@@ -148,6 +148,19 @@ class ThreadPool
             schedule_next_run(schedule)
           end
           Thread.pass
+        end
+
+        if last_checked_threads_at < (Time.now.to_f - 10.0)
+          last_checked_threads_at = Time.now.to_f
+          $logger.info(:thread) { "Checking for stale threads" }
+          @@thread_group.list.each do |thread|
+            if thread.key?(:started_at)
+              if thread[:started_at] < (Time.now.to_f - 60.0)
+                $logger.fatal(:thread) { "Thread #{thread.name.inspect} expired!" }
+                thread.exit
+              end
+            end
+          end
         end
 
         sleep SLEEP_TIME

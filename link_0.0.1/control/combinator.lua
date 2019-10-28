@@ -76,7 +76,7 @@ function get_link_transmitter_combinator(force)
               end
             end
 
-            if table_count(unit_signal_delta) > 0 then
+            if table_size(unit_signal_delta) > 0 then
               -- if we we able to generate a delta for this entity, add the signal deltas to the list
               if not signal_delta[unit_number] then signal_delta[unit_number] = {} end
               signal_delta[unit_number][link_network_id] = unit_signal_delta
@@ -90,7 +90,7 @@ function get_link_transmitter_combinator(force)
           -- no previous signals
 
           -- if we could not generate a delta and we have signals, add all signals to the list
-          if table_count(link_signals[entity.unit_number][link_network_id]) > 0 then
+          if table_size(link_signals[entity.unit_number][link_network_id]) > 0 then
             if not signal_delta[unit_number] then signal_delta[unit_number] = {} end
             signal_delta[unit_number][link_network_id] = link_signals[entity.unit_number][link_network_id]
           end
@@ -100,11 +100,11 @@ function get_link_transmitter_combinator(force)
     end
   end
 
-  if not force and table_count(signal_delta) == 0 then
+  if not force and table_size(signal_delta) == 0 then
     -- if this is not a forced refresh and if no signals changed send a NOOP
     rcon.print(game.table_to_json(noop))
     link_log("SIGNALS-TX", "NOOP")
-  elseif not force and table_count(signal_delta) > 0 then
+  elseif not force and table_size(signal_delta) > 0 then
     -- if this is not a forced refresh and we have a delta send it
     link_log("SIGNALS-TX", "Sending signal deltas.")
     rcon.print(game.table_to_json(signal_delta))
@@ -229,35 +229,75 @@ function set_link_receiver_combinator(force, json)
   for unit_number, data in pairs(global.link_inventory_combinators) do
     local behaviour = data.behaviour
     local entity = data.entity
+    -- local link_network_id_entity = data.link_network_id
 
     if entity.valid and behaviour.valid then
-      local signals = extract_circuit_network("inventory", link_signal_networks)
+      link_network_id = "inventory"
+      local signals = extract_circuit_network(link_network_id, link_signal_networks)
 
-      local deleted_signals = {}
-      local non_zero_signals = {}
+      link_log("SIGNALS-RX", string.format("Processing Network ID: %s", link_network_id))
 
-      for i, s in pairs(signals) do
-        if s.count ~= 0 then
-          behaviour.set_signal(s.index, s)
-          non_zero_signals[s.index] = true
-        else
-          table.insert(deleted_signals, s)
+      if force or not global.rx_signals[link_network_id] then
+        global.rx_signals[link_network_id] = signals
+      else
+        local signals_map = {}
+        for i, signal in pairs(global.rx_signals[link_network_id]) do
+          signals_map[link_sn(signal)] = signal
+        end
+
+        for i, s in pairs(signals) do
+          local existing_signal = signals_map[s.signal.name]
+          if existing_signal then
+            if s.count == 0 then
+              link_log("SIGNALS-RX", string.format("Delete Signal: %s", s.signal.name))
+              existing_signal.count = s.count
+            else
+              link_log("SIGNALS-RX", string.format("Update Signal: %s (%d -> %d)", s.signal.name, existing_signal.count, s.count))
+              existing_signal.count = s.count
+            end
+          else
+            link_log("SIGNALS-RX", string.format("Create Signal: %s (%d)", s.signal.name, s.count))
+            table.insert(global.rx_signals[link_network_id], s)
+          end
         end
       end
 
-      for i, s in pairs(deleted_signals) do
-        if not non_zero_signals[s.index] then
-          behaviour.set_signal(s.index, nil)
-        end
-      end
+      global.rx_signals[link_network_id] = scrub_signals(global.rx_signals[link_network_id])
 
+      behaviour.parameters = { parameters = global.rx_signals[link_network_id] }
       behaviour.enabled = true
-
-      -- for i, s in pairs(signals) do
-      --   behaviour.set_signal(s.index, s)
-      -- end
-      -- behaviour.enabled = true
     end
+    -- local behaviour = data.behaviour
+    -- local entity = data.entity
+
+    -- if entity.valid and behaviour.valid then
+    --   local signals = extract_circuit_network("inventory", link_signal_networks)
+
+    --   local deleted_signals = {}
+    --   local non_zero_signals = {}
+
+    --   for i, s in pairs(signals) do
+    --     if s.count ~= 0 then
+    --       behaviour.set_signal(s.index, s)
+    --       non_zero_signals[s.index] = true
+    --     else
+    --       table.insert(deleted_signals, s)
+    --     end
+    --   end
+
+    --   for i, s in pairs(deleted_signals) do
+    --     if not non_zero_signals[s.index] then
+    --       behaviour.set_signal(s.index, nil)
+    --     end
+    --   end
+
+    --   behaviour.enabled = true
+
+    --   -- for i, s in pairs(signals) do
+    --   --   behaviour.set_signal(s.index, s)
+    --   -- end
+    --   -- behaviour.enabled = true
+    -- end
   end
 
   rcon.print("OK")

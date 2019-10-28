@@ -109,7 +109,7 @@ class Servers
     end
 
     def server_types
-      %w( coal stone copper-ore iron-ore uranium-ore crude-oil )
+      %w( empty coal stone copper-ore iron-ore uranium-ore crude-oil )
     end
 
     def create(params)
@@ -155,7 +155,7 @@ class Servers
       IO.write(map_gen_settings_path, JSON.pretty_generate(map_gen_settings_json))
 
       config_json = {
-        'name' => "Link Server #{server.name}",
+        'name' => "Link Server: #{server.name}",
         'description' => 'Factorio Link Server',
         'max_players' => 0,
         'tags' => [ 'link' ],

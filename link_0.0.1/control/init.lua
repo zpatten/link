@@ -5,13 +5,13 @@ function link_dump(printer)
   printer.print("  - global.link_id: "..global.link_id)
   printer.print("  - global.link_rtt: "..global.link_rtt)
   printer.print("  - global.ticks_since_last_link_operation: "..global.ticks_since_last_link_operation)
-  printer.print("  - global.link_command_whitelist: "..dump(global.link_command_whitelist))
-  printer.print("  - global.link_events: "..dump(global.link_events))
-  printer.print("  - global.link_inventory_combinators: "..dump(global.link_inventory_combinators))
-  printer.print("  - global.link_receiver_combinators: "..dump(global.link_receiver_combinators))
-  printer.print("  - global.link_transmitter_combinators: "..dump(global.link_transmitter_combinators))
-  printer.print("  - global.link_provider_chests: "..dump(global.link_provider_chests))
-  printer.print("  - global.link_requester_chests: "..dump(global.link_requester_chests))
+  printer.print("  - global.link_command_whitelist: "..serpent.block(global.link_command_whitelist))
+  printer.print("  - global.link_events: "..serpent.block(global.link_events))
+  printer.print("  - global.link_inventory_combinators: "..serpent.block(global.link_inventory_combinators))
+  printer.print("  - global.link_receiver_combinators: "..serpent.block(global.link_receiver_combinators))
+  printer.print("  - global.link_transmitter_combinators: "..serpent.block(global.link_transmitter_combinators))
+  printer.print("  - global.link_provider_chests: "..serpent.block(global.link_provider_chests))
+  printer.print("  - global.link_requester_chests: "..serpent.block(global.link_requester_chests))
 end
 
 function link_debug()
@@ -30,20 +30,23 @@ function on_link_init()
 
   global.link_events = {}
 
+  global.link_providables = {}
+
   global.link_provider_chests = {}
   global.link_requester_chests = {}
-
-  global.link_previous_signals = {}
-
-  global.link_inventory_combinators = {}
-  global.link_receiver_combinators = {}
-  global.link_transmitter_combinators = {}
 
   global.link_electrical_providers = {}
   global.link_electrical_requesters = {}
 
   global.link_fluid_providers = {}
   global.link_fluid_requesters = {}
+
+  global.link_previous_signals = {}
+  global.rx_signals = {}
+
+  global.link_inventory_combinators = {}
+  global.link_receiver_combinators = {}
+  global.link_transmitter_combinators = {}
 
   global.ticks_since_last_link_operation = 0
 

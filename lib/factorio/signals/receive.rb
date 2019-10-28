@@ -16,17 +16,17 @@ class Signals
           return false if current_count == 0
           # new signal
           unit_signals << build_signal(name, current_count, signal_type(signal))
-          $logger.debug(:signals_rx) { "Create Signal: #{name} (#{current_count})" }
+          $logger.info(:signals_rx) { "Create Signal[#{network_id}]: #{name} (#{current_count})" }
         else
           previous_count = signal_count(unit_signal)
           if current_count == 0
             # delete signal
             unit_signals.delete_if { |us| signal_name(us) == name }
-            $logger.debug(:signals_rx) { "Delete Signal: #{name}" }
+            $logger.info(:signals_rx) { "Delete Signal[#{network_id}]: #{name}" }
           elsif previous_count != current_count
             # update signal
             unit_signal["count"] = current_count
-            $logger.debug(:signals_rx) { "Update Signal: #{name} (#{previous_count} -> #{current_count})" }
+            $logger.info(:signals_rx) { "Update Signal[#{network_id}]: #{name} (#{previous_count} -> #{current_count})" }
           end
         end
       end

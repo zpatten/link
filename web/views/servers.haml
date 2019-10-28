@@ -1,5 +1,9 @@
 %h1 Servers
+[
 %a{ href: '/servers/create', title: 'Create Server' } CREATE SERVER
+|
+%a{ href: '/servers/restart-all', title: 'Restart All Servers' } RESTART ALL SERVERS
+]
 
 %table
   %tr
@@ -14,7 +18,7 @@
     %th Available?
     %th RTT
     %th Actions
-  - Servers.all.each do |server|
+  - Servers.all.sort_by { |server| server.name }.each do |server|
     %tr
       %td= server.id
       %td= server.name

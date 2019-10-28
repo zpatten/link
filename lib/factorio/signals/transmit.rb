@@ -48,9 +48,10 @@ class Signals
       current_signals = calculate_signals(network_id)
 
       unless (network_id == :inventory)
+        local_id = (server.nil? ? nil : server.network_id)
         signal_data = {
           "signal-link-epoch" => Time.now.to_i,
-          "signal-link-local-id" => server.network_id,
+          "signal-link-local-id" => local_id,
           "signal-link-network-id" => nil
         }
         current_signals = scrub_signals(current_signals, signal_data)
@@ -59,7 +60,8 @@ class Signals
       # index the signals
       current_signals = index_signals(current_signals)
 
-      cache_key = [ "signals-tx-previous", server.name, network_id ].compact.join("-")
+      server_name = (server.nil? ? nil : server.name)
+      cache_key = [ "signals-tx-previous", server_name, network_id ].compact.join("-")
       previous_signals = MemoryCache.read(cache_key)
       network_signals = Array.new
       if !!previous_signals && !force
@@ -73,16 +75,16 @@ class Signals
             previous_signal = previous_signals_map[signal_name(current_signal)]
 
             if previous_signal.nil? # || not initalized
-              $logger.debug(:signals_tx) { "Create Signal: #{signal_name(current_signal)} (#{signal_count(current_signal)})" }
+              $logger.info(:signals_tx) { "Create Signal[#{network_id}]: #{signal_name(current_signal)} (#{signal_count(current_signal)})" }
               network_signals << current_signal
             else
               count_changed = (signal_count(previous_signal) != signal_count(current_signal))
               index_changed = (signal_count(previous_signal) != signal_count(current_signal))
               if count_changed
-                $logger.debug(:signals_tx) { "Update Signal: #{signal_name(current_signal)} count:(#{signal_count(previous_signal)} -> #{signal_count(current_signal)})" }
+                $logger.info(:signals_tx) { "Update Signal[#{network_id}]: #{signal_name(current_signal)} count:(#{signal_count(previous_signal)} -> #{signal_count(current_signal)})" }
                 network_signals << current_signal
               elsif index_changed
-                $logger.debug(:signals_tx) { "Update Signal: #{signal_name(current_signal)} index:(#{signal_index(previous_signal)} -> #{signal_index(current_signal)})" }
+                $logger.info(:signals_tx) { "Update Signal[#{network_id}]: #{signal_name(current_signal)} index:(#{signal_index(previous_signal)} -> #{signal_index(current_signal)})" }
                 network_signals << current_signal
               else
                 # Unchanged
@@ -94,7 +96,7 @@ class Signals
           previous_signals.each do |previous_signal|
             current_signal = current_signals_map[signal_name(previous_signal)]
             if current_signal.nil?
-              $logger.debug(:signals_tx) { "Delete Signal: #{signal_name(previous_signal)}" }
+              $logger.info(:signals_tx) { "Delete Signal[#{network_id}]: #{signal_name(previous_signal)}" }
               previous_signal["count"] = 0
               network_signals << previous_signal
             end

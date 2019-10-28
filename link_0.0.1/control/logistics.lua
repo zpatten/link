@@ -1,7 +1,7 @@
 function get_link_providables()
   global.ticks_since_last_link_operation = 0
 
-  local link_providables = {}
+  if not global.link_providables then global.link_providables = {} end
 
   -- CHESTS
   -- if not global.link_provider_chests then global.link_provider_chests = {} end
@@ -10,12 +10,12 @@ function get_link_providables()
     local inventory = data.inventory
     if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
       local items = inventory.get_contents()
-      if table_count(items) > 0 then
+      if table_size(items) > 0 then
         for item_name, item_count in pairs(items) do
-          if not link_providables[item_name] then
-            link_providables[item_name] = item_count
+          if not global.link_providables[item_name] then
+            global.link_providables[item_name] = item_count
           else
-            link_providables[item_name] = link_providables[item_name] + item_count
+            global.link_providables[item_name] = global.link_providables[item_name] + item_count
           end
           inventory.remove({name = item_name, count = item_count})
         end
@@ -31,10 +31,10 @@ function get_link_providables()
       local energy = math.floor(entity.energy)
       if energy > 0 then
         link_log("POWER", string.format("Energy: %d", energy))
-        if not link_providables[LINK_ELECTRICAL_ITEM_NAME] then
-          link_providables[LINK_ELECTRICAL_ITEM_NAME] = energy
+        if not global.link_providables[LINK_ELECTRICAL_ITEM_NAME] then
+          global.link_providables[LINK_ELECTRICAL_ITEM_NAME] = energy
         else
-          link_providables[LINK_ELECTRICAL_ITEM_NAME] = link_providables[LINK_ELECTRICAL_ITEM_NAME] + energy
+          global.link_providables[LINK_ELECTRICAL_ITEM_NAME] = global.link_providables[LINK_ELECTRICAL_ITEM_NAME] + energy
         end
         entity.energy = entity.energy - energy
       end
@@ -50,10 +50,10 @@ function get_link_providables()
       if fluid and (fluid.amount - 1) > 1 then
         local fluid_amount = math.floor(fluid.amount - 1)
         link_log("FLUID", string.format("Fluid: %s - %d", fluid.name, fluid_amount))
-        if not link_providables[fluid.name] then
-          link_providables[fluid.name] = fluid_amount
+        if not global.link_providables[fluid.name] then
+          global.link_providables[fluid.name] = fluid_amount
         else
-          link_providables[fluid.name] = link_providables[fluid.name] + fluid_amount
+          global.link_providables[fluid.name] = global.link_providables[fluid.name] + fluid_amount
         end
         fluid.amount = fluid.amount - fluid_amount
         entity.fluidbox[1] = fluid
@@ -61,7 +61,8 @@ function get_link_providables()
     end
   end
 
-  rcon.print(game.table_to_json(link_providables))
+  rcon.print(game.table_to_json(global.link_providables))
+  global.link_providables = {}
 end
 
 function get_link_requests()
@@ -82,9 +83,12 @@ function get_link_requests()
           current_item_count = inventory.get_item_count(requested_item.name)
           local missing_item_count = requested_item.count - current_item_count
           if missing_item_count > 0 then
-            -- calculate per entity totals for the fulfillments
-            if not link_requests[unit_number] then link_requests[unit_number] = {} end
-            link_requests[unit_number][requested_item.name] = missing_item_count
+            local can_insert = inventory.can_insert({ name = requested_item.name, count = missing_item_count })
+            if can_insert then
+              -- calculate per entity totals for the fulfillments
+              if not link_requests[unit_number] then link_requests[unit_number] = {} end
+              link_requests[unit_number][requested_item.name] = missing_item_count
+            end
           end
         end
       end
@@ -131,6 +135,8 @@ end
 function set_link_fulfillments(data)
   global.ticks_since_last_link_operation = 0
 
+  if not global.link_providables then global.link_providables = {} end
+
   local link_fulfillments = game.json_to_table(data)
   for unit_number, items in pairs(link_fulfillments) do
     -- CHESTS
@@ -143,7 +149,15 @@ function set_link_fulfillments(data)
         local items_to_insert = {}
         for item_name, item_count in pairs(items) do
           item_to_insert = { name = item_name, count = item_count }
-          inventory.insert(item_to_insert)
+          local item_count_inserted = inventory.insert(item_to_insert)
+          local item_count_remainder = item_count - item_count_inserted
+          if item_count_remainder > 0 then
+            if not global.link_providables[item_name] then
+              global.link_providables[item_name] = item_count_remainder
+            else
+              global.link_providables[item_name] = global.link_providables[item_name] + item_count_remainder
+            end
+          end
         end
       end
     end

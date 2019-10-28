@@ -10,11 +10,12 @@ class Signals
   extend Signals::Transmit
 end
 
+$rx_signals_initalized ||= Hash.new
+$tx_signals_initalized ||= Hash.new
 
 # Link Receiver Combinator
 ################################################################################
 
-$rx_signals_initalized ||= Hash.new
 def set_receiver_combinator(host, packet_fields, server)
   payload = packet_fields.payload
   unless payload.empty?
@@ -22,10 +23,12 @@ def set_receiver_combinator(host, packet_fields, server)
     unless network_ids.empty?
       $logger.debug(:signals_rx) { "[#{server.id}] Transmitting signals for circuit networks: #{network_ids.ai}" }
 
+      force = !$rx_signals_initalized[server.name]
+
       networks = Hash.new
       network_ids.each do |network_id|
         # signals to transmit to receivers
-        network_signals = Signals.tx(network_id, server, true)
+        network_signals = Signals.tx(network_id, server, force)
 
         unless network_signals.nil? || network_signals.empty?
           networks[network_id] = network_signals
@@ -34,7 +37,6 @@ def set_receiver_combinator(host, packet_fields, server)
 
       if networks.count > 0
         # update rx signals with the signal networks
-        force = ($rx_signals_initalized[server.name] != true)
         command = %(/#{rcon_executor} remote.call('link', 'set_receiver_combinator', #{force}, '#{networks.to_json}'))
         server.rcon_command_nonblock(command, method(:rcon_print))
         $rx_signals_initalized[server.name] = true
@@ -72,7 +74,6 @@ def get_transmitter_combinator(host, packet_fields, server)
   end
 end
 
-$tx_signals_initalized ||= Hash.new
 
 # def schedule_server_tx_signals
 def schedule_server_signals
@@ -89,7 +90,7 @@ def schedule_server_signals
     #   %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator'))
     # end
     servers.each do |server|
-      force = ($tx_signals_initalized[server.name] != true)
+      force = !$tx_signals_initalized[server.name]
       command = %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', #{force}))
       server.rcon_command_nonblock(command, method(:get_transmitter_combinator))
       $tx_signals_initalized[server.name] = true

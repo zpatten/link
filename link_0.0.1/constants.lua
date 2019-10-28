@@ -3,6 +3,7 @@ LINK_GROUP_NAME = "link-group"
 LINK_ACTIVE_PROVIDER_CHEST_NAME = "link-active-provider-chest"
 LINK_BUFFER_CHEST_NAME = "link-buffer-chest"
 LINK_REQUESTER_PROVIDER_CHEST_NAME = "link-requester-provider-chest"
+LINK_STORAGE_CHEST_NAME = "link-storage-chest"
 LINK_CHEST_SUBGROUP_NAME = "link-chest-subgroup"
 LINK_CHEST_ORDER = "a-[link-%s]"
 
