@@ -5,7 +5,7 @@ class Storage
   module ClassMethods
 
     @@storage = nil
-    @@storage_delta ||= Hash.new
+    @@storage_delta ||= Hash.new(0)
     @@storage_mutex ||= Hash.new
     @@storage_statistics ||= Hash.new
 
@@ -22,12 +22,6 @@ class Storage
 
     def storage
       @@storage
-    end
-
-    def clone_storage
-      storage_synchronize_all do
-        storage.clone
-      end
     end
 
     def filename
@@ -58,7 +52,11 @@ class Storage
 
     def update_websocket(item_name, item_count)
       WebServer.settings.storage_sockets.each do |s|
-        s.send({ name: item_name, count: item_count.round }.to_json)
+        s.send({
+          name: item_name,
+          count: item_count,
+          delta: delta[item_name]
+        }.to_json)
       end
     end
 
@@ -111,70 +109,33 @@ class Storage
       elsif delta_count > 0
         "+#{delta_count}"
       elsif delta_count == 0
-        '-'
+        '0'
       else
         delta_count.to_s
       end
     end
 
-    def deltas
+    def delta
       @@storage_delta
     end
 
-    # def delta_averages(item_name, delta_count)
-    #   @@previous_storage_deltas ||= Hash.new { |h,k| h[k] = Array.new }
-
-    #   @@previous_storage_deltas[item_name] << delta_count
-
-    #   rindex_15 = [@@previous_storage_deltas[item_name].count, 15].min
-    #   @@previous_storage_deltas[item_name] = @@previous_storage_deltas[item_name][-(rindex_15),15]
-    #   delta_count_15 = format_delta_count(@@previous_storage_deltas[item_name].sum.div(rindex_15))
-
-    #   rindex_5 = [@@previous_storage_deltas[item_name].count, 5].min
-    #   delta_count_5 = format_delta_count(@@previous_storage_deltas[item_name][-(rindex_5),5].sum.div(rindex_5))
-
-    #   delta_count_1 = format_delta_count(delta_count)
-
-    #   [delta_count_1, delta_count_5, delta_count_15]
-    # end
-
-    def statistics
-      deep_clone(@@storage_statistics)
-    end
-
-    def calculate_statistics
+    def calculate_delta
       storage.nil? and load
+      $logger.info(:storage) { "Calculating Deltas" }
 
       storage_synchronize_all do
-        @@previous_storage ||= storage.clone  # first run
+        @@previous_storage ||= deep_clone(@@storage)  # first run
 
-        storage_delta = Hash.new
-
-        storage.each do |item_name, item_count|
-          count_delta = (storage[item_name] - (@@previous_storage[item_name] || 0))
-          storage_delta[item_name] = count_delta
+        @@storage_delta = Hash.new(0)
+        @@storage.keys.each do |item_name|
+          count_delta = (@@storage[item_name] - (@@previous_storage[item_name] || 0))
+          @@storage_delta[item_name] = format_delta_count(count_delta)
         end
 
-        @@previous_storage = storage.clone
-
-        # if storage_delta.keys.count > 0
-
-        #   storage_delta.each do |item_name, delta_count|
-        #     storage_count = storage[item_name]
-        #     delta_count_1, delta_count_5, delta_count_15 = delta_averages(item_name, delta_count)
-        #     next if delta_count_15 == "-" && storage_count == 0
-
-        #     @@storage_statistics[item_name] = OpenStruct.new(
-        #       delta_count: delta_count,
-        #       delta_count_1: delta_count_1,
-        #       delta_count_5: delta_count_5,
-        #       delta_count_15: delta_count_15
-        #     )
-        #   end
-        # end
+        @@previous_storage = deep_clone(@@storage)
       end
 
-      @@storage_statistics
+      true
     end
 
   end

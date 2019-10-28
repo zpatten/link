@@ -4,7 +4,8 @@
 ################################################################################
 def schedule_task_statistics
   schedule_task(:statistics) do
-    Storage.calculate_statistics
+    $logger.info(:statistics) { ("=" * 80) }
+    Storage.calculate_delta
   end
 end
 

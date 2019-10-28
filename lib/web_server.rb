@@ -20,6 +20,8 @@ class WebServer < Sinatra::Application
   set :storage_sockets, []
   set :server_sockets, []
 
+  set :server_settings, :timeout => (10 * 60)
+
   set :views, File.join(Dir.pwd, "web", "views")
   set :public_folder, File.join(Dir.pwd, "web", "static")
 
@@ -38,8 +40,8 @@ class WebServer < Sinatra::Application
   get "/storage" do
     if !request.websocket?
       @storage = Storage.clone
+      @delta = Storage.delta
       @total_count = @storage.values.sum
-      @statistics = Storage.statistics
       haml :storage
     else
       request.websocket do |ws|
@@ -107,6 +109,24 @@ class WebServer < Sinatra::Application
     Servers.all.each do |server|
       server.restart!
       sleep 1 while server.unavailable?
+    end
+    redirect '/servers'
+  end
+
+  get '/servers/start-all' do
+    Servers.all.each do |server|
+      server.start!
+      server.startup!
+      sleep 1 while server.unavailable?
+    end
+    redirect '/servers'
+  end
+
+  get '/servers/stop-all' do
+    Servers.all.each do |server|
+      server.shutdown!
+      server.stop!
+      sleep 1 while server.available?
     end
     redirect '/servers'
   end

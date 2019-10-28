@@ -59,12 +59,17 @@ class ThreadPool
       return if @@thread_group.list.map(&:name).compact.include?(thread_name)
 
       thread = Thread.new do
-        Thread.current[:started_at] = Time.now.to_f
+        started_at = Time.now.to_f
+        Thread.current[:started_at] = started_at
+        Thread.current[:expires_in] = [(schedule.frequency * 2), 10.0].max
         trap_signals
         schedule_log(:thread, :started, schedule, Thread.current)
 
         schedule.block.call(*args)
 
+        run_time = (Time.now.to_f - started_at).round(4)
+
+        $logger.info(:thread) { "#{Thread.current.name} ran for #{run_time} seconds" }
         schedule_log(:thread, :stopping, schedule, Thread.current)
       end
       thread.name = thread_name
@@ -78,7 +83,7 @@ class ThreadPool
 
       servers  = Servers.find(what)
       servers.delete_if { |server| server.unavailable? } unless servers.nil?
-      return if servers.nil? || servers.count == 0
+      # return if !%w( statistics ).include?(what) && (servers.nil? || servers.count == 0)
 
       if parallel
         servers.each do |server|
@@ -127,9 +132,9 @@ class ThreadPool
     end
 
     def schedule_next_run(schedule)
-      now         = Time.now.to_f
-      frequency   = schedule.frequency
-      next_run_at = (now + (frequency - (now % frequency)))
+      now                  = Time.now.to_f
+      frequency            = schedule.frequency
+      next_run_at          = (now + (frequency - (now % frequency)))
       schedule.next_run_at = next_run_at
       # schedule_log(:thread, :scheduled, schedule)
     end
@@ -155,7 +160,7 @@ class ThreadPool
           $logger.info(:thread) { "Checking for stale threads" }
           @@thread_group.list.each do |thread|
             if thread.key?(:started_at)
-              if thread[:started_at] < (Time.now.to_f - 60.0)
+              if thread[:started_at] < (Time.now.to_f - thread[:expires_in])
                 $logger.fatal(:thread) { "Thread #{thread.name.inspect} expired!" }
                 thread.exit
               end
