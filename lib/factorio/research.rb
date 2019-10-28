@@ -29,7 +29,7 @@ end
 # Link Factorio Server Current Research Mirroring
 ################################################################################
 def schedule_server_current_research
-  schedule_servers(:current_research) do |server|
+  ThreadPool.schedule_servers(:current_research) do |server|
     command = %(/#{rcon_executor} remote.call('link', 'get_current_research'))
     server.rcon_command_nonblock(command, method(:set_current_research))
   end
@@ -38,7 +38,7 @@ end
 # Link Factorio Server Research Mirroring
 ################################################################################
 def schedule_server_research
-  schedule_servers(:research) do |server|
+  ThreadPool.schedule_servers(:research) do |server|
     command = %(/#{rcon_executor} remote.call('link', 'get_research'))
     server.rcon_command_nonblock(command, method(:set_research))
   end

@@ -77,7 +77,7 @@ end
 
 # def schedule_server_tx_signals
 def schedule_server_signals
-  schedule_servers(:signals, parallel: false) do |servers|
+  ThreadPool.schedule_servers(:signals, parallel: false) do |servers|
     command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
     servers.each do |server|
       server.rcon_command_nonblock(command, method(:set_receiver_combinator))

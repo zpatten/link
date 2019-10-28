@@ -35,7 +35,7 @@ end
 # Link Factorio Server Perform Fulfillments and Get New Requests
 ################################################################################
 def schedule_server_logistics
-  schedule_servers(:logistics, parallel: false) do |servers|
+  ThreadPool.schedule_servers(:logistics, parallel: false) do |servers|
 
     # command = %(/#{rcon_executor} remote.call('link', 'get_requests'))
     # $logger.info { "servers.count=#{servers.count}" }

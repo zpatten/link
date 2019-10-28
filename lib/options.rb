@@ -17,7 +17,7 @@ end
 op.on("-m", "--master", "Run as master") do
   thread = ThreadPool.thread("sinatra", priority: -100) do
     WebServer.run! do |server|
-      Servers.all.each { |s| s.running? && s.startup! }
+      Servers.all.each { |s| s.running? && s.start_rcon! }
     end
   end
 end

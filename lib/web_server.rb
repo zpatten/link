@@ -85,14 +85,12 @@ class WebServer < Sinatra::Application
   get '/servers/start/:name' do
     server = Servers.find_by_name(params[:name])
     server.start!
-    server.startup!
     sleep 1 while server.unavailable?
     redirect '/servers'
   end
 
   get '/servers/stop/:name' do
     server = Servers.find_by_name(params[:name])
-    server.shutdown!
     server.stop!
     sleep 1 while server.available?
     redirect '/servers'
@@ -106,28 +104,17 @@ class WebServer < Sinatra::Application
   end
 
   get '/servers/restart-all' do
-    Servers.all.each do |server|
-      server.restart!
-      sleep 1 while server.unavailable?
-    end
+    Servers.restart!
     redirect '/servers'
   end
 
   get '/servers/start-all' do
-    Servers.all.each do |server|
-      server.start!
-      server.startup!
-      sleep 1 while server.unavailable?
-    end
+    Servers.start!
     redirect '/servers'
   end
 
   get '/servers/stop-all' do
-    Servers.all.each do |server|
-      server.shutdown!
-      server.stop!
-      sleep 1 while server.available?
-    end
+    Servers.stop!
     redirect '/servers'
   end
 
@@ -136,12 +123,12 @@ class WebServer < Sinatra::Application
   end
 
   post "/servers/create" do
-    Servers.create(params)
+    Servers.create!(params)
     redirect '/servers'
   end
 
   get "/servers/delete/:name" do
-    Servers.delete(params)
+    Servers.delete!(params)
     redirect '/servers'
   end
 

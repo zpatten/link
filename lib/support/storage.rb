@@ -5,6 +5,7 @@ class Storage
   module ClassMethods
 
     @@storage = nil
+    @@storage_delta_history ||= Hash.new { |h,k| h[k] = Array.new }
     @@storage_delta ||= Hash.new(0)
     @@storage_mutex ||= Hash.new
     @@storage_statistics ||= Hash.new
@@ -121,15 +122,17 @@ class Storage
 
     def calculate_delta
       storage.nil? and load
-      $logger.info(:storage) { "Calculating Deltas" }
+      $logger.debug(:storage) { "Calculating Deltas" }
 
       storage_synchronize_all do
         @@previous_storage ||= deep_clone(@@storage)  # first run
 
-        @@storage_delta = Hash.new(0)
         @@storage.keys.each do |item_name|
           count_delta = (@@storage[item_name] - (@@previous_storage[item_name] || 0))
-          @@storage_delta[item_name] = format_delta_count(count_delta)
+          @@storage_delta_history[item_name] << count_delta
+          delta_count = [@@storage_delta_history[item_name].size, 60].min
+          @@storage_delta_history[item_name] = @@storage_delta_history[item_name][-delta_count, delta_count]
+          @@storage_delta[item_name] = format_delta_count(@@storage_delta_history[item_name].sum.div(@@storage_delta_history[item_name].size))
         end
 
         @@previous_storage = deep_clone(@@storage)

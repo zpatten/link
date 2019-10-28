@@ -83,15 +83,6 @@ def rcon_redirect(host, packet_fields, (player_index, command, origin_host))
   origin.rcon_command_nonblock(command, method(:rcon_print))
 end
 
-def schedule_task(what, parallel: false, **options, &block)
-  $logger.info(:scheduler) { "Scheduling #{what}..." }
-  ThreadPool.register(what, parallel: parallel, **options, &block)
-end
-
-def schedule_servers(what, parallel: true, **options, &block)
-  schedule_task(what, parallel: parallel, priority: 2, **options, &block)
-end
-
 # RCON Executor
 # Switch between using 'c' or 'silent-command' depending on the debug flag.
 def rcon_executor

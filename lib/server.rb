@@ -119,17 +119,52 @@ class Server
 
 ################################################################################
 
-  def restart!
-    self.shutdown!
-    self.stop!
-    sleep 1
-    self.start!
-    self.startup!
+  def backup(timestamp=false)
+    if File.exists?(self.save_file)
+      begin
+        FileUtils.mkdir_p(Servers.factorio_saves)
+      rescue Errno::ENOENT
+      end
+
+      filename = if timestamp
+        "#{self.name}-#{Time.now.to_i}.zip"
+      else
+        "#{self.name}.zip"
+      end
+      backup_save_file = File.join(Servers.factorio_saves, filename)
+      FileUtils.cp_r(self.save_file, backup_save_file)
+      $logger.info(:server) { "[#{self.name}] Backed up #{self.save_file} to #{backup_save_file}" }
+    end
   end
 
 ################################################################################
 
+  def restart!
+    self.stop!
+    self.start!
+  end
+
   def start!
+    self.start_container!
+    self.start_rcon!
+
+    Timeout.timeout(60) do
+      sleep SLEEP_TIME while self.unavailable?
+    end
+  end
+
+  def stop!
+    self.stop_rcon!
+    self.stop_container!
+
+    Timeout.timeout(60) do
+      sleep SLEEP_TIME while self.available?
+    end
+  end
+
+################################################################################
+
+  def start_container!
     FileUtils.cp_r(Servers.factorio_mods, self.path)
 
     command = Array.new
@@ -148,7 +183,7 @@ class Server
     command << %(--volume=#{self.config_path}:/opt/factorio/config)
     command << %(--volume=#{self.mods_path}:/opt/factorio/mods)
     command << %(--volume=#{self.saves_path}:/opt/factorio/saves)
-    command << Config['factorio_docker_image']
+    command << Config.factorio_docker_image
     command = command.flatten.compact.join(' ')
 
     # $logger.info {%(chcon -Rt svirt_sandbox_file_t #{self.server_path})}
@@ -159,7 +194,7 @@ class Server
     running!(true)
   end
 
-  def stop!
+  def stop_container!
     running!(false)
 
     shutdown!
@@ -175,11 +210,11 @@ class Server
 
 ################################################################################
 
-  def startup!
+  def start_rcon!
     @rcon.startup!
   end
 
-  def shutdown!
+  def stop_rcon!
     @rcon.shutdown!
     self.rtt = nil
   end

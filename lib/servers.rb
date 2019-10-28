@@ -50,6 +50,26 @@ class Servers
 
 ################################################################################
 
+    def start!
+      self.all.each(&:start!)
+    end
+
+    def stop!
+      self.all.each(&:stop!)
+    end
+
+    def restart!
+      self.all.each(&:restart!)
+    end
+
+    def backup
+      self.all.each do |server|
+        server.backup(true)
+      end
+    end
+
+################################################################################
+
     def factorio_mods
       File.expand_path(File.join(LINK_ROOT, 'mods'))
     end
@@ -58,28 +78,30 @@ class Servers
       File.expand_path(File.join(LINK_ROOT, 'saves'))
     end
 
-    def delete(params)
+    def delete!(params)
       server_name = params[:name]
       if (server = find_by_name(server_name))
         server.stop!
+        server.backup
 
         Config.servers.delete(server_name)
         Config.save!
         @@servers.delete(server_name)
 
-        sleep(1)
+        $logger.info(:servers) { "Deleted server #{server_name}" }
 
-        if File.exists?(server.save_file)
-          begin
-            FileUtils.mkdir_p(factorio_saves)
-          rescue Errno::ENOENT
-          end
 
-          FileUtils.cp_r(
-            server.save_file,
-            File.join(factorio_saves, "#{server_name}.zip")
-          )
-        end
+        # if File.exists?(server.save_file)
+        #   begin
+        #     FileUtils.mkdir_p(factorio_saves)
+        #   rescue Errno::ENOENT
+        #   end
+
+        #   FileUtils.cp_r(
+        #     server.save_file,
+        #     File.join(factorio_saves, "#{server_name}.zip")
+        #   )
+        # end
 
         # FileUtils.rm_rf(server.path)
       end
@@ -112,7 +134,7 @@ class Servers
       %w( empty coal stone copper-ore iron-ore uranium-ore crude-oil )
     end
 
-    def create(params)
+    def create!(params)
       server_name = params[:name]
       server_type = params[:type]
       server_details = {
@@ -195,6 +217,8 @@ class Servers
       Config['servers'] ||= Hash.new
       Config['servers'].merge!(server.to_h)
       Config.save!
+
+      server.start!
       $logger.info(:servers) { "Created server #{server_name}" }
     end
 
