@@ -83,23 +83,17 @@ class WebServer < Sinatra::Application
   end
 
   get '/servers/start/:name' do
-    server = Servers.find_by_name(params[:name])
-    server.start!
-    sleep 1 while server.unavailable?
+    Servers.find_by_name(params[:name]).start!
     redirect '/servers'
   end
 
   get '/servers/stop/:name' do
-    server = Servers.find_by_name(params[:name])
-    server.stop!
-    sleep 1 while server.available?
+    Servers.find_by_name(params[:name]).stop!
     redirect '/servers'
   end
 
   get '/servers/restart/:name' do
-    server = Servers.find_by_name(params[:name])
-    server.restart!
-    sleep 1 while server.unavailable?
+    Servers.find_by_name(params[:name]).restart!
     redirect '/servers'
   end
 

@@ -122,8 +122,18 @@ class Signals
     def update_inventory_signals
       signals = Array.new
       Storage.clone.each do |item_name, item_count|
-        next if item_name == "electricity"
+        item_name = 'signal-link-electricity' if item_name == 'electricity'
         item_type = rcon_lookup_item_type(item_name)
+        item_count = if item_name == 'signal-link-electricity'
+          if item_count > INT_32_MAX
+            INT_32_MAX
+          else
+            item_count
+          end
+        else
+          item_count
+        end
+
         signals << build_signal(item_name, item_count, item_type)
       end
 

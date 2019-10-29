@@ -4,7 +4,7 @@
 local recipe = table.deepcopy(data.raw.recipe["accumulator"])
 recipe.enabled = true
 recipe.name = LINK_ELECTRICAL_PROVIDER_NAME
-recipe.order = string.format(LINK_ELECTRICAL_ORDER, recipe.name)
+recipe.order = string.format(LINK_ELECTRICAL_ORDER, LINK_ELECTRICAL_PROVIDER_NAME)
 recipe.result = LINK_ELECTRICAL_PROVIDER_NAME
 recipe.subgroup = LINK_ELECTRICAL_SUBGROUP
 
@@ -15,7 +15,7 @@ recipe.subgroup = LINK_ELECTRICAL_SUBGROUP
 local item = table.deepcopy(data.raw.item["accumulator"])
 item.icons = { { icon = item.icon, tint = LINK_TINT } }
 item.name = LINK_ELECTRICAL_PROVIDER_NAME
-item.order = string.format(LINK_ELECTRICAL_ORDER, item.name)
+item.order = string.format(LINK_ELECTRICAL_ORDER, LINK_ELECTRICAL_PROVIDER_NAME)
 item.place_result = LINK_ELECTRICAL_PROVIDER_NAME
 item.subgroup = LINK_ELECTRICAL_SUBGROUP
 

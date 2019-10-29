@@ -58,61 +58,61 @@ function add_link_entity(entity)
   if not global.link_fluid_requesters then global.link_fluid_requesters = {} end
 
   if entity.name == LINK_ACTIVE_PROVIDER_CHEST_NAME then
-    game.print(string.format("add_link_entity(LINK_ACTIVE_PROVIDER_CHEST_NAME): %d", entity.unit_number))
+    link_log(string.format("add_link_entity(LINK_ACTIVE_PROVIDER_CHEST_NAME): %d", entity.unit_number))
     global.link_provider_chests[entity.unit_number] = {
       entity = entity,
       inventory = entity.get_inventory(defines.inventory.chest)
     }
   elseif entity.name == LINK_BUFFER_CHEST_NAME then
-    game.print(string.format("add_link_entity(LINK_BUFFER_CHEST_NAME): %d", entity.unit_number))
+    link_log(string.format("add_link_entity(LINK_BUFFER_CHEST_NAME): %d", entity.unit_number))
     global.link_requester_chests[entity.unit_number] = {
       entity = entity,
       filter_count = entity.prototype.filter_count,
       inventory = entity.get_inventory(defines.inventory.chest)
     }
   elseif entity.name == LINK_REQUESTER_PROVIDER_CHEST_NAME then
-    game.print(string.format("add_link_entity(LINK_REQUESTER_PROVIDER_CHEST_NAME): %d", entity.unit_number))
+    link_log(string.format("add_link_entity(LINK_REQUESTER_PROVIDER_CHEST_NAME): %d", entity.unit_number))
     global.link_provider_chests[entity.unit_number] = {
       entity = entity,
       inventory = entity.get_inventory(defines.inventory.chest)
     }
   elseif entity.name == LINK_STORAGE_CHEST_NAME then
-    game.print(string.format("add_link_entity(LINK_STORAGE_CHEST_NAME): %d", entity.unit_number))
+    link_log(string.format("add_link_entity(LINK_STORAGE_CHEST_NAME): %d", entity.unit_number))
     global.link_provider_chests[entity.unit_number] = {
       entity = entity,
       inventory = entity.get_inventory(defines.inventory.chest)
     }
   elseif entity.name == LINK_ELECTRICAL_PROVIDER_NAME then
-    game.print(string.format("add_link_entity(LINK_ELECTRICAL_PROVIDER_NAME): %d", entity.unit_number))
+    link_log(string.format("add_link_entity(LINK_ELECTRICAL_PROVIDER_NAME): %d", entity.unit_number))
     if not global.link_electrical_providers then global.link_electrical_providers = {} end
     global.link_electrical_providers[entity.unit_number] = {
       entity = entity
     }
   elseif entity.name == LINK_ELECTRICAL_REQUESTER_NAME then
-    game.print(string.format("add_link_entity(LINK_ELECTRICAL_REQUESTER_NAME): %d", entity.unit_number))
+    link_log(string.format("add_link_entity(LINK_ELECTRICAL_REQUESTER_NAME): %d", entity.unit_number))
     if not global.link_electrical_requesters then global.link_electrical_requesters = {} end
     global.link_electrical_requesters[entity.unit_number] = {
       entity = entity
     }
   elseif entity.name == LINK_FLUID_PROVIDER_NAME then
-    game.print(string.format("add_link_entity(LINK_FLUID_PROVIDER_NAME): %d", entity.unit_number))
+    link_log(string.format("add_link_entity(LINK_FLUID_PROVIDER_NAME): %d", entity.unit_number))
     global.link_fluid_providers[entity.unit_number] = {
       entity = entity
     }
   elseif entity.name == LINK_FLUID_REQUESTER_NAME then
-    game.print(string.format("add_link_entity(LINK_FLUID_REQUESTER_NAME): %d", entity.unit_number))
+    link_log(string.format("add_link_entity(LINK_FLUID_REQUESTER_NAME): %d", entity.unit_number))
     global.link_fluid_requesters[entity.unit_number] = {
       entity = entity
     }
   elseif entity.name == LINK_INVENTORY_COMBINATOR_NAME then
-    game.print(string.format("add_link_entity(LINK_INVENTORY_COMBINATOR_NAME): %d", entity.unit_number))
+    link_log(string.format("add_link_entity(LINK_INVENTORY_COMBINATOR_NAME): %d", entity.unit_number))
     entity.operable = false
     global.link_inventory_combinators[entity.unit_number] = {
       entity = entity,
       behaviour = entity.get_or_create_control_behavior()
     }
   elseif entity.name == LINK_RECEIVER_COMBINATOR_NAME then
-    game.print(string.format("add_link_entity(LINK_RECEIVER_COMBINATOR_NAME): %d", entity.unit_number))
+    link_log(string.format("add_link_entity(LINK_RECEIVER_COMBINATOR_NAME): %d", entity.unit_number))
     entity.operable = false
     entity.rotatable = false
     local parts = create_combinator(entity)
@@ -122,7 +122,7 @@ function add_link_entity(entity)
       link_network_id = parts.link_network_id
     }
   elseif entity.name == LINK_TRANSMITTER_COMBINATOR_NAME then
-    game.print(string.format("add_link_entity(LINK_TRANSMITTER_COMBINATOR_NAME): %d", entity.unit_number))
+    link_log(string.format("add_link_entity(LINK_TRANSMITTER_COMBINATOR_NAME): %d", entity.unit_number))
     entity.operable = false
     entity.rotatable = false
     local parts = create_combinator(entity)
@@ -148,39 +148,39 @@ function remove_link_entity(entity)
   if not global.link_fluid_requesters then global.link_fluid_requesters = {} end
 
   if entity.name == LINK_ACTIVE_PROVIDER_CHEST_NAME then
-    game.print(string.format("remove_link_entity(LINK_ACTIVE_PROVIDER_CHEST_NAME): %d", entity.unit_number))
+    link_log(string.format("remove_link_entity(LINK_ACTIVE_PROVIDER_CHEST_NAME): %d", entity.unit_number))
     global.link_provider_chests[entity.unit_number] = nil
   elseif entity.name == LINK_BUFFER_CHEST_NAME then
-    game.print(string.format("remove_link_entity(LINK_BUFFER_CHEST_NAME): %d", entity.unit_number))
+    link_log(string.format("remove_link_entity(LINK_BUFFER_CHEST_NAME): %d", entity.unit_number))
     global.link_requester_chests[entity.unit_number] = nil
   elseif entity.name == LINK_REQUESTER_PROVIDER_CHEST_NAME then
-    game.print(string.format("remove_link_entity(LINK_REQUESTER_PROVIDER_CHEST_NAME): %d", entity.unit_number))
+    link_log(string.format("remove_link_entity(LINK_REQUESTER_PROVIDER_CHEST_NAME): %d", entity.unit_number))
     global.link_provider_chests[entity.unit_number] = nil
   elseif entity.name == LINK_STORAGE_CHEST_NAME then
-    game.print(string.format("remove_link_entity(LINK_STORAGE_CHEST_NAME): %d", entity.unit_number))
+    link_log(string.format("remove_link_entity(LINK_STORAGE_CHEST_NAME): %d", entity.unit_number))
     global.link_provider_chests[entity.unit_number] = nil
   elseif entity.name == LINK_ELECTRICAL_PROVIDER_NAME then
-    game.print(string.format("remove_link_entity(LINK_ELECTRICAL_PROVIDER_NAME): %d", entity.unit_number))
+    link_log(string.format("remove_link_entity(LINK_ELECTRICAL_PROVIDER_NAME): %d", entity.unit_number))
     global.link_electrical_providers[entity.unit_number] = nil
   elseif entity.name == LINK_ELECTRICAL_REQUESTER_NAME then
-    game.print(string.format("remove_link_entity(LINK_ELECTRICAL_REQUESTER_NAME): %d", entity.unit_number))
+    link_log(string.format("remove_link_entity(LINK_ELECTRICAL_REQUESTER_NAME): %d", entity.unit_number))
     global.link_electrical_requesters[entity.unit_number] = nil
   elseif entity.name == LINK_FLUID_PROVIDER_NAME then
-    game.print(string.format("remove_link_entity(LINK_FLUID_PROVIDER_NAME): %d", entity.unit_number))
+    link_log(string.format("remove_link_entity(LINK_FLUID_PROVIDER_NAME): %d", entity.unit_number))
     global.link_fluid_providers[entity.unit_number] = nil
   elseif entity.name == LINK_FLUID_REQUESTER_NAME then
-    game.print(string.format("remove_link_entity(LINK_FLUID_REQUESTER_NAME): %d", entity.unit_number))
+    link_log(string.format("remove_link_entity(LINK_FLUID_REQUESTER_NAME): %d", entity.unit_number))
     global.link_fluid_requesters[entity.unit_number] = nil
   elseif entity.name == LINK_INVENTORY_COMBINATOR_NAME then
-    game.print(string.format("remove_link_entity(LINK_INVENTORY_COMBINATOR_NAME): %d", entity.unit_number))
+    link_log(string.format("remove_link_entity(LINK_INVENTORY_COMBINATOR_NAME): %d", entity.unit_number))
     global.link_inventory_combinators[entity.unit_number] = nil
   elseif entity.name == LINK_RECEIVER_COMBINATOR_NAME then
-    game.print(string.format("remove_link_entity(LINK_RECEIVER_COMBINATOR_NAME): %d", entity.unit_number))
+    link_log(string.format("remove_link_entity(LINK_RECEIVER_COMBINATOR_NAME): %d", entity.unit_number))
     data = global.link_receiver_combinators[entity.unit_number]
     destroy_combinator(data)
     global.link_receiver_combinators[entity.unit_number] = nil
   elseif entity.name == LINK_TRANSMITTER_COMBINATOR_NAME then
-    game.print(string.format("remove_link_entity(LINK_TRANSMITTER_COMBINATOR_NAME): %d", entity.unit_number))
+    link_log(string.format("remove_link_entity(LINK_TRANSMITTER_COMBINATOR_NAME): %d", entity.unit_number))
     data = global.link_transmitter_combinators[entity.unit_number]
     destroy_combinator(data)
     global.link_transmitter_combinators[entity.unit_number] = nil

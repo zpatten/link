@@ -141,10 +141,13 @@ class Server
 
   def restart!
     self.stop!
+    sleep 1
     self.start!
   end
 
   def start!
+    return if self.available?
+
     self.start_container!
     self.start_rcon!
 
@@ -154,6 +157,8 @@ class Server
   end
 
   def stop!
+    # return if self.unavailable?
+
     self.stop_rcon!
     self.stop_container!
 

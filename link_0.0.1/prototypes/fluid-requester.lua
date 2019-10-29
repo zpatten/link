@@ -11,11 +11,17 @@ for _, fluid in pairs(data.raw.fluid) do
   local fluid_recipe = {}
   fluid_recipe.category = LINK_FLUID_RECIPE_CATEGORY_NAME
   fluid_recipe.enabled = true
-  fluid_recipe.icon = table.deepcopy(fluid.icon)
-  fluid_recipe.icon_size = table.deepcopy(fluid.icon_size)
+  fluid_recipe.icons = {
+    {
+      icon = table.deepcopy(fluid.icon),
+      icon_size = table.deepcopy(fluid.icon_size),
+      tint = LINK_TINT
+    }
+  }
   fluid_recipe.ingredients = {}
   fluid_recipe.name = string.format("link-%s", fluid.name)
   fluid_recipe.order = string.format(LINK_FLUID_RECIPE_ORDER, fluid_recipe.name)
+  fluid_recipe.hide_from_player_crafting = true
   fluid_recipe.results = {
     {
       type = "fluid",
@@ -34,8 +40,15 @@ end
 --------------------------------------------------------------------------------
 local recipe = table.deepcopy(data.raw.recipe["assembling-machine-3"])
 recipe.enabled = true
+recipe.icons = {
+  {
+    icon = data.raw.item["storage-tank"].icon,
+    icon_size = 32,
+    tint = LINK_TINT
+  }
+}
 recipe.name = LINK_FLUID_REQUESTER_NAME
-recipe.order = string.format(LINK_FLUID_ORDER, recipe.name)
+recipe.order = string.format(LINK_FLUID_ORDER, LINK_FLUID_REQUESTER_NAME)
 recipe.result = LINK_FLUID_REQUESTER_NAME
 recipe.subgroup = LINK_FLUID_SUBGROUP_NAME
 
@@ -44,10 +57,9 @@ recipe.subgroup = LINK_FLUID_SUBGROUP_NAME
 -- ITEM
 --------------------------------------------------------------------------------
 local item = table.deepcopy(data.raw.item["assembling-machine-3"])
-item.icon = data.raw.item["storage-tank"].icon
-item.icons = { { icon = item.icon, tint = LINK_TINT } }
+item.icons = { { icon = data.raw.item["storage-tank"].icon, tint = LINK_TINT } }
 item.name = LINK_FLUID_REQUESTER_NAME
-item.order = string.format(LINK_FLUID_ORDER, item.name)
+item.order = string.format(LINK_FLUID_ORDER, LINK_FLUID_REQUESTER_NAME)
 item.place_result = LINK_FLUID_REQUESTER_NAME
 item.subgroup = LINK_FLUID_SUBGROUP_NAME
 

@@ -41,6 +41,10 @@ class Storage
       end
     end
 
+    def storage_item_instrumentation(item_name, item_count)
+      $storage_item_count.set(item_count, labels: { name: item_name })
+    end
+
     def clone
       storage.nil? and load
 
@@ -71,6 +75,7 @@ class Storage
 
       Signals.update_inventory_signals
       update_websocket(item_name, storage[item_name])
+      storage_item_instrumentation(item_name, storage[item_name])
 
       item_count
     end
@@ -92,6 +97,7 @@ class Storage
 
       Signals.update_inventory_signals
       update_websocket(item_name, storage[item_name])
+      storage_item_instrumentation(item_name, storage[item_name])
 
       removed_count
     end

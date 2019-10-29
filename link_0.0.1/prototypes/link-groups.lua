@@ -1,11 +1,16 @@
 local link_groups = {
   {
+    icons = {
+      {
+        icon = "__base__/graphics/item-group/logistics.png",
+        icon_size = 64,
+        tint = LINK_TINT
+      }
+    },
     type = "item-group",
     name = LINK_GROUP_NAME,
     inventory_order = "z",
-    order = "z",
-    icon = "__base__/graphics/item-group/production.png",
-    icon_size = 64
+    order = "z"
   },
   {
     type = "item-subgroup",

@@ -26,7 +26,7 @@ class ThreadPool
       thread.priority = options.fetch(:priority, 0)
       @@thread_group.add(thread)
 
-      $thread_pool_metric.set(@@thread_group.list.count)
+      $metric_thread_count.set(@@thread_group.list.count)
 
       thread
     end
@@ -48,7 +48,7 @@ class ThreadPool
     end
 
     def thread_instrumentation(schedule, &block)
-      if $thread_execution
+      if $thread_execution && $thread_timing
         elapsed_time = Benchmark.realtime(&block)
         $thread_execution.observe(elapsed_time, labels: { name: schedule.what.to_s })
         $thread_timing.set(elapsed_time, labels: { name: schedule.what.to_s })
@@ -98,7 +98,7 @@ class ThreadPool
         run_thread(schedule, servers)
       end
 
-      $thread_pool_metric.set(@@thread_group.list.count)
+      $metric_thread_count.set(@@thread_group.list.count)
 
       true
     end
@@ -185,7 +185,7 @@ class ThreadPool
 
         sleep SLEEP_TIME
 
-        $thread_pool_metric.set(@@thread_group.list.count)
+        $metric_thread_count.set(@@thread_group.list.count)
       end
     end
 

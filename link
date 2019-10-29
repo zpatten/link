@@ -22,10 +22,16 @@ require 'awesome_print'
 require 'prometheus/client'
 require 'prometheus/client/push'
 $prometheus = Prometheus::Client.registry
-$thread_pool_metric = Prometheus::Client::Gauge.new(:thread_count, docstring: '...')
-$prometheus.register($thread_pool_metric)
+
+$storage_item_count = Prometheus::Client::Gauge.new(:storage_item_count, docstring: '...', labels: [:name])
+$prometheus.register($storage_item_count)
+
+$metric_thread_count = Prometheus::Client::Gauge.new(:thread_count, docstring: '...')
+$prometheus.register($metric_thread_count)
+
 $thread_execution = Prometheus::Client::Histogram.new(:thread_execution, docstring: '...', labels: [:name])
 $prometheus.register($thread_execution)
+
 $thread_timing = Prometheus::Client::Gauge.new(:thread_timing, docstring: '...', labels: [:name])
 $prometheus.register($thread_timing)
 
@@ -35,6 +41,7 @@ $prometheus.register($thread_timing)
 
 SLEEP_TIME = 0.0001
 LINK_ROOT = Dir.pwd
+INT_32_MAX = (2**32).div(2) - 1
 
 STDOUT.sync = true
 # Thread.abort_on_exception = true
