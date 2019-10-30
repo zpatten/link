@@ -26,6 +26,9 @@ $prometheus = Prometheus::Client.registry
 $storage_item_count = Prometheus::Client::Gauge.new(:storage_item_count, docstring: '...', labels: [:name])
 $prometheus.register($storage_item_count)
 
+$storage_delta_count = Prometheus::Client::Gauge.new(:storage_delta_count, docstring: '...', labels: [:name])
+$prometheus.register($storage_delta_count)
+
 $metric_thread_count = Prometheus::Client::Gauge.new(:thread_count, docstring: '...')
 $prometheus.register($metric_thread_count)
 

@@ -10,7 +10,7 @@
   - @storage.sort.each do |item_name, item_count|
     %tr
       %td.align-right.one= item_name
-      %td.align-right.one{ id: "#{item_name}-count" }= item_count
+      %td.align-right.one{ id: "#{item_name}-count" }= countsize(item_count)
       %td.one{ id: "#{item_name}-delta"}= @delta[item_name]
       %td
         %div.fleft{ style: "width: #{((item_count.to_f / @total_count.to_f) * 100.0).to_i}%; background-color: red;" } &nbsp;

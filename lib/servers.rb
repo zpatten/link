@@ -64,7 +64,7 @@ class Servers
 
     def backup
       self.all.each do |server|
-        server.backup(true)
+        server.backup(true) if server.available?
       end
     end
 
@@ -89,21 +89,6 @@ class Servers
         @@servers.delete(server_name)
 
         $logger.info(:servers) { "Deleted server #{server_name}" }
-
-
-        # if File.exists?(server.save_file)
-        #   begin
-        #     FileUtils.mkdir_p(factorio_saves)
-        #   rescue Errno::ENOENT
-        #   end
-
-        #   FileUtils.cp_r(
-        #     server.save_file,
-        #     File.join(factorio_saves, "#{server_name}.zip")
-        #   )
-        # end
-
-        # FileUtils.rm_rf(server.path)
       end
     end
 

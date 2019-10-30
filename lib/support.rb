@@ -65,6 +65,18 @@ def filesize(size)
   '%.1f %s' % [size.to_f / 1024 ** exp, units[exp]]
 end
 
+def countsize(size)
+  units = ['', 'k', 'M', 'G', 'T', 'P', 'E']
+  decimal = [0, 1, 1, 2, 2, 3, 3]
+  size = size.to_i
+
+  return '0' if size == 0
+  exp = (Math.log(size) / Math.log(1000)).to_i
+  exp = 6 if exp > 6
+
+  "%.#{decimal[exp]}f %s" % [size.to_f / 1000 ** exp, units[exp]]
+end
+
 # Displays RCON response packets for debugging or other uses (i.e. when we do not care about the response)
 def rcon_print(host, packet_fields, data)
   # $logger.debug { "RCON Received Packet: #{packet_fields.inspect}" }

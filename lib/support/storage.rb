@@ -45,6 +45,10 @@ class Storage
       $storage_item_count.set(item_count, labels: { name: item_name })
     end
 
+    def storage_delta_instrumentation(item_name, item_count)
+      $storage_delta_count.set(item_count, labels: { name: item_name })
+    end
+
     def clone
       storage.nil? and load
 
@@ -59,7 +63,7 @@ class Storage
       WebServer.settings.storage_sockets.each do |s|
         s.send({
           name: item_name,
-          count: item_count,
+          count: countsize(item_count),
           delta: delta[item_name]
         }.to_json)
       end
@@ -114,11 +118,11 @@ class Storage
       if delta_count.nil?
         '-'
       elsif delta_count > 0
-        "+#{delta_count}"
+        "+#{countsize(delta_count)}"
       elsif delta_count == 0
         '0'
-      else
-        delta_count.to_s
+      elsif delta_count < 0
+        "-#{countsize(-delta_count)}"
       end
     end
 
@@ -136,9 +140,15 @@ class Storage
         @@storage.keys.each do |item_name|
           count_delta = (@@storage[item_name] - (@@previous_storage[item_name] || 0))
           @@storage_delta_history[item_name] << count_delta
-          delta_count = [@@storage_delta_history[item_name].size, 60].min
-          @@storage_delta_history[item_name] = @@storage_delta_history[item_name][-delta_count, delta_count]
-          @@storage_delta[item_name] = format_delta_count(@@storage_delta_history[item_name].sum.div(@@storage_delta_history[item_name].size))
+          delta_counts = [@@storage_delta_history[item_name].size, 60].min
+
+          @@storage_delta_history[item_name] = @@storage_delta_history[item_name][-delta_counts, delta_counts]
+
+          item_count = @@storage_delta_history[item_name].sum.div(@@storage_delta_history[item_name].size)
+
+          @@storage_delta[item_name] = format_delta_count(item_count)
+
+          storage_delta_instrumentation(item_name, item_count)
         end
 
         @@previous_storage = deep_clone(@@storage)

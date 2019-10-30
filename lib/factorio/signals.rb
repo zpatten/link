@@ -45,13 +45,6 @@ def set_receiver_combinator(host, packet_fields, server)
   end
 end
 
-# def schedule_server_rx_signals
-#   schedule_servers(:rx_signals) do |server|
-#     command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
-#     server.rcon_command_nonblock(command, method(:set_receiver_combinator))
-#   end
-# end
-
 
 # Link Transmitter Combinator
 ################################################################################
@@ -83,12 +76,6 @@ def schedule_server_signals
       server.rcon_command_nonblock(command, method(:set_receiver_combinator))
     end
 
-    # command = if $tx_signals_initalized[server.name].nil?
-    #   $tx_signals_initalized[server.name] = true
-    #   %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', true))
-    # else
-    #   %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator'))
-    # end
     servers.each do |server|
       force = !$tx_signals_initalized[server.name]
       command = %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', #{force}))
