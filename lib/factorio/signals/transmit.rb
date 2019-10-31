@@ -75,16 +75,16 @@ class Signals
             previous_signal = previous_signals_map[signal_name(current_signal)]
 
             if previous_signal.nil? # || not initalized
-              $logger.info(:signals_tx) { "Create Signal[#{network_id}]: #{signal_name(current_signal)} (#{signal_count(current_signal)})" }
+              $logger.debug(:signals_tx) { "Create Signal[#{network_id}]: #{signal_name(current_signal)} (#{signal_count(current_signal)})" }
               network_signals << current_signal
             else
               count_changed = (signal_count(previous_signal) != signal_count(current_signal))
               index_changed = (signal_count(previous_signal) != signal_count(current_signal))
               if count_changed
-                $logger.info(:signals_tx) { "Update Signal[#{network_id}]: #{signal_name(current_signal)} count:(#{signal_count(previous_signal)} -> #{signal_count(current_signal)})" }
+                $logger.debug(:signals_tx) { "Update Signal[#{network_id}]: #{signal_name(current_signal)} count:(#{signal_count(previous_signal)} -> #{signal_count(current_signal)})" }
                 network_signals << current_signal
               elsif index_changed
-                $logger.info(:signals_tx) { "Update Signal[#{network_id}]: #{signal_name(current_signal)} index:(#{signal_index(previous_signal)} -> #{signal_index(current_signal)})" }
+                $logger.debug(:signals_tx) { "Update Signal[#{network_id}]: #{signal_name(current_signal)} index:(#{signal_index(previous_signal)} -> #{signal_index(current_signal)})" }
                 network_signals << current_signal
               else
                 # Unchanged
@@ -96,7 +96,7 @@ class Signals
           previous_signals.each do |previous_signal|
             current_signal = current_signals_map[signal_name(previous_signal)]
             if current_signal.nil?
-              $logger.info(:signals_tx) { "Delete Signal[#{network_id}]: #{signal_name(previous_signal)}" }
+              $logger.debug(:signals_tx) { "Delete Signal[#{network_id}]: #{signal_name(previous_signal)}" }
               previous_signal["count"] = 0
               network_signals << previous_signal
             end

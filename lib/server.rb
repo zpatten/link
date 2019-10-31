@@ -14,6 +14,7 @@ class Server
   attr_reader :host
   attr_reader :name
   attr_reader :rcon
+  attr_reader :research
 
 ################################################################################
 

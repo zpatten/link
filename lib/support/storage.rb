@@ -64,7 +64,8 @@ class Storage
         s.send({
           name: item_name,
           count: countsize(item_count),
-          delta: delta[item_name]
+          delta_s: delta[item_name][0],
+          delta_m: delta[item_name][1]
         }.to_json)
       end
     end
@@ -144,11 +145,15 @@ class Storage
 
           @@storage_delta_history[item_name] = @@storage_delta_history[item_name][-delta_counts, delta_counts]
 
-          item_count = @@storage_delta_history[item_name].sum.div(@@storage_delta_history[item_name].size)
+          sec_rate = @@storage_delta_history[item_name].sum.div(@@storage_delta_history[item_name].size)
+          min_rate = @@storage_delta_history[item_name].sum
 
-          @@storage_delta[item_name] = format_delta_count(item_count)
+          @@storage_delta[item_name] = [
+            format_delta_count(sec_rate),
+            format_delta_count(min_rate)
+          ]
 
-          storage_delta_instrumentation(item_name, item_count)
+          storage_delta_instrumentation(item_name, sec_rate)
         end
 
         @@previous_storage = deep_clone(@@storage)

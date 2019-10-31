@@ -5,7 +5,7 @@ def get_providables(host, packet_fields, server)
   unless payload.empty?
     providables = JSON.parse(payload)
     unless providables.empty?
-      $logger.info(:providables) { "[#{server.name}] providables: #{providables.ai}" }
+      $logger.debug(:providables) { "[#{server.name}] providables: #{providables.ai}" }
       providables.each do |item_name, item_count|
         Storage.add(item_name, item_count)
       end

@@ -66,9 +66,12 @@ class ThreadPool
 
       thread = Thread.new do
         thread_instrumentation(schedule) do
-          Thread.current[:started_at] = Time.now.to_f
-          Thread.current[:expires_in] = [(schedule.frequency * 2), 10.0].max
           trap_signals
+          expires_in = [(schedule.frequency * 2), 10.0].max
+          expires_at = Time.now.to_f + expires_in
+          # Thread.current[:started_at] = Time.now.to_f
+          # Thread.current[:expires_in] = [(schedule.frequency * 2), 10.0].max
+          Thread.current[:expires_at] = expires_at
           schedule_log(:thread, :started, schedule, Thread.current)
 
           schedule.block.call(*args)
@@ -140,6 +143,7 @@ class ThreadPool
           "parallel:#{parallel}",
           "block:#{block}"
         ].compact.join(", ")
+
         $logger.debug(:thread) { "#{who} #{action} #{what}: #{log_fields}" }
       else
         $logger.debug(:thread) { "#{who} #{action} #{schedule.to_s.downcase}" }
@@ -151,7 +155,7 @@ class ThreadPool
       frequency            = schedule.frequency
       next_run_at          = (now + (frequency - (now % frequency)))
       schedule.next_run_at = next_run_at
-      # schedule_log(:thread, :scheduled, schedule)
+      schedule_log(:thread, :scheduled, schedule)
     end
 
     def shutdown!
@@ -167,18 +171,16 @@ class ThreadPool
             run(schedule)
             schedule_next_run(schedule)
           end
-          Thread.pass
+          # Thread.pass
         end
 
         if last_checked_threads_at < (Time.now.to_f - 10.0)
           last_checked_threads_at = Time.now.to_f
           $logger.info(:thread) { "Checking for stale threads" }
           @@thread_group.list.each do |thread|
-            if thread.key?(:started_at)
-              if thread[:started_at] < (Time.now.to_f - thread[:expires_in])
-                $logger.fatal(:thread) { "Thread #{thread.name.inspect} expired!" }
-                thread.exit
-              end
+            if thread.key?(:expires_at) && (Time.now.to_f > thread[:expires_at])
+              $logger.fatal(:thread) { "Thread #{thread.name.inspect} expired!" }
+              thread.exit
             end
           end
         end

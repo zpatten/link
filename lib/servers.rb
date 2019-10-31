@@ -26,9 +26,9 @@ class Servers
       when :commands, :chats, :ping, :command_whitelist, :logistics, :signals, :id
         all.select { |s| !!Config.server_value(s.name, what) }
       when :research, :current_research
-        all.select { |s| !!Config.server_value(s.name, :research) }
+        all.select { |s| s.research }
       when :non_research
-        all.select { |s| !(!!Config.server_value(s.name, :research)) }
+        all.select { |s| !s.research }
       else
         nil
       end
