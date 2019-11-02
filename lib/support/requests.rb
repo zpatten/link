@@ -212,3 +212,5 @@ class Requests
 
   extend(ClassMethods)
 end
+
+Requests.reset

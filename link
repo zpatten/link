@@ -76,8 +76,6 @@ require_relative 'lib/options'
 
 ################################################################################
 
-Requests.reset
-
 schedule_server_chats
 schedule_server_command_whitelist
 schedule_server_commands
