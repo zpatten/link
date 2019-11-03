@@ -118,6 +118,13 @@ class Server
     File.join(self.saves_path, "save.zip")
   end
 
+  def latest_save_file
+    save_files = Dir.glob(File.join(self.saves_path, '*.zip'), File::FNM_CASEFOLD)
+    save_files.reject! { |save_file| save_file =~ /tmp\.zip$/ }
+    save_files.sort! { |a, b| File.mtime(a) <=> File.mtime(b) }
+    save_files.last
+  end
+
 ################################################################################
 
   def backup(timestamp=false)
@@ -133,8 +140,9 @@ class Server
         "#{self.name}.zip"
       end
       backup_save_file = File.join(Servers.factorio_saves, filename)
-      FileUtils.cp_r(self.save_file, backup_save_file)
-      $logger.info(:server) { "[#{self.name}] Backed up #{self.save_file} to #{backup_save_file}" }
+      latest_save_file = self.latest_save_file
+      FileUtils.cp_r(latest_save_file, backup_save_file)
+      $logger.info(:server) { "[#{self.name}] Backed up #{latest_save_file.inspect} to #{backup_save_file.inspect}" }
     end
   end
 
