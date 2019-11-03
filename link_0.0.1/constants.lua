@@ -39,6 +39,7 @@ LINK_ELECTRICAL_ITEM_NAME = "electricity"
 LINK_FLUID_PROVIDER_NAME = "link-fluid-provider"
 LINK_FLUID_REQUESTER_NAME = "link-fluid-requester"
 LINK_FLUID_SUBGROUP_NAME = "link-fluid-subgroup"
+LINK_FLUID_ITEM_SUBGROUP_NAME = "link-fluid-item-subgroup"
 LINK_FLUID_ORDER = "f-[link-%s]"
 
 LINK_FLUID_RECIPE_CATEGORY_NAME = "link-requester-fluids"

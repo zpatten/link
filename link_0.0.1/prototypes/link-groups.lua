@@ -38,15 +38,21 @@ local link_groups = {
   },
   {
     type = "item-subgroup",
-    name = LINK_COMBINATOR_SUBGROUP_NAME,
+    name = LINK_FLUID_ITEM_SUBGROUP_NAME,
     group = LINK_GROUP_NAME,
     order = "e"
   },
   {
     type = "item-subgroup",
-    name = LINK_SIGNAL_SUBGROUP_NAME,
+    name = LINK_COMBINATOR_SUBGROUP_NAME,
     group = LINK_GROUP_NAME,
     order = "f"
+  },
+  {
+    type = "item-subgroup",
+    name = LINK_SIGNAL_SUBGROUP_NAME,
+    group = LINK_GROUP_NAME,
+    order = "g"
   }
 }
 

@@ -8,6 +8,20 @@ local link_requester_fluid_recipe_category = {
 data:extend{link_requester_fluid_recipe_category}
 
 for _, fluid in pairs(data.raw.fluid) do
+  local fluid_item = {}
+  fluid_item.icons = {
+    {
+      icon = data.raw.fluid[fluid.name].icon,
+      icon_size = 32,
+      tint = LINK_TINT
+    }
+  }
+  fluid_item.name = string.format("link-fluid-%s", fluid.name)
+  fluid_item.order = string.format(LINK_FLUID_ORDER, fluid_item.name)
+  fluid_item.subgroup = LINK_FLUID_ITEM_SUBGROUP_NAME
+  fluid_item.stack_size = LINK_FLUID_MAX
+  fluid_item.type = "item"
+
   local fluid_recipe = {}
   fluid_recipe.category = LINK_FLUID_RECIPE_CATEGORY_NAME
   fluid_recipe.enabled = true
@@ -18,20 +32,28 @@ for _, fluid in pairs(data.raw.fluid) do
       tint = LINK_TINT
     }
   }
-  fluid_recipe.ingredients = {}
-  fluid_recipe.name = string.format("link-%s", fluid.name)
+  fluid_recipe.ingredients = {
+    {
+      amount = LINK_FLUID_MAX,
+      name = fluid_item.name,
+      type = "item"
+    }
+  }
+  fluid_recipe.name = string.format("link-fluid-%s", fluid.name)
   fluid_recipe.order = string.format(LINK_FLUID_RECIPE_ORDER, fluid_recipe.name)
   fluid_recipe.hide_from_player_crafting = true
+  fluid_recipe.return_ingredients_on_change = false
   fluid_recipe.results = {
     {
-      type = "fluid",
+      amount = LINK_FLUID_MAX,
       name = fluid.name,
-      amount = 0
+      type = "fluid"
     }
   }
   fluid_recipe.subgroup = LINK_FLUID_RECIPE_SUBGROUP_NAME
   fluid_recipe.type = "recipe"
-  data:extend{fluid_recipe}
+
+  data:extend{ fluid_item, fluid_recipe }
 end
 
 
@@ -95,8 +117,7 @@ entity.fluid_boxes = {
         type = "output"
       }
     }
-  },
-  off_when_no_fluid_recipe = false
+  }
 }
 entity.minable = { mining_time = 0.5, result = LINK_FLUID_REQUESTER_NAME }
 entity.module_specification = { module_slots = 0 }
