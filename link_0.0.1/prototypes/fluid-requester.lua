@@ -16,8 +16,8 @@ for _, fluid in pairs(data.raw.fluid) do
       tint = LINK_TINT
     }
   }
-  fluid_item.name = string.format("link-fluid-%s", fluid.name)
-  fluid_item.order = string.format(LINK_FLUID_ORDER, fluid_item.name)
+  fluid_item.name = link_fluid_name(fluid.name)
+  fluid_item.order = string.format(LINK_FLUID_ORDER, link_fluid_name(fluid.name))
   fluid_item.subgroup = LINK_FLUID_ITEM_SUBGROUP_NAME
   fluid_item.stack_size = LINK_FLUID_MAX
   fluid_item.type = "item"
@@ -35,11 +35,11 @@ for _, fluid in pairs(data.raw.fluid) do
   fluid_recipe.ingredients = {
     {
       amount = LINK_FLUID_MAX,
-      name = fluid_item.name,
+      name = link_fluid_name(fluid.name),
       type = "item"
     }
   }
-  fluid_recipe.name = string.format("link-fluid-%s", fluid.name)
+  fluid_recipe.name = link_fluid_name(fluid.name)
   fluid_recipe.order = string.format(LINK_FLUID_RECIPE_ORDER, fluid_recipe.name)
   fluid_recipe.hide_from_player_crafting = true
   fluid_recipe.return_ingredients_on_change = false

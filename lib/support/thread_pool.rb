@@ -174,15 +174,15 @@ class ThreadPool
           # Thread.pass
         end
 
-        if last_checked_threads_at < (Time.now.to_f - 10.0)
-          last_checked_threads_at = Time.now.to_f
-          $logger.info(:thread) { "Checking for stale threads" }
+        if last_checked_threads_at < (Time.now.to_f - 1.0)
+          $logger.debug(:thread) { "Checking for stale threads" }
           @@thread_group.list.each do |thread|
             if thread.key?(:expires_at) && (Time.now.to_f > thread[:expires_at])
               $logger.fatal(:thread) { "Thread #{thread.name.inspect} expired!" }
               thread.exit
             end
           end
+          last_checked_threads_at = Time.now.to_f
         end
 
         sleep SLEEP_TIME

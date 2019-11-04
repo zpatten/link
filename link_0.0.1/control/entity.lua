@@ -57,6 +57,9 @@ function add_link_entity(entity)
   if not global.link_fluid_providers then global.link_fluid_providers = {} end
   if not global.link_fluid_requesters then global.link_fluid_requesters = {} end
 
+  ------------
+  -- CHESTS --
+  ------------
   if entity.name == LINK_ACTIVE_PROVIDER_CHEST_NAME then
     link_log(string.format("add_link_entity(LINK_ACTIVE_PROVIDER_CHEST_NAME): %d", entity.unit_number))
     global.link_provider_chests[entity.unit_number] = {
@@ -82,6 +85,23 @@ function add_link_entity(entity)
       entity = entity,
       inventory = entity.get_inventory(defines.inventory.chest)
     }
+  -----------
+  -- FLUID --
+  -----------
+  elseif entity.name == LINK_FLUID_PROVIDER_NAME then
+    link_log(string.format("add_link_entity(LINK_FLUID_PROVIDER_NAME): %d", entity.unit_number))
+    global.link_fluid_providers[entity.unit_number] = {
+      entity = entity
+    }
+  elseif entity.name == LINK_FLUID_REQUESTER_NAME then
+    link_log(string.format("add_link_entity(LINK_FLUID_REQUESTER_NAME): %d", entity.unit_number))
+    global.link_fluid_requesters[entity.unit_number] = {
+      entity = entity,
+      inventory = entity.get_inventory(defines.inventory.assembling_machine_input)
+    }
+  -----------
+  -- POWER --
+  -----------
   elseif entity.name == LINK_ELECTRICAL_PROVIDER_NAME then
     link_log(string.format("add_link_entity(LINK_ELECTRICAL_PROVIDER_NAME): %d", entity.unit_number))
     if not global.link_electrical_providers then global.link_electrical_providers = {} end
@@ -92,18 +112,12 @@ function add_link_entity(entity)
     link_log(string.format("add_link_entity(LINK_ELECTRICAL_REQUESTER_NAME): %d", entity.unit_number))
     if not global.link_electrical_requesters then global.link_electrical_requesters = {} end
     global.link_electrical_requesters[entity.unit_number] = {
-      entity = entity
+      entity = entity,
+      electric_buffer_size = entity.electric_buffer_size
     }
-  elseif entity.name == LINK_FLUID_PROVIDER_NAME then
-    link_log(string.format("add_link_entity(LINK_FLUID_PROVIDER_NAME): %d", entity.unit_number))
-    global.link_fluid_providers[entity.unit_number] = {
-      entity = entity
-    }
-  elseif entity.name == LINK_FLUID_REQUESTER_NAME then
-    link_log(string.format("add_link_entity(LINK_FLUID_REQUESTER_NAME): %d", entity.unit_number))
-    global.link_fluid_requesters[entity.unit_number] = {
-      entity = entity
-    }
+  -----------------
+  -- COMBINATORS --
+  -----------------
   elseif entity.name == LINK_INVENTORY_COMBINATOR_NAME then
     link_log(string.format("add_link_entity(LINK_INVENTORY_COMBINATOR_NAME): %d", entity.unit_number))
     entity.operable = false

@@ -1,5 +1,9 @@
 inspect = require "inspect"
 
+function link_fluid_name(fluid_name)
+  return string.format("link-fluid-%s", fluid_name)
+end
+
 function link_log(what, message)
   if global.link_debug then
     log(string.format("[LINK:%s] %s", what, message))
