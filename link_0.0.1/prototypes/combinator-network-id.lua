@@ -3,7 +3,7 @@
 --------------------------------------------------------------------------------
 local recipe = table.deepcopy(data.raw.recipe["constant-combinator"])
 recipe.enabled = true
-recipe.hide_from_player_crafting = true
+recipe.hidden = true
 recipe.name = LINK_NETWORK_ID_COMBINATOR_NAME
 recipe.order = string.format(LINK_COMBINATOR_ORDER, LINK_NETWORK_ID_COMBINATOR_NAME)
 recipe.result = LINK_NETWORK_ID_COMBINATOR_NAME

@@ -24,7 +24,6 @@ def set_receiver_combinator(host, packet_fields, server)
       $logger.debug(:signals_rx) { "[#{server.id}] Transmitting signals for circuit networks: #{network_ids.ai}" }
 
       force = !$rx_signals_initalized[server.name]
-
       networks = Hash.new
       network_ids.each do |network_id|
         # signals to transmit to receivers
@@ -61,7 +60,6 @@ def get_transmitter_combinator(host, packet_fields, server)
         Signals.rx(unit_networks_list, server)
       else
         $logger.debug(:combinator_tx) { "[#{server.id}] NOOP" }
-        return
       end
     end
   end
@@ -71,16 +69,16 @@ end
 # def schedule_server_tx_signals
 def schedule_server_signals
   ThreadPool.schedule_servers(:signals, parallel: false) do |servers|
-    command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
-    servers.each do |server|
-      server.rcon_command_nonblock(command, method(:set_receiver_combinator))
-    end
-
     servers.each do |server|
       force = !$tx_signals_initalized[server.name]
       command = %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', #{force}))
       server.rcon_command_nonblock(command, method(:get_transmitter_combinator))
       $tx_signals_initalized[server.name] = true
+    end
+
+    command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
+    servers.each do |server|
+      server.rcon_command_nonblock(command, method(:set_receiver_combinator))
     end
   end
 end

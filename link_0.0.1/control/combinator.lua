@@ -20,7 +20,7 @@ function get_link_transmitter_combinator(force)
     if entity.valid and behaviour.valid and link_network_id_entity.valid then
       link_network_id = fetch_circuit_network_id(link_network_id_entity)
       link_signals[entity.unit_number] = {}
-      link_signals[entity.unit_number][link_network_id] = behaviour.signals_last_tick
+      link_signals[entity.unit_number][link_network_id] = behaviour.signals_last_tick or {}
 
       link_log("SIGNALS-TX", string.format("Processing Network ID: %d", link_network_id))
 
@@ -95,6 +95,21 @@ function get_link_transmitter_combinator(force)
             signal_delta[unit_number][link_network_id] = link_signals[entity.unit_number][link_network_id]
           end
 
+        end
+      end
+    end
+  end
+
+  if not force and global.link_previous_signals then
+    for unit_number, unit_signal_networks in pairs(global.link_previous_signals) do
+      for link_network_id, previous_signals in pairs(unit_signal_networks) do
+        if not link_signals[unit_number] or not link_signals[unit_number][link_network_id] then
+          if not signal_delta[unit_number] then signal_delta[unit_number] = {} end
+          if not signal_delta[unit_number][link_network_id] then signal_delta[unit_number][link_network_id] = {} end
+          for i, previous_signal in pairs(previous_signals) do
+            previous_signal["count"] = 0
+            table.insert(signal_delta[unit_number][link_network_id], previous_signal)
+          end
         end
       end
     end
