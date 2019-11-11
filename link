@@ -75,9 +75,9 @@ require_relative 'lib/options'
 
 ################################################################################
 
-# schedule_server_chats
-# schedule_server_command_whitelist
-# schedule_server_commands
+schedule_server_chats
+schedule_server_command_whitelist
+schedule_server_commands
 schedule_server_current_research
 schedule_server_id
 schedule_server_logistics

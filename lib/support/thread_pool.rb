@@ -62,26 +62,26 @@ class ThreadPool
         server_names(*args),
         schedule.what.to_s
       ].compact.join(":")
-      return if @@thread_group.list.map(&:name).compact.include?(thread_name)
+
+      return false if @@thread_group.list.map(&:name).compact.include?(thread_name)
 
       thread = Thread.new do
         thread_instrumentation(schedule) do
           trap_signals
-          expires_in = [(schedule.frequency * 2), 10.0].max
-          expires_at = Time.now.to_f + expires_in
-          # Thread.current[:started_at] = Time.now.to_f
-          # Thread.current[:expires_in] = [(schedule.frequency * 2), 10.0].max
+          expires_in                  = [(schedule.frequency * 2), 10.0].max
+          expires_at                  = Time.now.to_f + expires_in
           Thread.current[:expires_at] = expires_at
-          schedule_log(:thread, :started, schedule, Thread.current)
 
+          schedule_log(:thread, :starting, schedule, Thread.current)
           schedule.block.call(*args)
-
           schedule_log(:thread, :stopping, schedule, Thread.current)
         end
       end
       thread.name = thread_name
       thread.priority = schedule.options.fetch(:priority, 0)
       @@thread_group.add(thread)
+
+      true
     end
 
     def run(schedule)

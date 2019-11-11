@@ -172,6 +172,7 @@ function set_link_fulfillments(data)
   local link_fulfillments = game.json_to_table(data)
 
   for unit_number, items in pairs(link_fulfillments) do
+
     ------------
     -- CHESTS --
     ------------

@@ -48,7 +48,7 @@ class Signals
       signal_lists.each do |unit_number, networks|
         networks.each do |network_id, signals|
           network_id = scrub_network_id(network_id)
-          $logger.debug(:signals_rx) { "Processing Circuit Network ID: #{pp_inline(network_id)}" }
+          $logger.debug(:signals_rx) { "Processing Circuit Network ID #{network_id.ai}" }
 
           # scrub the signals
           unless (network_id == :inventory)

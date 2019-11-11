@@ -95,6 +95,8 @@ class Signals
     end
 
     def scrub_signals(signals, signal_data)
+      signals = Array.new if signals.empty?
+
       signals.uniq!
       sort_signals!(signals)
       # cleanup and signals we will be inserting

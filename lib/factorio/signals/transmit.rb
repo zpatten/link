@@ -8,7 +8,6 @@ class Signals
       network_signals = self.clone(network_id)
 
       unless network_signals.nil? || network_signals.empty?
-        # pp network_signals
         total_signals = network_signals.values.flatten.count
         total_units = network_signals.keys.count
 
@@ -18,7 +17,6 @@ class Signals
         signal_types = Hash.new
 
         network_signals.each do |unit_number, unit_signals|
-          ###
           unit_signals.each do |unit_signal|
             signal_totals.merge!(signal_name(unit_signal) => signal_count(unit_signal)) { |k,o,n| o + n }
             signal_types[signal_name(unit_signal)] ||= signal_type(unit_signal)
@@ -39,9 +37,10 @@ class Signals
     end
 
     def tx(network_id=0, server=nil, force=false)
-      Signals.update_inventory_signals
       network_id = scrub_network_id(network_id)
-
+      if network_id == :inventory
+        Signals.update_inventory_signals
+      end
 
       $logger.debug(:signals_tx) { "Processing Circuit Network ID: #{pp_inline(network_id)}" }
 
