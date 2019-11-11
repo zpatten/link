@@ -21,6 +21,27 @@ require_relative "support/requests"
 require_relative "support/storage"
 require_relative "support/thread_pool"
 
+# def running!
+#   $shutdown = false
+# end
+
+def shutdown!
+  $shutdown = true
+  ThreadPool.shutdown!
+  sleep SLEEP_TIME while running?
+  Servers.shutdown!
+  Storage.save
+  $logger.close
+end
+
+def running?
+  ThreadPool.running?
+end
+
+def shutdown?
+  !!$shutdown
+end
+
 def platform
   case RUBY_PLATFORM
   when /mingw/i

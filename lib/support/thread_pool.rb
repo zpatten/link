@@ -24,7 +24,7 @@ class ThreadPool
       end
       thread.name     = name
       thread.priority = options.fetch(:priority, 0)
-      @@thread_group.add(thread)
+      # @@thread_group.add(thread)
 
       $metric_thread_count.set(@@thread_group.list.count)
 
@@ -160,7 +160,10 @@ class ThreadPool
 
     def shutdown!
       @@thread_schedules = Array.new
-      @@thread_group.list.map(&:exit)
+    end
+
+    def running?
+      @@thread_group.list.size > 0
     end
 
     def execute
@@ -171,7 +174,6 @@ class ThreadPool
             run(schedule)
             schedule_next_run(schedule)
           end
-          # Thread.pass
         end
 
         if last_checked_threads_at < (Time.now.to_f - 1.0)

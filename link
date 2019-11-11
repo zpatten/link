@@ -49,6 +49,7 @@ INT_32_MAX = (2**32).div(2) - 1
 STDOUT.sync = true
 # Thread.abort_on_exception = true
 
+
 ################################################################################
 
 require_relative 'lib/support'
@@ -65,9 +66,7 @@ trap_signals
 
 at_exit do
   $logger.fatal(:at_exit) { 'Shutting down!' }
-  Servers.shutdown!
-  Storage.save
-  $logger.close
+  shutdown!
 end
 
 ################################################################################
@@ -76,9 +75,9 @@ require_relative 'lib/options'
 
 ################################################################################
 
-schedule_server_chats
-schedule_server_command_whitelist
-schedule_server_commands
+# schedule_server_chats
+# schedule_server_command_whitelist
+# schedule_server_commands
 schedule_server_current_research
 schedule_server_id
 schedule_server_logistics

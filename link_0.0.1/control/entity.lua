@@ -30,12 +30,15 @@ end
 function create_combinator(entity)
   local position = calculate_position(entity)
 
-  local link_network_id = entity.surface.create_entity{
-    name = LINK_NETWORK_ID_COMBINATOR_NAME,
-    position = position.p_network_id,
-    force = entity.force,
-    direction = entity.direction
-  }
+  local link_network_id = entity.surface.find_entity(LINK_NETWORK_ID_COMBINATOR_NAME, position.p_network_id)
+  if not link_network_id then
+    link_network_id = entity.surface.create_entity{
+      name = LINK_NETWORK_ID_COMBINATOR_NAME,
+      position = position.p_network_id,
+      force = entity.force,
+      direction = entity.direction
+    }
+  end
 
   link_network_id.operable = true
   link_network_id.minable = false
@@ -207,10 +210,13 @@ function add_all_link_entities()
     LINK_BUFFER_CHEST_NAME,
     LINK_REQUESTER_PROVIDER_CHEST_NAME,
     LINK_STORAGE_CHEST_NAME,
+
     LINK_ELECTRICAL_PROVIDER_NAME,
     LINK_ELECTRICAL_REQUESTER_NAME,
+
     LINK_FLUID_PROVIDER_NAME,
     LINK_FLUID_REQUESTER_NAME,
+
     LINK_INVENTORY_COMBINATOR_NAME,
     LINK_RECEIVER_COMBINATOR_NAME,
     LINK_TRANSMITTER_COMBINATOR_NAME

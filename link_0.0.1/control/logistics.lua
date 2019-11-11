@@ -97,7 +97,7 @@ function get_link_requests()
     if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
       for i = 1, filter_count do
         local requested_item = entity.get_request_slot(i)
-        if requested_item and requested_item.valid then
+        if requested_item then
           local requested_item_name = requested_item.name
           local requested_item_count = requested_item.count
           local current_item_count = inventory.get_item_count(requested_item_name)
