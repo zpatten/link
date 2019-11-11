@@ -226,6 +226,8 @@ function remove_link_entity(entity)
   end
 end
 
+--------------------------------------------------------------------------------
+
 function add_all_link_entities()
   local names = {
     LINK_ACTIVE_PROVIDER_CHEST_NAME,
@@ -252,18 +254,22 @@ function add_all_link_entities()
   end
 end
 
-function on_link_entity_died(event)
+--------------------------------------------------------------------------------
+
+function on_link_entity_removed(event)
   local entity = event.entity
 
   if entity.type ~= "entity-ghost" then
     remove_link_entity(entity)
   end
 end
-script.on_event(defines.events.on_entity_died, on_link_entity_died)
-script.on_event(defines.events.on_robot_pre_mined, on_link_entity_died)
-script.on_event(defines.events.on_pre_player_mined_item, on_link_entity_died)
+script.on_event(defines.events.on_entity_died, on_link_entity_removed, LINK_EVENT_FILTER)
+script.on_event(defines.events.on_robot_mined, on_link_entity_removed, LINK_EVENT_FILTER)
+script.on_event(defines.events.on_player_mined_item, on_link_entity_removed, LINK_EVENT_FILTER)
 
-function on_built_link_entity(event)
+--------------------------------------------------------------------------------
+
+function on_link_entity_added(event)
   local entity = event.created_entity
   if not (entity and entity.valid) then
     return
@@ -273,5 +279,5 @@ function on_built_link_entity(event)
     add_link_entity(entity)
   end
 end
-script.on_event(defines.events.on_built_entity, on_built_link_entity)
-script.on_event(defines.events.on_robot_built_entity, on_built_link_entity)
+script.on_event(defines.events.on_built_entity, on_link_entity_added, LINK_EVENT_FILTER)
+script.on_event(defines.events.on_robot_built_entity, on_link_entity_added, LINK_EVENT_FILTER)

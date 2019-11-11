@@ -63,3 +63,22 @@ LINK_SIGNAL_ORDER = "s-[link-%s]"
 --------------------------------------------------------------------------------
 
 LINK_TINT = { r = 221 / 255, g = 160 / 255, b = 221 / 255 }
+
+--------------------------------------------------------------------------------
+
+LINK_EVENT_FILTER = {
+  { filter = "name", name = LINK_ACTIVE_PROVIDER_CHEST_NAME },
+  { filter = "name", name = LINK_BUFFER_CHEST_NAME },
+  { filter = "name", name = LINK_REQUESTER_PROVIDER_CHEST_NAME },
+  { filter = "name", name = LINK_STORAGE_CHEST_NAME },
+
+  { filter = "name", name = LINK_FLUID_PROVIDER_NAME },
+  { filter = "name", name = LINK_FLUID_REQUESTER_NAME },
+
+  { filter = "name", name = LINK_ELECTRICAL_PROVIDER_NAME },
+  { filter = "name", name = LINK_ELECTRICAL_REQUESTER_NAME },
+
+  { filter = "name", name = LINK_INVENTORY_COMBINATOR_NAME },
+  { filter = "name", name = LINK_RECEIVER_COMBINATOR_NAME },
+  { filter = "name", name = LINK_TRANSMITTER_COMBINATOR_NAME }
+}
