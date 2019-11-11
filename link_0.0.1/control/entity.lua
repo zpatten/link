@@ -97,7 +97,8 @@ function add_link_entity(entity)
   elseif entity.name == LINK_FLUID_PROVIDER_NAME then
     link_log(string.format("add_link_entity(LINK_FLUID_PROVIDER_NAME): %d", entity.unit_number))
     global.link_fluid_providers[entity.unit_number] = {
-      entity = entity
+      entity = entity,
+      inventory = entity.get_inventory(defines.inventory.assembling_machine_output)
     }
   elseif entity.name == LINK_FLUID_REQUESTER_NAME then
     link_log(string.format("add_link_entity(LINK_FLUID_REQUESTER_NAME): %d", entity.unit_number))
@@ -264,8 +265,8 @@ function on_link_entity_removed(event)
   end
 end
 script.on_event(defines.events.on_entity_died, on_link_entity_removed, LINK_EVENT_FILTER)
-script.on_event(defines.events.on_robot_mined, on_link_entity_removed, LINK_EVENT_FILTER)
-script.on_event(defines.events.on_player_mined_item, on_link_entity_removed, LINK_EVENT_FILTER)
+script.on_event(defines.events.on_robot_pre_mined, on_link_entity_removed, LINK_EVENT_FILTER)
+script.on_event(defines.events.on_pre_player_mined_item, on_link_entity_removed, LINK_EVENT_FILTER)
 
 --------------------------------------------------------------------------------
 

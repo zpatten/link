@@ -26,9 +26,15 @@ local link_groups = {
   },
   {
     type = "item-subgroup",
-    name = LINK_FLUID_RECIPE_SUBGROUP_NAME,
+    name = string.format(LINK_FLUID_RECIPE_SUBGROUP_NAME, "provide"),
     group = LINK_GROUP_NAME,
-    order = "c"
+    order = "ca"
+  },
+  {
+    type = "item-subgroup",
+    name = string.format(LINK_FLUID_RECIPE_SUBGROUP_NAME, "request"),
+    group = LINK_GROUP_NAME,
+    order = "cb"
   },
   {
     type = "item-subgroup",

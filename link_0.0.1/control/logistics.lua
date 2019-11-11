@@ -22,7 +22,7 @@ function get_link_providables()
           else
             global.link_providables[item_name] = removed_item_count
           end
-          link_log("ITEM", string.format("Item: %s - %d", item_name, removed_item_count))
+          link_log("ITEM-PROVIDABLE", string.format("Item: %s - %d", item_name, removed_item_count))
         end
       end
     end
@@ -33,25 +33,68 @@ function get_link_providables()
   -----------
   for unit_number, data in pairs(global.link_fluid_providers) do
     local entity = data.entity
+    local inventory = data.inventory
     if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
-      local fluids = entity.get_fluid_contents()
-      if table_size(fluids) > 0 then
-        for fluid_name, fluid_amount in pairs(fluids) do
-          removed_fluid_amount = entity.remove_fluid({name = fluid_name, amount = math.floor(fluid_amount)})
-          removed_fluid_amount_adjusted = math.ceil(removed_fluid_amount)
-          removed_fluid_amount_remainder = removed_fluid_amount_adjusted - removed_fluid_amount
-          if removed_fluid_amount_remainder > 0 then
-            entity.insert_fluid({name = fluid_name, amount = removed_fluid_amount_remainder})
-          end
-          if global.link_providables[fluid_name] then
-            global.link_providables[fluid_name] = global.link_providables[fluid_name] + removed_fluid_amount_adjusted
+      local items = inventory.get_contents()
+      if table_size(items) > 0 then
+        for item_name, item_count in pairs(items) do
+          removed_item_count = inventory.remove({name = item_name, count = item_count})
+          item_name = link_extract_fluid_name(item_name)
+          if global.link_providables[item_name] then
+            global.link_providables[item_name] = global.link_providables[item_name] + removed_item_count
           else
-            global.link_providables[fluid_name] = removed_fluid_amount_adjusted
+            global.link_providables[item_name] = removed_item_count
           end
-          link_log("FLUID", string.format("Fluid: %s - %d", fluid_name, removed_fluid_amount_adjusted))
+          link_log("FLUID-PROVIDABLE", string.format("Fluid: %s - %d", item_name, removed_item_count))
         end
       end
     end
+    -- local entity = data.entity
+    -- if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
+    --   -- if #entity.fluidbox > 0 then
+    --   --   for i = 1, #entity.fluidbox do
+    --   --     local fluid = entity.fluidbox[i]
+    --   --     local removed_fluid_amount = math.floor(fluid.amount)
+    --   --     fluid.amount = fluid.amount - removed_fluid_amount
+    --   --     -- entity.fluidbox[i] = fluid
+    --   --     if global.link_providables[fluid.name] then
+    --   --       global.link_providables[fluid.name] = global.link_providables[fluid.name] + removed_fluid_amount
+    --   --     else
+    --   --       global.link_providables[fluid.name] = removed_fluid_amount
+    --   --     end
+    --   --     link_log("FLUID", string.format("Fluid: %s - %d", fluid.name, removed_fluid_amount))
+    --   --   end
+    --   -- end
+    --   -- local fluids = entity.get_fluid_contents()
+    --   -- if table_size(fluids) > 0 then
+    --   --   for fluid_name, fluid_amount in pairs(fluids) do
+    --   --     removed_fluid_amount = entity.remove_fluid({name = fluid_name, amount = math.floor(fluid_amount)})
+    --   --     removed_fluid_amount_adjusted = math.ceil(removed_fluid_amount)
+    --   --     removed_fluid_amount_remainder = removed_fluid_amount_adjusted - removed_fluid_amount
+    --   --     if removed_fluid_amount_remainder > 0 then
+    --   --       entity.insert_fluid({name = fluid_name, amount = removed_fluid_amount_remainder})
+    --   --     end
+    --   --     if global.link_providables[fluid_name] then
+    --   --       global.link_providables[fluid_name] = global.link_providables[fluid_name] + removed_fluid_amount_adjusted
+    --   --     else
+    --   --       global.link_providables[fluid_name] = removed_fluid_amount_adjusted
+    --   --     end
+    --   --     link_log("FLUID", string.format("Fluid: %s - %d", fluid_name, removed_fluid_amount_adjusted))
+    --   --   end
+    --   -- end
+    --   local fluids = entity.get_fluid_contents()
+    --   if table_size(fluids) > 0 then
+    --     for fluid_name, fluid_amount in pairs(fluids) do
+    --       removed_fluid_amount = entity.remove_fluid({name = fluid_name, amount = fluid_amount})
+    --       if global.link_providables[fluid_name] then
+    --         global.link_providables[fluid_name] = global.link_providables[fluid_name] + removed_fluid_amount
+    --       else
+    --         global.link_providables[fluid_name] = removed_fluid_amount
+    --       end
+    --       link_log("FLUID-PROVIDABLE", string.format("Fluid: %s - %f", fluid_name, removed_fluid_amount))
+    --     end
+    --   end
+    -- end
   end
 
   -----------
@@ -68,7 +111,7 @@ function get_link_providables()
         else
           global.link_providables[LINK_ELECTRICAL_ITEM_NAME] = energy
         end
-        link_log("POWER", string.format("Energy: %d", energy))
+        link_log("POWER-PROVIDABLE", string.format("Energy: %d", energy))
       end
     end
   end
@@ -101,12 +144,13 @@ function get_link_requests()
           local requested_item_name = requested_item.name
           local requested_item_count = requested_item.count
           local current_item_count = inventory.get_item_count(requested_item_name)
-          local needed_item_count = math.floor(requested_item_count - current_item_count)
+          local needed_item_count = requested_item_count - current_item_count
           if needed_item_count > 0 then
             local can_insert = inventory.can_insert({ name = requested_item_name, count = needed_item_count })
             if can_insert then
               if not link_requests[unit_number] then link_requests[unit_number] = {} end
               link_requests[unit_number][requested_item_name] = needed_item_count
+              link_log("ITEM-REQUESTED", string.format("Item: %s - %d", requested_item_name, needed_item_count))
             end
           end
         end
@@ -124,16 +168,29 @@ function get_link_requests()
     if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
       local recipe = entity.get_recipe()
       if recipe and recipe.valid then
+        -- local ingredient_name = recipe.ingredients[1].name
+        -- local ingredient_amount = recipe.ingredients[1].amount
+        -- local current_fluid_amount = inventory.get_fluid_count(ingredient_name)
+        -- local needed_fluid_amount = ingredient_amount - current_fluid_amount
+        -- if needed_fluid_amount > 0 then
+        --   -- local can_insert = inventory.can_insert({ name = ingredient_name, count = needed_fluid_amount })
+        --   -- if can_insert then
+        --     if not link_requests[unit_number] then link_requests[unit_number] = {} end
+        --     link_requests[unit_number][ingredient_name] = needed_fluid_amount
+        --     link_log("FLUID-REQUESTED", string.format("Fluid: %s - %f", fluid_name, needed_fluid_amount))
+        --   -- end
+        -- end
         local ingredient_name = recipe.ingredients[1].name
         local ingredient_amount = recipe.ingredients[1].amount
         local product_name = recipe.products[1].name
         local current_fluid_amount = inventory.get_item_count(ingredient_name)
-        local needed_fluid_amount = math.floor(ingredient_amount - current_fluid_amount)
+        local needed_fluid_amount = ingredient_amount - current_fluid_amount
         if needed_fluid_amount > 0 then
           local can_insert = inventory.can_insert({ name = ingredient_name, count = needed_fluid_amount })
           if can_insert then
             if not link_requests[unit_number] then link_requests[unit_number] = {} end
             link_requests[unit_number][product_name] = needed_fluid_amount
+            link_log("FLUID-REQUESTED", string.format("Fluid: %s - %d", product_name, needed_fluid_amount))
           end
         end
       end
@@ -153,6 +210,7 @@ function get_link_requests()
       if needed_energy > 0 then
         if not link_requests[unit_number] then link_requests[unit_number] = {} end
         link_requests[unit_number][LINK_ELECTRICAL_ITEM_NAME] = needed_energy
+        link_log("POWER-REQUESTED", string.format("Power: %d", needed_energy))
       end
     end
   end
@@ -179,10 +237,8 @@ function set_link_fulfillments(data)
     local data = global.link_requester_chests[tonumber(unit_number)]
     if data then
       local entity = data.entity
+      local inventory = data.inventory
       if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
-        link_log("ITEMS", "Received")
-        local inventory = data.inventory
-        -- local items_to_insert = {}
         for item_name, item_count in pairs(items) do
           if item_count > 0 then
             local item_to_insert = { name = item_name, count = item_count }
@@ -195,6 +251,7 @@ function set_link_fulfillments(data)
                 global.link_providables[item_name] = global.link_providables[item_name] + item_count_remainder
               end
             end
+            link_log("ITEM-FULFILLED", string.format("Item: %s - %d (%d)", item_name, item_count_inserted, item_count_remainder))
           end
         end
       end
@@ -208,10 +265,24 @@ function set_link_fulfillments(data)
       local entity = data.entity
       local inventory = data.inventory
       if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
-        link_log("FLUID", "Received")
+        -- for fluid_name, fluid_amount in pairs(items) do
+        --   if fluid_amount > 0 then
+        --     local fluid_to_insert = { name = fluid_name, count = fluid_amount }
+        --     local fluid_amount_inserted = entity.insert_fluid(fluid_to_insert)
+        --     local fluid_amount_remainder = fluid_amount - fluid_amount_inserted
+        --     if fluid_amount_remainder > 0 then
+        --       if not global.link_providables[fluid_name] then
+        --         global.link_providables[fluid_name] = fluid_amount_remainder
+        --       else
+        --         global.link_providables[fluid_name] = global.link_providables[fluid_name] + fluid_amount_remainder
+        --       end
+        --     end
+        --     link_log("FLUID-FULFILLED", string.format("Fluid: %s - %f (%f)", fluid_name, fluid_amount_inserted, fluid_amount_remainder))
+        --   end
+        -- end
         for fluid_name, fluid_amount in pairs(items) do
           if fluid_amount > 0 then
-            local fluid_to_insert = { name = link_fluid_name(fluid_name), count = fluid_amount }
+            local fluid_to_insert = { name = link_format_fluid_name(fluid_name), count = fluid_amount }
             local fluid_amount_inserted = entity.insert(fluid_to_insert)
             local fluid_amount_remainder = fluid_amount - fluid_amount_inserted
             if fluid_amount_remainder > 0 then
@@ -221,6 +292,7 @@ function set_link_fulfillments(data)
                 global.link_providables[fluid_name] = global.link_providables[fluid_name] + fluid_amount_remainder
               end
             end
+            link_log("FLUID-FULFILLED", string.format("Fluid: %s - %d (%d)", fluid_name, fluid_amount_inserted, fluid_amount_remainder))
           end
         end
       end
@@ -233,10 +305,10 @@ function set_link_fulfillments(data)
     if data then
       local entity = data.entity
       if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
-        link_log("POWER", "Received")
         for _, energy in pairs(items) do
           if energy > 0 then
             entity.energy = entity.energy + energy
+            link_log("POWER-FULFILLED", string.format("Power: %d", energy))
           end
         end
       end

@@ -9,7 +9,7 @@ require 'sinatra-websocket'
 
 class WebServer < Sinatra::Application
   enable :logging
-  set :logger, $logger
+  # set :logger, $logger
   # set :server, :puma
   set :server, :thin
   set :port, 4242

@@ -1,7 +1,11 @@
 inspect = require "inspect"
 
-function link_fluid_name(fluid_name)
-  return string.format("link-fluid-%s", fluid_name)
+function link_format_fluid_name(fluid_name)
+  return string.format("%s-%s", LINK_FLUID_ITEM_PREFIX, fluid_name)
+end
+
+function link_extract_fluid_name(fluid_name)
+  return string.sub(fluid_name, string.len(LINK_FLUID_ITEM_PREFIX) + 2, -1)
 end
 
 function link_log(what, message)

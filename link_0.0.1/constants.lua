@@ -43,11 +43,13 @@ LINK_FLUID_ITEM_SUBGROUP_NAME = "link-fluid-item-subgroup"
 LINK_FLUID_ORDER = "f-[link-%s]"
 
 LINK_FLUID_RECIPE_CATEGORY_NAME = "link-requester-fluids"
-LINK_FLUID_RECIPE_SUBGROUP_NAME = "link-fluid-recipe-subgroup"
+LINK_FLUID_RECIPE_SUBGROUP_NAME = "link-fluid-%s-recipe-subgroup"
 LINK_FLUID_RECIPE_ORDER = "f-[link-%s]"
 
+LINK_FLUID_ITEM_PREFIX = "link-fluid"
+
 LINK_FLUID_MAX = 25000
-LINK_FLUID_BASE_AREA = LINK_FLUID_MAX / 100
+LINK_FLUID_BASE_AREA = 10 -- LINK_FLUID_MAX / 100
 
 --------------------------------------------------------------------------------
 

@@ -206,10 +206,11 @@ class Server
     system command
 
     running!(true)
+
+    true
   end
 
   def stop_container!
-    running!(false)
 
     shutdown!
     command = Array.new
@@ -218,8 +219,13 @@ class Server
     command << self.name
     command = command.flatten.compact.join(' ')
 
-    $logger.info(:server) { "command=#{command}" }
+    # $logger.info(:server) { "command=#{command}" }
+    puts "command=#{command}"
     system command
+
+    running!(false)
+
+    true
   end
 
 ################################################################################

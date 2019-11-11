@@ -74,6 +74,7 @@ require "prototypes.chest-buffer"
 require "prototypes.chest-requester-provider"
 require "prototypes.chest-storage"
 
+require "prototypes.fluid-items"
 require "prototypes.fluid-provider"
 require "prototypes.fluid-requester"
 
