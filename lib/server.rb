@@ -202,7 +202,8 @@ class Server
 
     # $logger.info {%(chcon -Rt svirt_sandbox_file_t #{self.server_path})}
     system %(/usr/bin/env chcon -Rt svirt_sandbox_file_t #{self.path})
-    puts "command=#{command}"
+    # puts "command=#{command}"
+    $logger.info(:server) { "command=#{command}" }
     system command
 
     running!(true)
@@ -211,17 +212,18 @@ class Server
   end
 
   def stop_container!
-
-    shutdown!
     command = Array.new
     command << %(sudo)
     command << %(docker stop)
     command << self.name
     command = command.flatten.compact.join(' ')
 
-    # $logger.info(:server) { "command=#{command}" }
-    puts "command=#{command}"
+    $logger.info(:server) { "command=#{command}" }
+    # puts "command=#{command}"
     system command
+
+    $rx_signals_initalized[server.name] = nil
+    $tx_signals_initalized[server.name] = nil
 
     running!(false)
 

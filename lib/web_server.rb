@@ -8,7 +8,7 @@ require 'sinatra/json'
 require 'sinatra-websocket'
 
 class WebServer < Sinatra::Application
-  enable :logging
+  # enable :logging
   # set :logger, $logger
   # set :server, :puma
   set :server, :thin
