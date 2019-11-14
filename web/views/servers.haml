@@ -4,9 +4,9 @@
 |
 %a{ href: '/servers/start-all', title: 'Start All Servers' } START ALL SERVERS
 |
-%a{ href: '/servers/stop-all', title: 'Stop All Servers' } STOP ALL SERVERS
+%a{ href: '/servers/stop-all', title: 'Stop All Servers', onclick: "return confirm('WARNING: Are you sure you want to stop all servers?')" } STOP ALL SERVERS
 |
-%a{ href: '/servers/restart-all', title: 'Restart All Servers' } RESTART ALL SERVERS
+%a{ href: '/servers/restart-all', title: 'Restart All Servers', onclick: "return confirm('WARNING: Are you sure you want to restart all servers?')" } RESTART ALL SERVERS
 ]
 
 %table
@@ -43,10 +43,10 @@
           %a{ href: "/servers/start/#{server.name}", title: "Start Server '#{server.name}'" } START
           |
         - if server.available?
-          %a{ href: "/servers/stop/#{server.name}", title: "Stop Server '#{server.name}'" } STOP
+          %a{ href: "/servers/stop/#{server.name}", title: "Stop Server '#{server.name}'", onclick: "return confirm('WARNING: Are you sure you want to stop the server \\'#{server.name}\\'?')" } STOP
           |
         - if server.available?
-          %a{ href: "/servers/restart/#{server.name}", title: "Restart Server '#{server.name}'" } RESTART
+          %a{ href: "/servers/restart/#{server.name}", title: "Restart Server '#{server.name}'", onclick: "return confirm('WARNING: Are you sure you want to restart the server \\'#{server.name}\\'?')" } RESTART
           |
         %a{ href: "/servers/destroy/#{server.name}", title: "Delete Server '#{server.name}'", onclick: "return confirm('WARNING: Are you sure you want to delete the server \\'#{server.name}\\'?')" } DELETE
 

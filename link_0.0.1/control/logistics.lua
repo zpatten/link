@@ -181,7 +181,7 @@ function get_link_requests()
         --   -- end
         -- end
         local ingredient_name = recipe.ingredients[1].name
-        local ingredient_amount = recipe.ingredients[1].amount
+        local ingredient_amount = recipe.ingredients[1].amount * 3
         local product_name = recipe.products[1].name
         local current_fluid_amount = inventory.get_item_count(ingredient_name)
         local needed_fluid_amount = ingredient_amount - current_fluid_amount

@@ -222,8 +222,8 @@ class Server
     # puts "command=#{command}"
     system command
 
-    $rx_signals_initalized[server.name] = nil
-    $tx_signals_initalized[server.name] = nil
+    $rx_signals_initalized[self.name] = nil
+    $tx_signals_initalized[self.name] = nil
 
     running!(false)
 

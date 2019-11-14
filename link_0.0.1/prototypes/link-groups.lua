@@ -18,42 +18,36 @@ local link_groups = {
     group = LINK_GROUP_NAME,
     order = "a"
   },
-  {
-    type = "item-subgroup",
-    name = LINK_ELECTRICAL_SUBGROUP,
-    group = LINK_GROUP_NAME,
-    order = "b"
-  },
-  {
-    type = "item-subgroup",
-    name = string.format(LINK_FLUID_RECIPE_SUBGROUP_NAME, "provide"),
-    group = LINK_GROUP_NAME,
-    order = "ca"
-  },
-  {
-    type = "item-subgroup",
-    name = string.format(LINK_FLUID_RECIPE_SUBGROUP_NAME, "request"),
-    group = LINK_GROUP_NAME,
-    order = "cb"
-  },
-  {
-    type = "item-subgroup",
-    name = LINK_FLUID_SUBGROUP_NAME,
-    group = LINK_GROUP_NAME,
-    order = "d"
-  },
-  {
-    type = "item-subgroup",
-    name = LINK_FLUID_ITEM_SUBGROUP_NAME,
-    group = LINK_GROUP_NAME,
-    order = "e"
-  },
-  {
-    type = "item-subgroup",
-    name = LINK_COMBINATOR_SUBGROUP_NAME,
-    group = LINK_GROUP_NAME,
-    order = "f"
-  },
+  -- {
+  --   type = "item-subgroup",
+  --   name = LINK_ELECTRICAL_SUBGROUP,
+  --   group = LINK_GROUP_NAME,
+  --   order = "b"
+  -- },
+  -- {
+  --   type = "item-subgroup",
+  --   name = LINK_FLUID_RECIPE_PROVIDER_SUBGROUP_NAME,
+  --   group = LINK_GROUP_NAME,
+  --   order = "ca"
+  -- },
+  -- {
+  --   type = "item-subgroup",
+  --   name = LINK_FLUID_RECIPE_REQUESTER_SUBGROUP_NAME,
+  --   group = LINK_GROUP_NAME,
+  --   order = "cb"
+  -- },
+  -- {
+  --   type = "item-subgroup",
+  --   name = LINK_FLUID_SUBGROUP_NAME,
+  --   group = LINK_GROUP_NAME,
+  --   order = "d"
+  -- },
+  -- {
+  --   type = "item-subgroup",
+  --   name = LINK_COMBINATOR_SUBGROUP_NAME,
+  --   group = LINK_GROUP_NAME,
+  --   order = "f"
+  -- },
   {
     type = "item-subgroup",
     name = LINK_SIGNAL_SUBGROUP_NAME,
