@@ -24,14 +24,13 @@ function set_link_current_research(data)
 
   local link_current_research = game.json_to_table(data)
 
-  if link_current_research.research_queue then
+  if table_size(link_current_research.research_queue) > 0 then
     game.forces.player.research_queue_enabled = link_current_research.research_queue_enabled
     game.forces.player.research_queue = link_current_research.research_queue
     game.forces.player.research_progress = link_current_research.research_progress
   else
     game.forces.player.research_queue_enabled = link_current_research.research_queue_enabled
     game.forces.player.research_queue = nil
-    game.forces.player.research_progress = 0
   end
 
   rcon.print("OK")
