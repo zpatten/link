@@ -18,8 +18,19 @@
 --   link_fluid_requester_recipe_categories
 -- }
 -- --------------------------------------------------------------------------------
-local subgroup = link_build_data({
-  type = 'item-subgroup',
-  what = 'combinator'
+local group = link_build_data({
+  type = 'item-group',
+  what = 'group',
+  attributes = {
+    icons = {
+      {
+        icon = "__base__/graphics/item-group/logistics.png",
+        icon_size = 64,
+        tint = LINK_TINT
+      }
+    },
+    inventory_order = 'z',
+    order = 'z'
+  }
 })
-link_extend_data({subgroup})
+link_extend_data({group})

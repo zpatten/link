@@ -19,6 +19,8 @@ for _, fluid in pairs(data.raw.fluid) do
     name = fluid.name,
     what = 'fluid',
     which = 'provider',
+    lname = string.format('Link %s Provider', fluid.name),
+    ldescription = string.format('Converts %s to Link %s so it can be provided to the Link inventory', fluid.name, fluid.name),
     icon = fluid.icon,
     icon_size = fluid.icon_size,
     energy_required = LINK_FLUID_RECIPE_CRAFTING_TIME,
@@ -94,7 +96,8 @@ local recipe = link_build_data({
   inherit = data.raw.recipe['assembling-machine-3'],
   type = 'recipe',
   what = 'fluid',
-  which = 'provider'
+  which = 'provider',
+  ldescription = 'Provides fluids to the Link inventory'
 })
 -- recipe.enabled = true
 -- recipe.name = LINK_FLUID_PROVIDER_NAME
@@ -111,7 +114,8 @@ local item = link_build_data({
   inherit = data.raw.item['assembling-machine-3'],
   type = 'item',
   what = 'fluid',
-  which = 'provider'
+  which = 'provider',
+  ldescription = 'Provides fluids to the Link inventory'
 })
 -- table.deepcopy(data.raw.item['assembling-machine-3'])
 -- link_build_data(item, 'fluid', 'provider')
@@ -128,6 +132,7 @@ local entity = link_build_data({
   inherit = data.raw['assembling-machine']['assembling-machine-3'],
   what = 'fluid',
   which = 'provider',
+  ldescription = 'Provides fluids to the Link inventory',
   fluid_boxes = {
     {
       base_area = LINK_FLUID_BASE_AREA,
@@ -167,7 +172,6 @@ local entity = link_build_data({
 -- entity.module_specification = { module_slots = 0 }
 -- entity.name = LINK_FLUID_PROVIDER_NAME
 -- entity.order = link_format_fluid_order(LINK_FLUID_PROVIDER_NAME)
-
 
 link_extend_data({
   recipe_category,

@@ -16,6 +16,8 @@ for _, fluid in pairs(data.raw.fluid) do
     type = 'item',
     name = fluid.name,
     what = 'fluid',
+    lname = string.format('Link %s', fluid.name),
+    ldescription = 'Link item for transmitting and receiving fluids',
     icon = data.raw.fluid[fluid.name].icon,
     stack_size = LINK_FLUID_RECIPE_AMOUNT,
     place_result = false,

@@ -37,9 +37,13 @@ function capitalize(str)
 end
 
 function link_extend_data(d)
-  print(string.format("--------------------\n%s\n", serpent.block(d)))
+  -- print(string.format("--------------------\n%s\n", serpent.block(d)))
   -- log(string.format("--------------------\n%s\n", serpent.block(d)))
   data:extend(d)
+end
+
+function strcopy(str)
+  return string.format('%s', str)
 end
 
 function link_build_data(args)
@@ -58,10 +62,10 @@ function link_build_data(args)
     args.subgroup = args.what
   end
 
-  if args.name and not args.which then
-    o.name = string.format('link-%s-%s', args.what, args.name)
-  elseif args.name and args.which then
+  if args.name and args.which then
     o.name = string.format('link-%s-%s-%s', args.what, args.which, args.name)
+  elseif args.name and not args.which then
+    o.name = string.format('link-%s-%s', args.what, args.name)
   elseif args.which then
     o.name = string.format('link-%s-%s', args.what, args.which)
   else
@@ -80,7 +84,14 @@ function link_build_data(args)
   if o.crafting_categories then
     o.crafting_categories = { o.name }
   end
-  link_add_tint(o)
+
+  if args.hidden then
+    o.hidden = true
+  end
+
+  if args.item_slot_count then
+    o.item_slot_count = args.item_slot_count
+  end
 
   if o.minable then
     o.minable = {
@@ -109,6 +120,14 @@ function link_build_data(args)
     o.energy_source.usage_priority = 'tertiary'
   end
 
+  if args.inventory then
+    o.inventory = args.inventory
+  end
+
+  if args.picture then
+    o.picture = table.deepcopy(args.picture)
+  end
+
   if o.type == 'recipe' then
     o.enabled = true
     if args.energy_required then
@@ -132,15 +151,32 @@ function link_build_data(args)
   if o.type == 'item-group' then
     o.order = 'z'
   elseif o.type == 'item-subgroup' then
-    o.group = LINK_GROUP
+    o.group = LINK_GROUP_NAME
     o.order = string.sub(args.what, 1, 1)
   else
     o.order = string.format('%s-[%s]', string.sub(args.what, 1, 1), o.name)
     o.subgroup = string.format('link-%s', args.subgroup)
   end
 
-  o.localised_name = string.format('%s', capitalize(string.gsub(o.name, '-', ' ')))
-  o.localised_description = string.format('D: %s', capitalize(string.gsub(o.name, '-', ' ')))
+  if args.lname then
+    o.localised_name = args.lname
+  else
+    o.localised_name = string.format('%s', capitalize(string.gsub(o.name, '-', ' ')))
+  end
+
+  if args.ldescription then
+    o.localised_description = args.ldescription
+  else
+    o.localised_description = string.format('D: %s', capitalize(string.gsub(o.name, '-', ' ')))
+  end
+
+  if args.attributes then
+    for key, value in pairs(args.attributes) do
+      o[key] = value
+    end
+  end
+
+  link_add_tint(o)
 
   return o
 end

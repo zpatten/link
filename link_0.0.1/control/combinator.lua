@@ -22,7 +22,7 @@ function get_link_transmitter_combinator(force)
       link_signals[entity.unit_number] = {}
       link_signals[entity.unit_number][link_network_id] = behaviour.signals_last_tick or {}
 
-      link_log("SIGNALS-TX", string.format("Processing Network ID: %d", link_network_id))
+      link_log('SIGNALS-TX', string.format('Processing Network ID[%d]: %d', entity.unit_number, link_network_id))
 
       if not force and global.link_previous_signals then
         -- get the current signals
@@ -56,11 +56,11 @@ function get_link_transmitter_combinator(force)
               local previous_signal = previous_signals_map[link_sn(current_signal)]
               if not previous_signal then
                 -- new signal
-                link_log("SIGNALS-TX", string.format("Create Signal: %s (%d)", current_signal.signal.name, current_signal.count))
+                link_log('SIGNALS-TX', string.format('Create Signal[%d:%s]: %s (%d)', entity.unit_number, link_network_id, current_signal.signal.name, current_signal.count))
                 table.insert(unit_signal_delta, current_signal)
               elseif link_sc(current_signal) ~= link_sc(previous_signal) then
                 -- signal count changed
-                link_log("SIGNALS-TX", string.format("Update Signal: %s (%d -> %d)", current_signal.signal.name, previous_signal.count, current_signal.count))
+                link_log('SIGNALS-TX', string.format('Update Signal[%d:%s]: %s (%d -> %d)', entity.unit_number, link_network_id, current_signal.signal.name, previous_signal.count, current_signal.count))
                 table.insert(unit_signal_delta, current_signal)
               end
             end
@@ -70,8 +70,8 @@ function get_link_transmitter_combinator(force)
               local current_signal = current_signals_map[link_sn(previous_signal)]
               if not current_signal then
                 -- signal deleted
-                link_log("SIGNALS-TX", string.format("Delete Signal: %s", previous_signal.signal.name))
-                previous_signal["count"] = 0
+                link_log('SIGNALS-TX', string.format('Delete Signal[%d:%s]: %s', entity.unit_number, link_network_id, previous_signal.signal.name))
+                previous_signal['count'] = 0
                 table.insert(unit_signal_delta, previous_signal)
               end
             end
@@ -107,7 +107,7 @@ function get_link_transmitter_combinator(force)
           if not signal_delta[unit_number] then signal_delta[unit_number] = {} end
           if not signal_delta[unit_number][link_network_id] then signal_delta[unit_number][link_network_id] = {} end
           for i, previous_signal in pairs(previous_signals) do
-            previous_signal["count"] = 0
+            previous_signal['count'] = 0
             table.insert(signal_delta[unit_number][link_network_id], previous_signal)
           end
         end
@@ -118,14 +118,14 @@ function get_link_transmitter_combinator(force)
   if not force and table_size(signal_delta) == 0 then
     -- if this is not a forced refresh and if no signals changed send a NOOP
     rcon.print(game.table_to_json(noop))
-    link_log("SIGNALS-TX", "NOOP")
+    link_log('SIGNALS-TX', 'NOOP')
   elseif not force and table_size(signal_delta) > 0 then
     -- if this is not a forced refresh and we have a delta send it
-    link_log("SIGNALS-TX", "Sending signal deltas.")
+    link_log('SIGNALS-TX', 'Sending signal deltas.')
     rcon.print(game.table_to_json(signal_delta))
   else
     -- otherwise send everything
-    link_log("SIGNALS-TX", "Sending all signals (forced).")
+    link_log('SIGNALS-TX', 'Sending all signals (forced).')
     rcon.print(game.table_to_json(link_signals))
   end
 
@@ -149,7 +149,7 @@ function get_link_receiver_combinator_network_ids()
     local entity = data.entity
 
     if entity and entity.valid then
-      table.insert(network_ids, "inventory")
+      table.insert(network_ids, 'inventory')
     end
   end
 
@@ -159,7 +159,7 @@ end
 function extract_circuit_network(network_id, link_signal_networks)
   for id, link_signal_network in pairs(link_signal_networks) do
     if tostring(network_id) == tostring(id) then
-      return link_signal_network
+      return scrub_signals(link_signal_network)
     end
   end
 
@@ -204,10 +204,10 @@ function set_link_receiver_combinator(force, json)
     local link_network_id_entity = data.link_network_id
 
     if entity.valid and behaviour.valid then
-      link_network_id = fetch_circuit_network_id(link_network_id_entity)
+      local link_network_id = fetch_circuit_network_id(link_network_id_entity)
       local signals = extract_circuit_network(link_network_id, link_signal_networks)
 
-      link_log("SIGNALS-RX", string.format("Processing Network ID: %d", link_network_id))
+      link_log('SIGNALS-RX', string.format('Processing Network ID[%d]: %d', unit_number, link_network_id))
 
       if force or not global.rx_signals[link_network_id] then
         global.rx_signals[link_network_id] = signals
@@ -221,14 +221,14 @@ function set_link_receiver_combinator(force, json)
           local existing_signal = signals_map[s.signal.name]
           if existing_signal then
             if s.count == 0 then
-              link_log("SIGNALS-RX", string.format("Delete Signal: %s", s.signal.name))
+              link_log('SIGNALS-RX', string.format('Delete Signal[%d:%s]: %s', unit_number, link_network_id, s.signal.name))
               existing_signal.count = s.count
-            else
-              link_log("SIGNALS-RX", string.format("Update Signal: %s (%d -> %d)", s.signal.name, existing_signal.count, s.count))
+            elseif existing_signal.count ~= s.count then
+              link_log('SIGNALS-RX', string.format('Update Signal[%d:%s]: %s (%d -> %d)', unit_number, link_network_id, s.signal.name, existing_signal.count, s.count))
               existing_signal.count = s.count
             end
           else
-            link_log("SIGNALS-RX", string.format("Create Signal: %s (%d)", s.signal.name, s.count))
+            link_log('SIGNALS-RX', string.format('Create Signal[%d:%s]: %s (%d)', unit_number, link_network_id, s.signal.name, s.count))
             table.insert(global.rx_signals[link_network_id], s)
           end
         end
@@ -247,10 +247,10 @@ function set_link_receiver_combinator(force, json)
     -- local link_network_id_entity = data.link_network_id
 
     if entity.valid and behaviour.valid then
-      link_network_id = "inventory"
+      local link_network_id = 'inventory'
       local signals = extract_circuit_network(link_network_id, link_signal_networks)
 
-      link_log("SIGNALS-RX", string.format("Processing Network ID: %s", link_network_id))
+      link_log('SIGNALS-RX', string.format('Processing Network ID[%d]: %s', unit_number, link_network_id))
 
       if force or not global.rx_signals[link_network_id] then
         global.rx_signals[link_network_id] = signals
@@ -264,14 +264,14 @@ function set_link_receiver_combinator(force, json)
           local existing_signal = signals_map[s.signal.name]
           if existing_signal then
             if s.count == 0 then
-              link_log("SIGNALS-RX", string.format("Delete Signal: %s", s.signal.name))
+              link_log('SIGNALS-RX', string.format('Delete Signal[%d:%s]: %s', unit_number, link_network_id, s.signal.name))
               existing_signal.count = s.count
-            else
-              link_log("SIGNALS-RX", string.format("Update Signal: %s (%d -> %d)", s.signal.name, existing_signal.count, s.count))
+            elseif existing_signal.count ~= s.count then
+              link_log('SIGNALS-RX', string.format('Update Signal[%d:%s]: %s (%d -> %d)', unit_number, link_network_id, s.signal.name, existing_signal.count, s.count))
               existing_signal.count = s.count
             end
           else
-            link_log("SIGNALS-RX", string.format("Create Signal: %s (%d)", s.signal.name, s.count))
+            link_log('SIGNALS-RX', string.format('Create Signal[%d:%s]: %s (%d)', unit_number, link_network_id, s.signal.name, s.count))
             table.insert(global.rx_signals[link_network_id], s)
           end
         end
@@ -286,7 +286,7 @@ function set_link_receiver_combinator(force, json)
     -- local entity = data.entity
 
     -- if entity.valid and behaviour.valid then
-    --   local signals = extract_circuit_network("inventory", link_signal_networks)
+    --   local signals = extract_circuit_network('inventory', link_signal_networks)
 
     --   local deleted_signals = {}
     --   local non_zero_signals = {}
@@ -315,7 +315,7 @@ function set_link_receiver_combinator(force, json)
     -- end
   end
 
-  rcon.print("OK")
+  rcon.print('OK')
 end
 
 function link_lookup_item_type(item_name)
@@ -324,38 +324,38 @@ function link_lookup_item_type(item_name)
   local virtuals = game.virtual_signal_prototypes
 
   if items[item_name] then
-    rcon.print("item")
+    rcon.print('item')
   elseif fluids[item_name] then
-    rcon.print("fluid")
+    rcon.print('fluid')
   elseif virtuals[item_name] then
-    rcon.print("virtual")
+    rcon.print('virtual')
+  else
+    rcon.print('')
   end
-
-  rcon.print("")
 end
 
-function set_link_inventory_combinator(json)
-  local storage = game.json_to_table(json)
-  local signals = {}
+-- function set_link_inventory_combinator(json)
+--   local storage = game.json_to_table(json)
+--   local signals = {}
 
 
-  for item_name, item_count in pairs(storage) do
-    local signal_id = {
-      name = item_name,
-      type = link_lookup_item_type(item_name)
-    }
-    signals[#signals+1] = { signal = signal_id, count = item_count, index = #signals+1 }
-  end
+--   for item_name, item_count in pairs(storage) do
+--     local signal_id = {
+--       name = item_name,
+--       type = link_lookup_item_type(item_name)
+--     }
+--     signals[#signals+1] = { signal = signal_id, count = item_count, index = #signals+1 }
+--   end
 
-  for unit_number, data in pairs(global.link_inventory_combinators) do
-    local behaviour = data.behaviour
-    local entity = data.entity
+--   for unit_number, data in pairs(global.link_inventory_combinators) do
+--     local behaviour = data.behaviour
+--     local entity = data.entity
 
-    if entity.valid and behaviour.valid then
-      behaviour.parameters = { parameters = signals }
-      behaviour.enabled = true
-    end
-  end
+--     if entity.valid and behaviour.valid then
+--       behaviour.parameters = { parameters = signals }
+--       behaviour.enabled = true
+--     end
+--   end
 
-  rcon.print("OK")
-end
+--   rcon.print('OK')
+-- end

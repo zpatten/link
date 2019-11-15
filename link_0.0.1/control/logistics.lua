@@ -22,7 +22,7 @@ function get_link_providables()
           else
             global.link_providables[item_name] = removed_item_count
           end
-          link_log("ITEM-PROVIDABLE", string.format("Item: %s - %d", item_name, removed_item_count))
+          link_log('ITEM', string.format('Providable: %s - %d', item_name, removed_item_count))
         end
       end
     end
@@ -45,7 +45,7 @@ function get_link_providables()
           else
             global.link_providables[item_name] = removed_item_count
           end
-          link_log("FLUID-PROVIDABLE", string.format("Fluid: %s - %d", item_name, removed_item_count))
+          link_log('FLUID', string.format('Providable: %s - %d', item_name, removed_item_count))
         end
       end
     end
@@ -62,7 +62,7 @@ function get_link_providables()
     --   --     else
     --   --       global.link_providables[fluid.name] = removed_fluid_amount
     --   --     end
-    --   --     link_log("FLUID", string.format("Fluid: %s - %d", fluid.name, removed_fluid_amount))
+    --   --     link_log('FLUID', string.format('Fluid: %s - %d', fluid.name, removed_fluid_amount))
     --   --   end
     --   -- end
     --   -- local fluids = entity.get_fluid_contents()
@@ -79,7 +79,7 @@ function get_link_providables()
     --   --     else
     --   --       global.link_providables[fluid_name] = removed_fluid_amount_adjusted
     --   --     end
-    --   --     link_log("FLUID", string.format("Fluid: %s - %d", fluid_name, removed_fluid_amount_adjusted))
+    --   --     link_log('FLUID', string.format('Fluid: %s - %d', fluid_name, removed_fluid_amount_adjusted))
     --   --   end
     --   -- end
     --   local fluids = entity.get_fluid_contents()
@@ -91,15 +91,15 @@ function get_link_providables()
     --       else
     --         global.link_providables[fluid_name] = removed_fluid_amount
     --       end
-    --       link_log("FLUID-PROVIDABLE", string.format("Fluid: %s - %f", fluid_name, removed_fluid_amount))
+    --       link_log('FLUID-PROVIDABLE', string.format('Fluid: %s - %f', fluid_name, removed_fluid_amount))
     --     end
     --   end
     -- end
   end
 
-  -----------
-  -- POWER --
-  -----------
+  ----------------
+  -- ELECTRICAL --
+  ----------------
   for unit_number, data in pairs(global.link_electrical_providers) do
     local entity = data.entity
     if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
@@ -111,7 +111,7 @@ function get_link_providables()
         else
           global.link_providables[LINK_ELECTRICAL_ITEM_NAME] = energy
         end
-        link_log("POWER-PROVIDABLE", string.format("Energy: %d", energy))
+        link_log('ELECTRICAL', string.format('Providable: %d', energy))
       end
     end
   end
@@ -147,10 +147,10 @@ function get_link_requests()
           local needed_item_count = requested_item_count - current_item_count
           if needed_item_count > 0 then
             local can_insert = inventory.can_insert({ name = requested_item_name, count = needed_item_count })
-            if can_insert then
+            if can_insert == true then
               if not link_requests[unit_number] then link_requests[unit_number] = {} end
               link_requests[unit_number][requested_item_name] = needed_item_count
-              link_log("ITEM-REQUESTED", string.format("Item: %s - %d", requested_item_name, needed_item_count))
+              link_log('ITEM', string.format('Requested: %s - %d', requested_item_name, needed_item_count))
             end
           end
         end
@@ -177,7 +177,7 @@ function get_link_requests()
         --   -- if can_insert then
         --     if not link_requests[unit_number] then link_requests[unit_number] = {} end
         --     link_requests[unit_number][ingredient_name] = needed_fluid_amount
-        --     link_log("FLUID-REQUESTED", string.format("Fluid: %s - %f", fluid_name, needed_fluid_amount))
+        --     link_log('FLUID-REQUESTED', string.format('Fluid: %s - %f', fluid_name, needed_fluid_amount))
         --   -- end
         -- end
         local ingredient_name = recipe.ingredients[1].name
@@ -187,19 +187,19 @@ function get_link_requests()
         local needed_fluid_amount = ingredient_amount - current_fluid_amount
         if needed_fluid_amount > 0 then
           local can_insert = inventory.can_insert({ name = ingredient_name, count = needed_fluid_amount })
-          if can_insert then
+          if can_insert == true then
             if not link_requests[unit_number] then link_requests[unit_number] = {} end
             link_requests[unit_number][product_name] = needed_fluid_amount
-            link_log("FLUID-REQUESTED", string.format("Fluid: %s - %d", product_name, needed_fluid_amount))
+            link_log('FLUID', string.format('Requested: %s - %d', product_name, needed_fluid_amount))
           end
         end
       end
     end
   end
 
-  -----------
-  -- POWER --
-  -----------
+  ----------------
+  -- ELECTRICAL --
+  ----------------
   if not global.link_electrical_requesters then global.link_electrical_requesters = {} end
   for unit_number, data in pairs(global.link_electrical_requesters) do
     local entity = data.entity
@@ -210,7 +210,7 @@ function get_link_requests()
       if needed_energy > 0 then
         if not link_requests[unit_number] then link_requests[unit_number] = {} end
         link_requests[unit_number][LINK_ELECTRICAL_ITEM_NAME] = needed_energy
-        link_log("POWER-REQUESTED", string.format("Power: %d", needed_energy))
+        link_log('ELECTRICAL', string.format('Requested: %d', needed_energy))
       end
     end
   end
@@ -251,7 +251,7 @@ function set_link_fulfillments(data)
                 global.link_providables[item_name] = global.link_providables[item_name] + item_count_remainder
               end
             end
-            link_log("ITEM-FULFILLED", string.format("Item: %s - %d (%d)", item_name, item_count_inserted, item_count_remainder))
+            link_log('ITEM', string.format('Fulfilled: %s - %d (%d)', item_name, item_count_inserted, item_count_remainder))
           end
         end
       end
@@ -277,7 +277,7 @@ function set_link_fulfillments(data)
         --         global.link_providables[fluid_name] = global.link_providables[fluid_name] + fluid_amount_remainder
         --       end
         --     end
-        --     link_log("FLUID-FULFILLED", string.format("Fluid: %s - %f (%f)", fluid_name, fluid_amount_inserted, fluid_amount_remainder))
+        --     link_log('FLUID-FULFILLED', string.format('Fluid: %s - %f (%f)', fluid_name, fluid_amount_inserted, fluid_amount_remainder))
         --   end
         -- end
         for fluid_name, fluid_amount in pairs(items) do
@@ -292,15 +292,15 @@ function set_link_fulfillments(data)
                 global.link_providables[fluid_name] = global.link_providables[fluid_name] + fluid_amount_remainder
               end
             end
-            link_log("FLUID-FULFILLED", string.format("Fluid: %s - %d (%d)", fluid_name, fluid_amount_inserted, fluid_amount_remainder))
+            link_log('FLUID', string.format('Fulfilled: %s - %d (%d)', fluid_name, fluid_amount_inserted, fluid_amount_remainder))
           end
         end
       end
     end
 
-    -----------
-    -- POWER --
-    -----------
+    ----------------
+    -- ELECTRICAL --
+    ----------------
     local data = global.link_electrical_requesters[tonumber(unit_number)]
     if data then
       local entity = data.entity
@@ -308,12 +308,12 @@ function set_link_fulfillments(data)
         for _, energy in pairs(items) do
           if energy > 0 then
             entity.energy = entity.energy + energy
-            link_log("POWER-FULFILLED", string.format("Power: %d", energy))
+            link_log('ELECTRICAL', string.format('Fulfilled: %d', energy))
           end
         end
       end
     end
   end
 
-  rcon.print("OK")
+  rcon.print('OK')
 end

@@ -52,7 +52,11 @@ class RCon
 
       buffer.rewind
       packet_fields = decode_packet(buffer.read)
-      $logger.debug(:rcon) { %([#{rcon_tag}:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
+      if packet_fields.payload.to_s =~ /error/i then
+        $logger.error(:rcon) { %([#{rcon_tag}:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
+      else
+        $logger.debug(:rcon) { %([#{rcon_tag}:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
+      end
       register_response(packet_fields)
       packet_fields
     end

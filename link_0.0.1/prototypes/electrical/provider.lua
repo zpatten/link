@@ -5,7 +5,8 @@ local recipe = link_build_data({
   inherit = data.raw.recipe['accumulator'],
   type = 'recipe',
   what = 'electrical',
-  which = 'provider'
+  which = 'provider',
+  ldescription = 'Provides electricity to the Link inventory'
 })
 
 -- local recipe = table.deepcopy(data.raw.recipe["accumulator"])
@@ -24,7 +25,8 @@ local item = link_build_data({
   inherit = data.raw.item['accumulator'],
   type = 'item',
   what = 'electrical',
-  which = 'provider'
+  which = 'provider',
+  ldescription = 'Provides electricity to the Link inventory'
 })
 
 -- local item = table.deepcopy(data.raw.item["accumulator"])
@@ -42,6 +44,7 @@ local entity = link_build_data({
   inherit = data.raw['accumulator']['accumulator'],
   what = 'electrical',
   which = 'provider',
+  ldescription = 'Provides electricity to the Link inventory',
   energy_source = {
     buffer_capacity = LINK_ELECTRICAL_BUFFER_CAPACITY,
     input_flow_limit = LINK_ELECTRICAL_FLOW_LIMIT,
