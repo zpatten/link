@@ -20,6 +20,6 @@
 -- --------------------------------------------------------------------------------
 local subgroup = link_build_data({
   type = 'item-subgroup',
-  what = 'signal'
+  what = 'combinator'
 })
 link_extend_data({subgroup})

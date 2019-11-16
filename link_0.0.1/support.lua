@@ -159,23 +159,16 @@ function link_build_data(args)
   end
 
   o.localised_name = string.format('%s', capitalize(string.gsub(o.name, '-', ' ')))
-  -- if args.lname then
-  --   o.localised_name = args.lname
-  -- else
-  -- end
-
   o.localised_description = string.format('D: %s', capitalize(string.gsub(o.name, '-', ' ')))
-  -- if args.ldescription then
-  --   o.localised_description = args.ldescription
-  -- else
-  -- end
 
   if args.attributes then
     for key, value in pairs(args.attributes) do
       if key == 'subgroup' then
         value = string.format('link-%s', value)
       elseif key == 'localised_name' then
+        value = capitalize(string.gsub(value, '-', ' '))
       elseif key == 'localised_description' then
+        value = string.gsub(value, '-', ' ')
       end
 
       o[key] = value

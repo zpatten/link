@@ -1,4 +1,5 @@
-local localised_description = 'Actively provides its contents to the Link inventory'
+local localised_description = 'Actively provides contents to the Link.'
+
 
 --------------------------------------------------------------------------------
 -- ITEM RECIPE

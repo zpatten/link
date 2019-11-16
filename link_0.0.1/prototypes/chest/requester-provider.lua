@@ -1,4 +1,4 @@
-local localised_description = 'Provides to the Link inventory acting as a requester chest for logistic networks'
+local localised_description = 'Provides contents to the Link requesting specified items from the logistic network.'
 
 --------------------------------------------------------------------------------
 -- ITEM RECIPE

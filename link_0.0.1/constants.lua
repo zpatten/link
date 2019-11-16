@@ -6,6 +6,7 @@
 -- LINK_GROUP = "link-group"
 
 --------------------------------------------------------------------------------
+LINK_GIGAJOULE = 1000000000
 
 LINK_GROUP_NAME = "link-group"
 
@@ -21,10 +22,10 @@ LINK_STORAGE_CHEST_NAME = "link-chest-storage"
 
 --------------------------------------------------------------------------------
 
-LINK_INVENTORY_COMBINATOR_NAME = "link-signal-inventory"
-LINK_NETWORK_ID_COMBINATOR_NAME = "link-signal-network-id"
-LINK_RECEIVER_COMBINATOR_NAME = "link-signal-receiver"
-LINK_TRANSMITTER_COMBINATOR_NAME = "link-signal-transmitter"
+LINK_INVENTORY_COMBINATOR_NAME = "link-combinator-inventory"
+LINK_NETWORK_ID_COMBINATOR_NAME = "link-combinator-network-id"
+LINK_RECEIVER_COMBINATOR_NAME = "link-combinator-receiver"
+LINK_TRANSMITTER_COMBINATOR_NAME = "link-combinator-transmitter"
 
 -- LINK_COMBINATOR_ORDER = "c-[link-%s]"
 -- LINK_COMBINATOR_SUBGROUP_NAME = "link-combinator-subgroup"
@@ -60,19 +61,19 @@ LINK_FLUID_BASE_AREA = LINK_FLUID_RECIPE_AMOUNT / 100
 
 --------------------------------------------------------------------------------
 
-LINK_SIGNAL_ELECTRICITY_NAME = "signal-link-electricity"
-LINK_SIGNAL_EPOCH_NAME = "signal-link-epoch"
-LINK_SIGNAL_LOCAL_ID_NAME = "signal-link-local-id"
-LINK_SIGNAL_NETWORK_ID_NAME = "signal-link-network-id"
-LINK_SIGNAL_SOURCE_ID_NAME = "signal-link-source-id"
+-- LINK_SIGNAL_ELECTRICITY_NAME = "signal-link-electricity"
+-- LINK_SIGNAL_EPOCH_NAME = "signal-link-epoch"
+-- LINK_SIGNAL_LOCAL_ID_NAME = "signal-link-local-id"
+-- LINK_SIGNAL_NETWORK_ID_NAME = "signal-link-network-id"
+-- LINK_SIGNAL_SOURCE_ID_NAME = "signal-link-source-id"
 
-LINK_SIGNAL_ORDER = "s-[link-%s]"
-LINK_SIGNAL_SUBGROUP_NAME = "link-signal-subgroup"
+-- LINK_SIGNAL_ORDER = "s-[link-%s]"
+-- LINK_SIGNAL_SUBGROUP_NAME = "link-signal-subgroup"
 
 --------------------------------------------------------------------------------
 
 -- LINK_TINT = { r = 221 / 255, g = 160 / 255, b = 221 / 255 }
-LINK_TINT = { r = 238 / 255, g = 130 / 255, b = 238 / 255, a = 1 }
+LINK_TINT = { r = 255 / 255, g = 0 / 255, b = 255 / 255, a = 1 }
 
 --------------------------------------------------------------------------------
 

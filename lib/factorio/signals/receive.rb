@@ -53,9 +53,9 @@ class Signals
           # scrub the signals
           unless (network_id == :inventory)
             signal_data = {
-              "signal-link-epoch" => nil,
-              "signal-link-network-id" => network_id,
-              "signal-link-source-id" => server.network_id
+              "link-signal-epoch" => nil,
+              "link-signal-network-id" => network_id,
+              "link-signal-source-id" => server.network_id
             }
             signals = scrub_signals(signals, signal_data)
           end

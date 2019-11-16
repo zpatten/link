@@ -19,6 +19,14 @@ require 'prototypes.chest.storage'
 
 --------------------------------------------------------------------------------
 
+require 'prototypes.combinator.subgroup'
+require 'prototypes.combinator.inventory'
+require 'prototypes.combinator.network-id'
+require 'prototypes.combinator.receiver'
+require 'prototypes.combinator.transmitter'
+
+--------------------------------------------------------------------------------
+
 require 'prototypes.electrical.subgroup'
 require 'prototypes.electrical.provider'
 require 'prototypes.electrical.requester'
@@ -34,10 +42,5 @@ require 'prototypes.fluid.requester'
 
 require "prototypes.signals"
 
-require 'prototypes.signal.subgroup'
-require 'prototypes.signal.inventory'
-require 'prototypes.signal.network-id'
-require 'prototypes.signal.receiver'
-require 'prototypes.signal.transmitter'
 
 --------------------------------------------------------------------------------

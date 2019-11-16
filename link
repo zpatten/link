@@ -45,6 +45,7 @@ $prometheus.register($thread_timing)
 SLEEP_TIME = 0.0001
 LINK_ROOT = Dir.pwd
 INT_32_MAX = (2**32).div(2) - 1
+GIGAJOULE = 10 ** 9
 
 STDOUT.sync = true
 # Thread.abort_on_exception = true

@@ -49,9 +49,9 @@ class Signals
       unless (network_id == :inventory)
         local_id = (server.nil? ? nil : server.network_id)
         signal_data = {
-          "signal-link-epoch" => Time.now.to_i,
-          "signal-link-local-id" => local_id,
-          "signal-link-network-id" => nil
+          "link-signal-epoch" => Time.now.to_i,
+          "link-signal-local-id" => local_id,
+          "link-signal-network-id" => nil
         }
         current_signals = scrub_signals(current_signals, signal_data)
       end

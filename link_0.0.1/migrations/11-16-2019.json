@@ -1,0 +1,10 @@
+{
+  "virtual-signal":
+  [
+    ["signal-link-electricity", "link-signal-electricity"],
+    ["signal-link-epoch", "link-signal-epoch"],
+    ["signal-link-local-id", "link-signal-local-id"],
+    ["signal-link-network-id", "link-signal-network-id"],
+    ["signal-link-source-id", "link-signal-source-id"]
+  ]
+}

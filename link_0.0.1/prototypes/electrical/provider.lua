@@ -1,4 +1,4 @@
-local localised_description = 'Provides electricity to the Link inventory'
+local localised_description = 'Provides electricity to the Link.'
 
 --------------------------------------------------------------------------------
 -- ITEM RECIPE

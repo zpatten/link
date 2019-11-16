@@ -1,4 +1,4 @@
-local localised_description = 'Provides fluids to the Link inventory'
+local localised_description = 'Provides fluids to the Link.'
 
 --------------------------------------------------------------------------------
 -- FLUID RECIPE CATEGORY
@@ -16,7 +16,7 @@ local recipe_category = link_build_data({
 --------------------------------------------------------------------------------
 for _, fluid in pairs(data.raw.fluid) do
   local localised_name = string.format('Link %s Provider', fluid.name)
-  local localised_description = string.format('Converts %s to Link %s so it can be provided to the Link inventory', fluid.name, fluid.name)
+  local localised_description = string.format('Converts %s to Link %s so it can be provided to the Link.', fluid.name, fluid.name)
 
   local fluid_recipe = link_build_data({
     type = 'recipe',
