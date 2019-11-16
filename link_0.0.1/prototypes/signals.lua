@@ -1,5 +1,3 @@
-local
-
 --------------------------------------------------------------------------------
 -- SIGNAL SUBGROUP
 --------------------------------------------------------------------------------
@@ -39,7 +37,7 @@ local local_id = link_build_data({
   which = 'local-id',
   attributes = {
     icon = "__base__/graphics/icons/signal/signal_L.png",
-    icon_size = 32
+    icon_size = 32,
     localised_name = 'Link Local Server ID',
     localised_description = 'Link signal set to the factorio server ID which is receiving the network signals.'
   }
@@ -64,7 +62,7 @@ local network_id = link_build_data({
   which = 'network-id',
   attributes = {
     icon = "__base__/graphics/icons/signal/signal_N.png",
-    icon_size = 32
+    icon_size = 32,
     localised_name = 'Link Network ID',
     localised_description = 'Link signal set to the ID of the Link signal network to be transmitted or received.'
   }
@@ -114,10 +112,10 @@ local electricity = link_build_data({
   which = 'electricity',
   attributes = {
     icons = {
-      -- {
-      --   icon = "__base__/graphics/icons/signal/shape_square.png",
-      --   icon_size = 32
-      -- },
+      {
+        icon = "__base__/graphics/icons/signal/shape_square.png",
+        icon_size = 32
+      },
       {
         icon = "__base__/graphics/icons/signal/signal_G.png",
         icon_size = 32,
