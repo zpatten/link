@@ -1,3 +1,5 @@
+local localised_description = 'Provides to the Link inventory acting as a storage chest for logistic networks'
+
 --------------------------------------------------------------------------------
 -- ITEM RECIPE
 --------------------------------------------------------------------------------
@@ -6,7 +8,9 @@ local recipe = link_build_data({
   type = 'recipe',
   what = 'chest',
   which = 'storage',
-  ldescription = 'Provides to the Link inventory acting as a storage chest for logistic networks'
+  attributes = {
+    localised_description = localised_description
+  }
 })
 
 -- local recipe = table.deepcopy(data.raw.recipe["logistic-chest-storage"])
@@ -26,7 +30,9 @@ local item = link_build_data({
   type = 'item',
   what = 'chest',
   which = 'storage',
-  ldescription = 'Provides to the Link inventory acting as a storage chest for logistic networks'
+  attributes = {
+    localised_description = localised_description
+  }
 })
 
 -- local item = table.deepcopy(data.raw.item["logistic-chest-storage"])
@@ -45,10 +51,10 @@ local entity = link_build_data({
   inherit = data.raw['logistic-container']['logistic-chest-storage'],
   what = 'chest',
   which = 'storage',
-  ldescription = 'Provides to the Link inventory acting as a storage chest for logistic networks',
   attributes = {
     inventory = 60,
-    render_not_in_network_icon = false
+    render_not_in_network_icon = false,
+    localised_description = localised_description
   }
 })
 

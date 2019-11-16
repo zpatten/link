@@ -58,9 +58,9 @@ function link_build_data(args)
   if args.type then
     o.type = args.type
   end
-  if not args.subgroup then
-    args.subgroup = args.what
-  end
+  -- if not args.subgroup then
+  --   args.subgroup = args.what
+  -- end
 
   if args.name and args.which then
     o.name = string.format('link-%s-%s-%s', args.what, args.which, args.name)
@@ -85,13 +85,13 @@ function link_build_data(args)
     o.crafting_categories = { o.name }
   end
 
-  if args.hidden then
-    o.hidden = true
-  end
+  -- if args.hidden then
+  --   o.hidden = true
+  -- end
 
-  if args.item_slot_count then
-    o.item_slot_count = args.item_slot_count
-  end
+  -- if args.item_slot_count then
+  --   o.item_slot_count = args.item_slot_count
+  -- end
 
   if o.minable then
     o.minable = {
@@ -106,42 +106,42 @@ function link_build_data(args)
     }
   end
 
-  if args.stack_size then
-    o.stack_size = args.stack_size
-  end
+  -- if args.stack_size then
+  --   o.stack_size = args.stack_size
+  -- end
 
-  if args.fluid_boxes then
-    o.fluid_boxes = args.fluid_boxes
-  end
+  -- if args.fluid_boxes then
+  --   o.fluid_boxes = args.fluid_boxes
+  -- end
 
-  if args.energy_source then
-    o.energy_source = args.energy_source
-    o.energy_source.type = 'electrical'
-    o.energy_source.usage_priority = 'tertiary'
-  end
+  -- if args.energy_source then
+  --   o.energy_source = args.energy_source
+  --   o.energy_source.type = 'electrical'
+  --   o.energy_source.usage_priority = 'tertiary'
+  -- end
 
-  if args.inventory then
-    o.inventory = args.inventory
-  end
+  -- if args.inventory then
+  --   o.inventory = args.inventory
+  -- end
 
-  if args.picture then
-    o.picture = table.deepcopy(args.picture)
-  end
+  -- if args.picture then
+  --   o.picture = table.deepcopy(args.picture)
+  -- end
 
   if o.type == 'recipe' then
     o.enabled = true
-    if args.energy_required then
-      o.energy_required = args.energy_required
-    end
-    if args.ingredients then
-      o.ingredients = args.ingredients
+    -- if args.energy_required then
+    --   o.energy_required = args.energy_required
+    -- end
+    if args.attributes.ingredients then
+      -- o.ingredients = args.ingredients
       o.category = string.format('link-%s-%s', args.what, args.which)
       o.hide_from_player_crafting = true
       o.return_ingredients_on_change = false
     end
-    if args.results then
-      o.results = args.results
-    else
+    if not args.attributes.results then
+    --   o.results = args.results
+    -- else
       o.result = o.name
     end
   elseif o.type == 'item' and args.place_result ~= false then
@@ -155,23 +155,29 @@ function link_build_data(args)
     o.order = string.sub(args.what, 1, 1)
   else
     o.order = string.format('%s-[%s]', string.sub(args.what, 1, 1), o.name)
-    o.subgroup = string.format('link-%s', args.subgroup)
+    o.subgroup = string.format('link-%s', args.what)
   end
 
-  if args.lname then
-    o.localised_name = args.lname
-  else
-    o.localised_name = string.format('%s', capitalize(string.gsub(o.name, '-', ' ')))
-  end
+  o.localised_name = string.format('%s', capitalize(string.gsub(o.name, '-', ' ')))
+  -- if args.lname then
+  --   o.localised_name = args.lname
+  -- else
+  -- end
 
-  if args.ldescription then
-    o.localised_description = args.ldescription
-  else
-    o.localised_description = string.format('D: %s', capitalize(string.gsub(o.name, '-', ' ')))
-  end
+  o.localised_description = string.format('D: %s', capitalize(string.gsub(o.name, '-', ' ')))
+  -- if args.ldescription then
+  --   o.localised_description = args.ldescription
+  -- else
+  -- end
 
   if args.attributes then
     for key, value in pairs(args.attributes) do
+      if key == 'subgroup' then
+        value = string.format('link-%s', value)
+      elseif key == 'localised_name' then
+      elseif key == 'localised_description' then
+      end
+
       o[key] = value
     end
   end

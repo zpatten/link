@@ -1,3 +1,5 @@
+local localised_description = 'Requests fluids from the Link inventory'
+
 --------------------------------------------------------------------------------
 -- FLUID RECIPE CATEGORY
 --------------------------------------------------------------------------------
@@ -13,29 +15,33 @@ local recipe_category = link_build_data({
 -- FLUID RECIPES
 --------------------------------------------------------------------------------
 for _, fluid in pairs(data.raw.fluid) do
-  -- local fluid_recipe = {}
+  local localised_name = string.format('Link %s Requester', fluid.name)
+  local localised_description = string.format('Converts Link %s to %s so it can be requested from the Link inventory', fluid.name, fluid.name)
+
   local fluid_recipe = link_build_data({
     type = 'recipe',
     name = fluid.name,
     what = 'fluid',
     which = 'requester',
-    lname = string.format('Link %s Requester', fluid.name),
-    ldescription = string.format('Converts Link %s to %s so it can be requested from the Link inventory', fluid.name, fluid.name),
-    icon = fluid.icon,
-    icon_size = fluid.icon_size,
-    energy_required = LINK_FLUID_RECIPE_CRAFTING_TIME,
-    ingredients = {
-      {
-        amount = LINK_FLUID_RECIPE_AMOUNT,
-        name = string.format('link-fluid-%s', fluid.name),
-        type = 'item'
-      }
-    },
-    results = {
-      {
-        amount = LINK_FLUID_RECIPE_AMOUNT,
-        name = fluid.name,
-        type = 'fluid'
+    attributes = {
+      energy_required = LINK_FLUID_RECIPE_CRAFTING_TIME,
+      icon = fluid.icon,
+      icon_size = fluid.icon_size,
+      localised_name = localised_name,
+      localised_description = localised_description,
+      ingredients = {
+        {
+          amount = LINK_FLUID_RECIPE_AMOUNT,
+          name = string.format('link-fluid-%s', fluid.name),
+          type = 'item'
+        }
+      },
+      results = {
+        {
+          amount = LINK_FLUID_RECIPE_AMOUNT,
+          name = fluid.name,
+          type = 'fluid'
+        }
       }
     }
   })
@@ -95,7 +101,9 @@ local recipe = link_build_data({
   type = 'recipe',
   what = 'fluid',
   which = 'requester',
-  ldescription = 'Requests fluids from the Link inventory'
+  attributes = {
+    localised_description = localised_description
+  }
 })
 -- local recipe = table.deepcopy(data.raw.recipe['assembling-machine-3'])
 -- link_build_data(recipe, 'fluid', 'requester')
@@ -115,7 +123,9 @@ local item = link_build_data({
   type = 'item',
   what = 'fluid',
   which = 'requester',
-  ldescription = 'Requests fluids from the Link inventory'
+  attributes = {
+    localised_description = localised_description
+  }
 })
 -- local item = table.deepcopy(data.raw.item['assembling-machine-3'])
 -- link_build_data(item, 'fluid', 'requester')
@@ -132,21 +142,23 @@ local entity = link_build_data({
   inherit = data.raw['assembling-machine']['assembling-machine-3'],
   what = 'fluid',
   which = 'requester',
-  ldescription = 'Requests fluids from the Link inventory',
-  fluid_boxes = {
-    {
-      base_area = LINK_FLUID_BASE_AREA,
-      base_level = 1,
-      pipe_connections = {
-        {
-          position = { 0, -2 },
-          type = 'output'
-        }
-      },
-      pipe_covers = pipecoverspictures(),
-      pipe_picture = assembler3pipepictures(),
-      production_type = 'output'
-    }
+  attributes = {
+    fluid_boxes = {
+      {
+        base_area = LINK_FLUID_BASE_AREA,
+        base_level = 1,
+        pipe_connections = {
+          {
+            position = { 0, -2 },
+            type = 'output'
+          }
+        },
+        pipe_covers = pipecoverspictures(),
+        pipe_picture = assembler3pipepictures(),
+        production_type = 'output'
+      }
+    },
+    localised_description = localised_description
   }
 })
 -- local entity = table.deepcopy(data.raw['assembling-machine']['assembling-machine-3'])

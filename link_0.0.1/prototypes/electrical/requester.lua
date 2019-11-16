@@ -1,3 +1,5 @@
+local localised_description = 'Requests electricity from the Link inventory'
+
 --------------------------------------------------------------------------------
 -- ITEM RECIPE
 --------------------------------------------------------------------------------
@@ -6,7 +8,9 @@ local recipe = link_build_data({
   type = 'recipe',
   what = 'electrical',
   which = 'requester',
-  ldescription = 'Requests electricity from the Link inventory'
+  attributes = {
+    localised_description = localised_description
+  }
 })
 
 -- local recipe = table.deepcopy(data.raw.recipe["accumulator"])
@@ -26,7 +30,9 @@ local item = link_build_data({
   type = 'item',
   what = 'electrical',
   which = 'requester',
-  ldescription = 'Requests electricity from the Link inventory'
+  attributes = {
+    localised_description = localised_description
+  }
 })
 
 -- local item = table.deepcopy(data.raw.item["accumulator"])
@@ -44,11 +50,15 @@ local entity = link_build_data({
   inherit = data.raw['accumulator']['accumulator'],
   what = 'electrical',
   which = 'requester',
-  ldescription = 'Requests electricity from the Link inventory',
-  energy_source = {
-    buffer_capacity = LINK_ELECTRICAL_BUFFER_CAPACITY,
-    input_flow_limit = "0kW",
-    output_flow_limit = LINK_ELECTRICAL_FLOW_LIMIT
+  attributes = {
+    energy_source = {
+      buffer_capacity = LINK_ELECTRICAL_BUFFER_CAPACITY,
+      input_flow_limit = '0kW',
+      output_flow_limit = LINK_ELECTRICAL_FLOW_LIMIT,
+      type = 'electrical',
+      usage_priority = 'tertiary'
+    },
+    localised_description = localised_description
   }
 })
 

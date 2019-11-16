@@ -1,3 +1,6 @@
+local localised_name = 'Link Inventory'
+local localised_description = 'Provides the contents of the Link inventory via a circuit network'
+
 --------------------------------------------------------------------------------
 -- ITEM RECIPE
 --------------------------------------------------------------------------------
@@ -6,8 +9,10 @@ local recipe = link_build_data({
   type = 'recipe',
   what = 'signal',
   which = 'inventory',
-  lname = 'Link Inventory',
-  ldescription = 'Provides the contents of the Link inventory via a circuit network'
+  attributes = {
+    localised_name = localised_name,
+    localised_description = localised_description
+  }
 })
 
 -- local recipe = table.deepcopy(data.raw.recipe["constant-combinator"])
@@ -27,8 +32,10 @@ local item = link_build_data({
   type = 'item',
   what = 'signal',
   which = 'inventory',
-  lname = 'Link Inventory',
-  ldescription = 'Provides the contents of the Link inventory via a circuit network'
+  attributes = {
+    localised_name = localised_name,
+    localised_description = localised_description
+  }
 })
 
 
@@ -48,9 +55,11 @@ local entity = link_build_data({
   inherit = data.raw['constant-combinator']['constant-combinator'],
   what = 'signal',
   which = 'inventory',
-  lname = 'Link Inventory',
-  ldescription = 'Provides the contents of the Link inventory via a circuit network',
-  item_slot_count = 1024
+  attributes = {
+    item_slot_count = 1024,
+    localised_name = localised_name,
+    localised_description = localised_description
+  }
 })
 
 -- local entity = table.deepcopy(data.raw["constant-combinator"]["constant-combinator"])
@@ -60,7 +69,7 @@ local entity = link_build_data({
 -- entity.name = LINK_INVENTORY_COMBINATOR_NAME
 -- link_add_tint(entity)
 
-print(string.format("--------------------\n%s\n", serpent.block(entity)))
+-- print(string.format("--------------------\n%s\n", serpent.block(entity)))
 
 link_extend_data({
   recipe,

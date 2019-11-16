@@ -1,3 +1,5 @@
+local localised_description = 'Actively provides its contents to the Link inventory'
+
 --------------------------------------------------------------------------------
 -- ITEM RECIPE
 --------------------------------------------------------------------------------
@@ -6,7 +8,9 @@ local recipe = link_build_data({
   type = 'recipe',
   what = 'chest',
   which = 'active-provider',
-  ldescription = 'Actively provides its contents to the Link inventory'
+  attributes = {
+    localised_description = localised_description
+  }
 })
 
 -- local recipe = table.deepcopy(data.raw.recipe['logistic-chest-active-provider'])
@@ -26,7 +30,9 @@ local item = link_build_data({
   type = 'item',
   what = 'chest',
   which = 'active-provider',
-  ldescription = 'Actively provides its contents to the Link inventory'
+  attributes = {
+    localised_description = localised_description
+  }
 })
 
 -- local item = table.deepcopy(data.raw.item['logistic-chest-active-provider'])
@@ -45,9 +51,11 @@ local entity = link_build_data({
   inherit = data.raw.container['steel-chest'],
   what = 'chest',
   which = 'active-provider',
-  ldescription = 'Actively provides its contents to the Link inventory',
-  inventory = 60,
-  picture = data.raw['logistic-container']['logistic-chest-active-provider'].animation
+  attributes = {
+    inventory = 60,
+    picture = table.deepcopy(data.raw['logistic-container']['logistic-chest-active-provider'].animation),
+    localised_description = localised_description
+  }
 })
 
 -- local entity = table.deepcopy(data.raw.container['steel-chest'])

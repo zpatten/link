@@ -1,3 +1,5 @@
+local localised_description = 'Transmits signals to a Link circuit network'
+
 --------------------------------------------------------------------------------
 -- ITEM RECIPE
 --------------------------------------------------------------------------------
@@ -6,7 +8,9 @@ local recipe = link_build_data({
   type = 'recipe',
   what = 'signal',
   which = 'transmitter',
-  ldescription = 'Transmits signals to a Link circuit network'
+  attributes = {
+    localised_description = localised_description
+  }
 })
 
 -- local recipe = table.deepcopy(data.raw.recipe["decider-combinator"])
@@ -26,7 +30,9 @@ local item = link_build_data({
   type = 'item',
   what = 'signal',
   which = 'transmitter',
-  ldescription = 'Transmits signals to a Link circuit network'
+  attributes = {
+    localised_description = localised_description
+  }
 })
 
 -- local item = table.deepcopy(data.raw.item["decider-combinator"])
@@ -45,7 +51,9 @@ local entity = link_build_data({
   inherit = data.raw['decider-combinator']['decider-combinator'],
   what = 'signal',
   which = 'transmitter',
-  ldescription = 'Transmits signals to a Link circuit network'
+  attributes = {
+    localised_description = localised_description
+  }
 })
 
 -- local entity = table.deepcopy(data.raw["decider-combinator"]["decider-combinator"])

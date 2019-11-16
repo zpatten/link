@@ -12,16 +12,21 @@ link_extend_data({subgroup})
 -- FLUID ITEMS
 --------------------------------------------------------------------------------
 for _, fluid in pairs(data.raw.fluid) do
+  local localised_name = string.format('Link %s', fluid.name)
+  local localised_description = 'Link item for transmitting and receiving fluids'
+
   local fluid_item = link_build_data({
     type = 'item',
     name = fluid.name,
     what = 'fluid',
-    lname = string.format('Link %s', fluid.name),
-    ldescription = 'Link item for transmitting and receiving fluids',
-    icon = data.raw.fluid[fluid.name].icon,
-    stack_size = LINK_FLUID_RECIPE_AMOUNT,
     place_result = false,
-    subgroup = 'fluid-item'
+    attributes = {
+      localised_name = localised_name,
+      localised_description = localised_description,
+      icon = data.raw.fluid[fluid.name].icon,
+      stack_size = LINK_FLUID_RECIPE_AMOUNT,
+      subgroup = 'fluid-item'
+    }
   })
   -- local fluid_item = {}
   -- fluid_item.icon = data.raw.fluid[fluid.name].icon
