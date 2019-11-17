@@ -15,8 +15,9 @@ local recipe_category = link_build_data({
 -- FLUID RECIPES
 --------------------------------------------------------------------------------
 for _, fluid in pairs(data.raw.fluid) do
-  local localised_name = string.format('Link %s Requester', fluid.name)
-  local localised_description = string.format('Converts Link %s to %s so it can be requested from the Link.', fluid.name, fluid.name)
+  local fluid_name = capitalize(string.gsub(fluid.name, '-', ' '))
+  local localised_name = string.format('Link %s Requester', fluid_name)
+  local localised_description = string.format('Converts Link %s to %s so it can be provided to the Link.', fluid_name, fluid_name)
 
   local fluid_recipe = link_build_data({
     type = 'recipe',

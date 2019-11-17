@@ -166,6 +166,18 @@ class ThreadPool
       @@thread_group.list.size > 0
     end
 
+    def wait_on_server_threads(server_name)
+      sleep SLEEP_TIME while server_thread_running?(server_name)
+    end
+
+    def server_thread_running?(server_name)
+      @@thread_group.list.each do |thread|
+        return true if thread.name =~ /server_name/i
+      end
+
+      false
+    end
+
     def execute
       last_checked_threads_at = Time.now.to_f
       loop do

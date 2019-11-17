@@ -6,7 +6,7 @@ class Server
 
 ################################################################################
 
-  attr_accessor :rtt
+  # attr_accessor :rtt
   attr_reader :client_password
   attr_reader :client_port
   attr_reader :details
@@ -237,6 +237,7 @@ class Server
   end
 
   def stop_rcon!
+    ThreadPool.wait_on_server_threads(self.name)
     @rcon.shutdown!
     self.rtt = nil
   end

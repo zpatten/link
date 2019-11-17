@@ -208,7 +208,7 @@ class Servers
       server = Server.new(server_name, server_details)
 
       autoplace_off = { frequency: 0, size: 0, richness: 0 }
-      autoplace_on  = { frequency: 2, size: 2, richness: 2 }
+      autoplace_on  = { frequency: 6, size: 6, richness: 6 }
 
       FileUtils.mkdir_p(server.config_path)
       FileUtils.mkdir_p(server.mods_path)
