@@ -1,23 +1,6 @@
--- --------------------------------------------------------------------------------
--- -- FLUID RECIPES
--- --------------------------------------------------------------------------------
--- local link_fluid_provider_recipe_categories = {
---   name = LINK_FLUID_RECIPE_PROVIDER_CATEGORY_NAME,
---   type = "recipe-category"
--- }
-
--- local link_fluid_requester_recipe_categories = {
---   name = LINK_FLUID_RECIPE_REQUESTER_CATEGORY_NAME,
---   type = "recipe-category"
--- }
-
-
--- --------------------------------------------------------------------------------
--- data:extend{
---   link_fluid_provider_recipe_categories,
---   link_fluid_requester_recipe_categories
--- }
--- --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- GROUP
+--------------------------------------------------------------------------------
 local group = link_build_data({
   type = 'item-group',
   what = 'group',
@@ -33,4 +16,8 @@ local group = link_build_data({
     order = 'z'
   }
 })
+
+
+--------------------------------------------------------------------------------
 link_extend_data({group})
+--------------------------------------------------------------------------------

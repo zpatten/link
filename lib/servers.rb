@@ -158,11 +158,14 @@ class Servers
       server_name = params[:name]
       if (server = find_by_name(server_name))
         server.stop!
+
         server.backup
 
+        @@servers.delete(server_name)
         Config.servers.delete(server_name)
         Config.save!
-        @@servers.delete(server_name)
+
+        FileUtils.rm_r(server.path)
 
         $logger.info(:servers) { "Deleted server #{server_name}" }
       end

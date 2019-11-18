@@ -4,10 +4,10 @@ require 'constants'
 require 'support'
 require 'util'
 
-require "prototypes.link-groups"
 --------------------------------------------------------------------------------
 
 require 'prototypes.group'
+require "prototypes.signals"
 
 --------------------------------------------------------------------------------
 
@@ -37,10 +37,5 @@ require 'prototypes.fluid.subgroup'
 require 'prototypes.fluid.items'
 require 'prototypes.fluid.provider'
 require 'prototypes.fluid.requester'
-
---------------------------------------------------------------------------------
-
-require "prototypes.signals"
-
 
 --------------------------------------------------------------------------------
