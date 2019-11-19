@@ -31,6 +31,8 @@ class Server
     @host              = details['host']
     @research          = details['research']
 
+    @paused = false
+
     @rcon = RCon.new(@name, @host, @client_port, @client_password)
   end
 
@@ -79,6 +81,18 @@ class Server
   end
 
 ################################################################################
+
+  def pause
+    @paused = true
+  end
+
+  def unpause
+    @paused = false
+  end
+
+  def paused?
+    @paused
+  end
 
   def running!(running=false)
     unless Config.servers[@name].nil?
@@ -160,6 +174,8 @@ class Server
     self.start_container!
     self.start_rcon!
 
+    self.unpause
+
     Timeout.timeout(60) do
       sleep SLEEP_TIME while self.unavailable?
     end
@@ -167,6 +183,10 @@ class Server
 
   def stop!
     # return if self.unavailable?
+
+    self.pause
+
+    ThreadPool.wait_on_server_threads(self.name)
 
     self.stop_rcon!
     self.stop_container!
@@ -237,7 +257,6 @@ class Server
   end
 
   def stop_rcon!
-    ThreadPool.wait_on_server_threads(self.name)
     @rcon.shutdown!
     self.rtt = nil
   end
@@ -265,11 +284,11 @@ class Server
 ################################################################################
 
   def available?
-    @rcon.available?
+    !self.paused? && @rcon.available?
   end
 
   def unavailable?
-    @rcon.unavailable?
+    self.paused? || @rcon.unavailable?
   end
 
 ################################################################################

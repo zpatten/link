@@ -42,7 +42,8 @@ LINK_TINT_BLUE = { r = 173 / 255, g = 216 / 255, b = 230 / 255 }
 LINK_TINT_GREEN = { r = 144 / 255, g = 238 / 255, b = 144 / 255 }
 LINK_TINT_PURPLE = { r = 197 / 255, g = 139 / 255, b = 231 / 255 }
 LINK_TINT_YELLOW = { r = 1, g = 1 }
-LINK_TINT_RED = { r = 1, g = 64 / 255, b = 64 / 255 }
+LINK_TINT_RED = { r = 240 / 255, g = 128 / 255, b = 128 / 255 }
+-- { r = 1, g = 64 / 255, b = 64 / 255 }
 
 LINK_TINTS = {}
 LINK_TINTS['link-chest-active-provider'] = LINK_TINT_PURPLE
@@ -75,3 +76,5 @@ LINK_EVENT_FILTER = {
   { filter = "name", name = LINK_RECEIVER_COMBINATOR_NAME },
   { filter = "name", name = LINK_TRANSMITTER_COMBINATOR_NAME }
 }
+
+--------------------------------------------------------------------------------

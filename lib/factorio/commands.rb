@@ -2,7 +2,7 @@
 
 def get_commands(host, packet_fields, data)
   payload = packet_fields.payload
-  unless payload.empty?
+  unless payload.nil? || payload.empty?
     command_events = JSON.parse(payload)
     unless command_events.empty?
       $logger.debug(:commands) { command_events.ai }

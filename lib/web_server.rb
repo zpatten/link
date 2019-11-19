@@ -118,7 +118,7 @@ class WebServer < Sinatra::Application
 
   post "/servers/create" do
     Servers.create!(params)
-    redirect '/servers'
+    redirect "/servers/start/#{params[:name]}"
   end
 
   get "/servers/delete/:name" do

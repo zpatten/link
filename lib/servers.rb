@@ -107,7 +107,7 @@ class Servers
 
       now = Time.now
       save_file_hash.each do |server_name, save_files|
-        next if save_files.size == 1
+        next if save_files.size <= 1
         save_files.sort! { |(atime,afile),(btime,bfile)| atime <=> btime }
         h = Hash.new
         save_files.each do |save_file|
@@ -133,6 +133,8 @@ class Servers
             end
           end
         end
+
+        next if delete_save_files.nil? || delete_save_files.empty?
 
         delete_save_files.flatten!.uniq!
         delete_save_files.each do |delete_save_file|
@@ -201,6 +203,7 @@ class Servers
     def create!(params)
       server_name = params[:name]
       server_type = params[:type]
+      server_enemy_base = params[:biters]
       server_details = {
         'host' => "127.0.0.1",
         'client_port' => generate_port_number,
@@ -231,7 +234,7 @@ class Servers
           'uranium-ore': (server_type == 'uranium-ore' ? autoplace_on : autoplace_off),
           'crude-oil': (server_type == 'crude-oil' ? autoplace_on : autoplace_off),
           trees: autoplace_off,
-          'enemy-base': autoplace_on
+          'enemy-base': (server_enemy_base == 'true' ? autoplace_on : autoplace_off)
         },
         cliff_settings: {
           richness: 0

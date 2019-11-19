@@ -2,7 +2,7 @@
 
 def get_chats(host, packet_fields, data)
   payload = packet_fields.payload
-  unless payload.empty?
+  unless payload.nil? || payload.empty?
     chat_events = JSON.parse(payload)
     unless chat_events.empty?
       origin_server = Servers.find_by_name(host)

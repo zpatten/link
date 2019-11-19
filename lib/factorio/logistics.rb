@@ -2,7 +2,7 @@
 
 def get_providables(host, packet_fields, server)
   payload = packet_fields.payload
-  unless payload.empty?
+  unless payload.nil? || payload.empty?
     providables = JSON.parse(payload)
     unless providables.empty?
       $logger.debug(:providables) { "[#{server.name}] providables: #{providables.ai}" }
@@ -22,7 +22,7 @@ def schedule_server_logistics
     command = %(/#{rcon_executor} remote.call('link', 'get_requests'))
     servers.each do |server|
       payload = server.rcon_command(command) #, method(:get_requests))
-      unless payload.empty?
+      unless payload.nil? || payload.empty?
         requests = JSON.parse(payload)
         unless requests.empty?
           # $logger.info(:requests) { "[#{server.name}] requests: #{requests.ai}" }

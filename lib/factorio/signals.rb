@@ -18,7 +18,7 @@ $tx_signals_initalized ||= Hash.new
 
 def set_receiver_combinator(host, packet_fields, server)
   payload = packet_fields.payload
-  unless payload.empty?
+  unless payload.nil? || payload.empty?
     network_ids = JSON.parse(payload)
     unless network_ids.empty?
       $logger.debug(:signals_rx) { "[#{server.id}] Transmitting signals for circuit networks: #{network_ids.ai}" }
@@ -50,7 +50,7 @@ end
 
 def get_transmitter_combinator(host, packet_fields, server)
   payload = packet_fields.payload
-  unless payload.empty?
+  unless payload.nil? || payload.empty?
     unit_networks_list = JSON.parse(payload)
     unless unit_networks_list.empty?
       if unit_networks_list["noop"].nil?

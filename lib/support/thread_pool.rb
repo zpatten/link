@@ -167,6 +167,7 @@ class ThreadPool
     end
 
     def wait_on_server_threads(server_name)
+      sleep 1
       sleep SLEEP_TIME while server_thread_running?(server_name)
     end
 

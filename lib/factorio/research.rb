@@ -2,7 +2,7 @@
 
 def set_research(host, packet_fields, server)
   payload = packet_fields.payload
-  unless payload.empty?
+  unless payload.nil? || payload.empty?
     research = JSON.parse(payload)
     unless research.empty?
       $logger.debug(:research) { "[#{server.id}] research: #{research.ai}" }
@@ -16,7 +16,7 @@ end
 
 def set_current_research(host, packet_fields, server)
   payload = packet_fields.payload
-  unless payload.empty?
+  unless payload.nil? || payload.empty?
     current_research = JSON.parse(payload)
     $logger.debug(:research) { "[#{server.id}] current research: #{current_research.ai}" }
     command = %(/#{rcon_executor} remote.call('link', 'set_current_research', '#{current_research.to_json}'))
