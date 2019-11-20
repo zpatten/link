@@ -25,7 +25,7 @@ def schedule_server_logistics
       unless payload.nil? || payload.empty?
         requests = JSON.parse(payload)
         unless requests.empty?
-          # $logger.info(:requests) { "[#{server.name}] requests: #{requests.ai}" }
+          $logger.debug(:requests) { "[#{server.name}] requests: #{requests.ai}" }
           Requests.add(server.name, requests)
         end
       end
@@ -36,8 +36,17 @@ def schedule_server_logistics
     command = %(/#{rcon_executor} remote.call('link', 'get_providables'))
     servers.each do |server|
       server.rcon_command_nonblock(command, method(:get_providables))
+      # payload = server.rcon_command(command) #, method(:get_providables))
+      # unless payload.nil? || payload.empty?
+      #   providables = JSON.parse(payload)
+      #   unless providables.empty?
+      #     $logger.debug(:providables) { "[#{server.name}] providables: #{providables.ai}" }
+      #     providables.each do |item_name, item_count|
+      #       Storage.add(item_name, item_count)
+      #     end
+      #   end
+      # end
     end
 
   end
 end
-

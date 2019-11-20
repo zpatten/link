@@ -56,5 +56,3 @@ class Config
   extend ClassMethods
 
 end
-
-Config.load

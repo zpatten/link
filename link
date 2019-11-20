@@ -29,6 +29,12 @@ $prometheus.register($storage_item_count)
 $storage_delta_count = Prometheus::Client::Gauge.new(:storage_delta_count, docstring: '...', labels: [:name])
 $prometheus.register($storage_delta_count)
 
+$electrical_count = Prometheus::Client::Gauge.new(:electrical_count, docstring: '...', labels: [:name])
+$prometheus.register($electrical_count)
+
+$electrical_delta_count = Prometheus::Client::Gauge.new(:electrical_delta_count, docstring: '...', labels: [:name])
+$prometheus.register($electrical_delta_count)
+
 $metric_thread_count = Prometheus::Client::Gauge.new(:thread_count, docstring: '...')
 $prometheus.register($metric_thread_count)
 
@@ -38,7 +44,8 @@ $prometheus.register($thread_execution)
 $thread_timing = Prometheus::Client::Gauge.new(:thread_timing, docstring: '...', labels: [:name])
 $prometheus.register($thread_timing)
 
-# require 'active_support/core_ext'
+$server_rtt = Prometheus::Client::Gauge.new(:server_rtt, docstring: '...', labels: [:name])
+$prometheus.register($server_rtt)
 
 ################################################################################
 
@@ -47,28 +54,22 @@ LINK_ROOT = Dir.pwd
 INT_32_MAX = (2**32).div(2) - 1
 GIGAJOULE = 10 ** 9
 
-STDOUT.sync = true
+# STDOUT.sync = true
 # Thread.abort_on_exception = true
 
 
 ################################################################################
 
+require_relative "lib/support/logger"
+
 require_relative 'lib/support'
 require_relative 'lib/servers'
 require_relative 'lib/tasks'
 require_relative 'lib/factorio'
-require_relative 'lib/web_server'
 
-$logger.level = Logger::INFO
+# $logger.level = Logger::INFO
 
 ################################################################################
-
-trap_signals
-
-at_exit do
-  $logger.fatal(:at_exit) { 'Shutting down!' }
-  shutdown!
-end
 
 ################################################################################
 
@@ -76,19 +77,5 @@ require_relative 'lib/options'
 
 ################################################################################
 
-schedule_server_chats
-schedule_server_command_whitelist
-schedule_server_commands
-schedule_server_current_research
-schedule_server_id
-schedule_server_logistics
-schedule_server_ping
-schedule_server_research
-schedule_server_signals
-schedule_task_backup
-schedule_task_prometheus
-schedule_task_statistics
-
-ThreadPool.execute
 
 ################################################################################

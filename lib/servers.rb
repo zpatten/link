@@ -90,6 +90,7 @@ class Servers
     end
 
     def trim_save_files
+      $logger.info(:backup) { "Trimming save files..." }
       save_file_hash = Hash.new
       save_files = Dir.glob(File.join(factorio_saves, "*.zip"), File::FNM_CASEFOLD)
       save_files.each do |save_file|
@@ -138,7 +139,7 @@ class Servers
 
         delete_save_files.flatten!.uniq!
         delete_save_files.each do |delete_save_file|
-          $logger.warn(:backup) { "Trimming save file #{File.basename(delete_save_file).inspect}" }
+          $logger.debug(:backup) { "Trimming save file #{File.basename(delete_save_file).inspect}" }
         end
         FileUtils.rm(delete_save_files, force: true)
       end

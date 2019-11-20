@@ -42,11 +42,19 @@ class Storage
     end
 
     def storage_item_instrumentation(item_name, item_count)
-      $storage_item_count.set(item_count, labels: { name: item_name })
+      if item_name == 'electricity'
+        $electrical_count.set(item_count, labels: { name: item_name })
+      else
+        $storage_item_count.set(item_count, labels: { name: item_name })
+      end
     end
 
     def storage_delta_instrumentation(item_name, item_count)
-      $storage_delta_count.set(item_count, labels: { name: item_name })
+      if item_name == 'electricity'
+        $electrical_delta_count.set(item_count, labels: { name: item_name })
+      else
+        $storage_delta_count.set(item_count, labels: { name: item_name })
+      end
     end
 
     def clone
@@ -82,6 +90,8 @@ class Storage
       update_websocket(item_name, storage[item_name])
       storage_item_instrumentation(item_name, storage[item_name])
 
+      Storage.save
+
       item_count
     end
 
@@ -103,6 +113,8 @@ class Storage
       Signals.update_inventory_signals
       update_websocket(item_name, storage[item_name])
       storage_item_instrumentation(item_name, storage[item_name])
+
+      Storage.save
 
       removed_count
     end

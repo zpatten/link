@@ -4,8 +4,8 @@ class ThreadPool
 
   module ClassMethods
 
-    @@thread_group = ThreadGroup.new
-    @@thread_schedules ||= ThreadSafeArray.new
+    @@thread_group ||= ThreadGroup.new
+    @@thread_schedules ||= Array.new #ThreadSafeArray.new
 
     def thread_group
       @@thread_group
@@ -180,6 +180,33 @@ class ThreadPool
     end
 
     def execute
+
+      trap_signals
+
+      at_exit do
+        $logger.fatal(:at_exit) { 'Shutting down!' }
+        shutdown!
+      end
+
+      thread = ThreadPool.thread("sinatra", priority: -100) do
+        WebServer.run! do |server|
+          Servers.all.each { |s| s.running? && s.start_rcon! }
+        end
+      end
+
+      schedule_server_chats
+      schedule_server_command_whitelist
+      schedule_server_commands
+      schedule_server_current_research
+      schedule_server_id
+      schedule_server_logistics
+      schedule_server_ping
+      schedule_server_research
+      schedule_server_signals
+      schedule_task_backup
+      schedule_task_prometheus
+      schedule_task_statistics
+
       last_checked_threads_at = Time.now.to_f
       loop do
         @@thread_schedules.each do |schedule|

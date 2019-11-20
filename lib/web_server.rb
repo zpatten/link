@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-require 'thin'
+# require 'sinatra/custom_logger'
 require 'sinatra'
-require 'sinatra/custom_logger'
-require 'sinatra/respond_with'
-require 'sinatra/json'
+# require 'sinatra-contrib'
 require 'sinatra-websocket'
+require 'sinatra/json'
+require 'sinatra/respond_with'
+require 'thin'
 
 class WebServer < Sinatra::Application
   # enable :logging
@@ -28,6 +29,14 @@ class WebServer < Sinatra::Application
   set :haml, :format => :html5
 
   respond_to :html, :json
+
+  configure do
+    use ::Rack::CommonLogger, $logger
+  end
+
+  # before do
+  #   env['rack.errors'] = $logger
+  # end
 
   get "/" do
     respond_to do |f|

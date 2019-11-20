@@ -12,7 +12,6 @@ class ThreadSafeArray
 end
 
 
-require_relative "support/logger"
 
 require_relative "support/config"
 require_relative "support/memory_cache"
