@@ -7,20 +7,17 @@ class Storage
     @@storage = nil
     @@storage_delta_history ||= Hash.new { |h,k| h[k] = Array.new }
     @@storage_delta ||= Hash.new(0)
-    # @@storage_mutex ||= Hash.new
     @@storage_mutex ||= Mutex.new
     @@storage_statistics ||= Hash.new
 
-    # def storage_synchronize(item_name, &block)
-    #   @@storage_mutex[item_name] ||= Mutex.new
-    #   @@storage_mutex[item_name].synchronize(&block)
-    # end
+    def storage_synchronize(item_name, &block)
+      @@storage_mutex[item_name] ||= Mutex.new
+      @@storage_mutex[item_name].synchronize(&block)
+    end
 
-    # def storage_synchronize_all(&block)
-    #   @@storage_mutex.values.map(&:lock)
-    #   block.call
-    #   @@storage_mutex.values.map(&:unlock)
-    # end
+    def storage_synchronize_all(&block)
+      @@storage_global_mutex.synchronize(&block)
+    end
 
     def [](item_name)
       @@storage[item_name]
@@ -37,21 +34,19 @@ class Storage
     def load
       @@storage_mutex.synchronize do
         @@storage = (JSON.parse(IO.read(filename)) rescue Hash.new)
-        @@storage.delete_if { |k,v| v == 0 }
       end
-      # storage_synchronize_all do
-      #   @@storage = (JSON.parse(IO.read(filename)) rescue Hash.new)
-      # end
     end
 
     def save
-      @@storage_mutex.synchronize do
-        @@storage.nil? or IO.write(filename, JSON.pretty_generate(storage.sort.to_h))
-        @@storage.delete_if { |k,v| v == 0 }
+      # pid = Process.fork do
+      unless @@storage.nil?
+        @@storage_mutex.synchronize do
+          @@storage.delete_if { |k,v| v == 0 }
+          IO.write(filename, JSON.pretty_generate(@@storage.sort.to_h))
+        end
       end
-      # storage_synchronize_all do
-      #   @@storage.nil? or IO.write(filename, JSON.pretty_generate(storage))
       # end
+      # Process.detach(pid)
     end
 
     def storage_item_instrumentation(item_name, item_count)
