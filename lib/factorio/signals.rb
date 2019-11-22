@@ -68,17 +68,13 @@ end
 
 # def schedule_server_tx_signals
 def schedule_server_signals
-  ThreadPool.schedule_servers(:signals, parallel: false) do |servers|
-    servers.each do |server|
-      force = !$tx_signals_initalized[server.name]
-      command = %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', #{force}))
-      server.rcon_command_nonblock(command, method(:get_transmitter_combinator))
-      $tx_signals_initalized[server.name] = true
-    end
+  ThreadPool.schedule_servers(:signals) do |server|
+    force = !$tx_signals_initalized[server.name]
+    command = %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', #{force}))
+    server.rcon_command_nonblock(command, method(:get_transmitter_combinator))
+    $tx_signals_initalized[server.name] = true
 
     command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
-    servers.each do |server|
-      server.rcon_command_nonblock(command, method(:set_receiver_combinator))
-    end
+    server.rcon_command_nonblock(command, method(:set_receiver_combinator))
   end
 end

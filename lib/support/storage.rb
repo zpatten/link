@@ -7,18 +7,23 @@ class Storage
     @@storage = nil
     @@storage_delta_history ||= Hash.new { |h,k| h[k] = Array.new }
     @@storage_delta ||= Hash.new(0)
-    @@storage_mutex ||= Hash.new
+    # @@storage_mutex ||= Hash.new
+    @@storage_mutex ||= Mutex.new
     @@storage_statistics ||= Hash.new
 
-    def storage_synchronize(item_name, &block)
-      @@storage_mutex[item_name] ||= Mutex.new
-      @@storage_mutex[item_name].synchronize(&block)
-    end
+    # def storage_synchronize(item_name, &block)
+    #   @@storage_mutex[item_name] ||= Mutex.new
+    #   @@storage_mutex[item_name].synchronize(&block)
+    # end
 
-    def storage_synchronize_all(&block)
-      @@storage_mutex.values.map(&:lock)
-      block.call
-      @@storage_mutex.values.map(&:unlock)
+    # def storage_synchronize_all(&block)
+    #   @@storage_mutex.values.map(&:lock)
+    #   block.call
+    #   @@storage_mutex.values.map(&:unlock)
+    # end
+
+    def [](item_name)
+      @@storage[item_name]
     end
 
     def storage
@@ -30,15 +35,23 @@ class Storage
     end
 
     def load
-      storage_synchronize_all do
+      @@storage_mutex.synchronize do
         @@storage = (JSON.parse(IO.read(filename)) rescue Hash.new)
+        @@storage.delete_if { |k,v| v == 0 }
       end
+      # storage_synchronize_all do
+      #   @@storage = (JSON.parse(IO.read(filename)) rescue Hash.new)
+      # end
     end
 
     def save
-      storage_synchronize_all do
-        @@storage.nil? or IO.write(filename, JSON.pretty_generate(storage))
+      @@storage_mutex.synchronize do
+        @@storage.nil? or IO.write(filename, JSON.pretty_generate(storage.sort.to_h))
+        @@storage.delete_if { |k,v| v == 0 }
       end
+      # storage_synchronize_all do
+      #   @@storage.nil? or IO.write(filename, JSON.pretty_generate(storage))
+      # end
     end
 
     def storage_item_instrumentation(item_name, item_count)
@@ -61,9 +74,12 @@ class Storage
       storage.nil? and load
 
       storage_clone = nil
-      storage_synchronize_all do
+      @@storage_mutex.synchronize do
         storage_clone = deep_clone(storage)
       end
+      # storage_synchronize_all do
+      #   storage_clone = deep_clone(storage)
+      # end
       storage_clone.delete_if { |n,c| (c == 0) }
     end
 
@@ -81,10 +97,16 @@ class Storage
     def add(item_name, item_count)
       storage.nil? and load
 
-      storage_synchronize(item_name) do
+      @@storage_mutex.synchronize do
         storage[item_name] ||= 0
         storage[item_name] += item_count
       end
+      # $logger.info(:storage) { "#{item_name}: +#{item_count}" }
+
+      # storage_synchronize(item_name) do
+      #   storage[item_name] ||= 0
+      #   storage[item_name] += item_count
+      # end
 
       Signals.update_inventory_signals
       update_websocket(item_name, storage[item_name])
@@ -99,7 +121,7 @@ class Storage
       storage.nil? and load
 
       removed_count = 0
-      storage_synchronize(item_name) do
+      @@storage_mutex.synchronize do
         storage[item_name] ||= 0
 
         removed_count = if storage[item_name] < item_count
@@ -109,6 +131,18 @@ class Storage
         end
         storage[item_name] -= removed_count
       end
+      # $logger.info(:storage) { "#{item_name}: -#{item_count}" }
+
+      # storage_synchronize(item_name) do
+      #   storage[item_name] ||= 0
+
+      #   removed_count = if storage[item_name] < item_count
+      #     storage[item_name]
+      #   else
+      #     item_count
+      #   end
+      #   storage[item_name] -= removed_count
+      # end
 
       Signals.update_inventory_signals
       update_websocket(item_name, storage[item_name])
@@ -122,9 +156,12 @@ class Storage
     def count(item_name)
       storage.nil? and load
 
-      storage_synchronize(item_name) do
+      @@storage_mutex.synchronize do
         storage[item_name] ||= 0
       end
+      # storage_synchronize(item_name) do
+      #   storage[item_name] ||= 0
+      # end
     end
 
     def format_delta_count(delta_count)
@@ -147,7 +184,7 @@ class Storage
       storage.nil? and load
       $logger.debug(:storage) { "Calculating Deltas" }
 
-      storage_synchronize_all do
+      @@storage_mutex.synchronize do
         @@previous_storage ||= deep_clone(@@storage)  # first run
 
         @@storage.keys.each do |item_name|
@@ -170,6 +207,29 @@ class Storage
 
         @@previous_storage = deep_clone(@@storage)
       end
+      # storage_synchronize_all do
+      #   @@previous_storage ||= deep_clone(@@storage)  # first run
+
+      #   @@storage.keys.each do |item_name|
+      #     count_delta = (@@storage[item_name] - (@@previous_storage[item_name] || 0))
+      #     @@storage_delta_history[item_name] << count_delta
+      #     delta_counts = [@@storage_delta_history[item_name].size, 60].min
+
+      #     @@storage_delta_history[item_name] = @@storage_delta_history[item_name][-delta_counts, delta_counts]
+
+      #     sec_rate = @@storage_delta_history[item_name].sum.div(@@storage_delta_history[item_name].size)
+      #     min_rate = @@storage_delta_history[item_name].sum
+
+      #     @@storage_delta[item_name] = [
+      #       format_delta_count(sec_rate),
+      #       format_delta_count(min_rate)
+      #     ]
+
+      #     storage_delta_instrumentation(item_name, sec_rate)
+      #   end
+
+      #   @@previous_storage = deep_clone(@@storage)
+      # end
 
       true
     end

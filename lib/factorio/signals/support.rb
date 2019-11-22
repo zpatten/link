@@ -128,13 +128,12 @@ class Signals
         item_type = rcon_lookup_item_type(item_name)
         item_count = if item_name == 'link-signal-electricity'
           item_count.div(GIGAJOULE)
-          # if item_count > INT_32_MAX
-          #   INT_32_MAX
-          # else
-          #   item_count
-          # end
         else
-          item_count
+          if item_count > INT_32_MAX
+            INT_32_MAX
+          else
+            item_count
+          end
         end
 
         signals << build_signal(item_name, item_count, item_type)

@@ -1,5 +1,5 @@
-config.json
-storage.json
+config.json*
+storage.json*
 *.log
 *.pid
 

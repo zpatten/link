@@ -2,6 +2,7 @@
 
 $start = false
 $stop = false
+$foreground = false
 require 'optparse'
 
 parser = OptionParser.new do |op|
@@ -35,6 +36,10 @@ parser = OptionParser.new do |op|
   op.on("--restart", "Restart the Link") do
     $start = true
     $stop = true
+  end
+
+  op.on('-f', 'Run in foreground') do
+    $foreground = true
   end
 
   # op.on("--start=NAME", "Start a server") do |name|
@@ -79,14 +84,21 @@ rescue Errno::ESRCH
 end
 
 def start_link
-  Process.fork do
-    require_relative '../lib/web_server'
-    Process.daemon(true, false)
+  if $foreground
     Config.load
     Storage.load
     $0 = 'Link Server'
     IO.write('link.pid', Process.pid)
     ThreadPool.execute
+  else
+    Process.fork do
+      Process.daemon(true, false)
+      Config.load
+      Storage.load
+      $0 = 'Link Server'
+      IO.write('link.pid', Process.pid)
+      ThreadPool.execute
+    end
   end
 end
 

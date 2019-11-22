@@ -47,11 +47,11 @@ class ThreadPool
       true
     end
 
-    def thread_instrumentation(schedule, &block)
+    def thread_instrumentation(thread_name, &block)
       if $thread_execution && $thread_timing
         elapsed_time = Benchmark.realtime(&block)
-        $thread_execution.observe(elapsed_time, labels: { name: schedule.what.to_s })
-        $thread_timing.set(elapsed_time, labels: { name: schedule.what.to_s })
+        $thread_execution.observe(elapsed_time, labels: { name: thread_name })
+        $thread_timing.set(elapsed_time, labels: { name: thread_name })
       else
         block.call
       end
@@ -66,7 +66,7 @@ class ThreadPool
       return false if @@thread_group.list.map(&:name).compact.include?(thread_name)
 
       thread = Thread.new do
-        thread_instrumentation(schedule) do
+        thread_instrumentation(thread_name) do
           trap_signals
           expires_in                  = [(schedule.frequency * 2), 10.0].max
           expires_at                  = Time.now.to_f + expires_in
@@ -189,8 +189,10 @@ class ThreadPool
       end
 
       thread = ThreadPool.thread("sinatra", priority: -100) do
-        WebServer.run! do |server|
-          Servers.all.each { |s| s.running? && s.start_rcon! }
+        require_relative '../web_server'
+        # require_relative '../web_server'
+        ::WebServer.run! do |server|
+          ::Servers.all.each { |s| s.running? && s.start_rcon! }
         end
       end
 

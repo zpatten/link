@@ -195,7 +195,6 @@ class Requests
       items_to_remove.each do |item_name, item_count|
         Storage.remove(item_name, item_count)
       end
-      Storage.save
     end
 
     def process

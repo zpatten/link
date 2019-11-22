@@ -265,6 +265,7 @@ class Servers
         'autosave_slots' => 5,
         'afk_autokick_interval' => 0,
         'auto_pause' => false,
+        'non_blocking_saving' => true,
         'maximum_segment_size' => 300,
         'maximum_segment_size_peer_count' => 20
       }
