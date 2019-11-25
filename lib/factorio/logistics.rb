@@ -7,6 +7,9 @@ def get_providables(host, packet_fields, server)
     unless providables.empty?
       $logger.debug(:providables) { "[#{server.name}] providables: #{providables.ai}" }
       providables.each do |item_name, item_count|
+        if item_name =~ /link-fluid-(?!.*(provider|requester)).*/
+          item_name.gsub!('link-fluid-', '')
+        end
         Storage.add(item_name, item_count)
       end
     end
@@ -77,6 +80,9 @@ def schedule_server_logistics
       unless providables.nil? || providables.empty?
         $logger.debug(:logistics) { "[#{server.name}] providables: #{providables.ai}" }
         providables.each do |item_name, item_count|
+          if item_name =~ /link-fluid-(?!.*(provider|requester)).*/
+            item_name = item_name.gsub('link-fluid-', '')
+          end
           Storage.add(item_name, item_count)
         end
       end

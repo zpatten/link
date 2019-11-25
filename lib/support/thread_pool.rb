@@ -66,6 +66,9 @@ class ThreadPool
       return false if @@thread_group.list.map(&:name).compact.include?(thread_name)
 
       thread = Thread.new do
+        Thread.current.name = thread_name
+        Thread.current.priority = schedule.options.fetch(:priority, 0)
+
         thread_instrumentation(thread_name) do
           trap_signals
           expires_in                  = [(schedule.frequency * 2), 10.0].max
@@ -77,8 +80,6 @@ class ThreadPool
           schedule_log(:thread, :stopping, schedule, Thread.current)
         end
       end
-      thread.name = thread_name
-      thread.priority = schedule.options.fetch(:priority, 0)
       @@thread_group.add(thread)
 
       true
