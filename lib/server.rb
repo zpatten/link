@@ -185,9 +185,19 @@ class Server
     result = nil
     if parent?
       @method_proxy_mutex.synchronize do
-        @method_proxy_child.send(Marshal.dump(method_args), 0)
-        result = Marshal.load(@method_proxy_child.recv(RECV_MAX_LEN))
-        $logger.debug(:mproxy) { "#{method_args.inspect} == #{result.inspect}" }
+        begin
+          Timeout.timeout(THREAD_TIMEOUT.div(2)) do
+            @method_proxy_child.send(Marshal.dump(method_args), 0)
+            result = Marshal.load(@method_proxy_child.recv(RECV_MAX_LEN))
+            $logger.debug(:mproxy) { "#{method_args.inspect} == #{result.inspect}" }
+          end
+        rescue Timeout::Error
+          self.stop_process!
+          nil
+        end
+        # @method_proxy_child.send(Marshal.dump(method_args), 0)
+        # result = Marshal.load(@method_proxy_child.recv(RECV_MAX_LEN))
+        # $logger.debug(:mproxy) { "#{method_args.inspect} == #{result.inspect}" }
       end
     elsif child?
       @method_rproxy_mutex.synchronize do
@@ -233,15 +243,15 @@ class Server
 
         ThreadPool.thread("#{self.name}-method-proxy-child") do
           loop do
-            begin
-              Timeout.timeout(THREAD_TIMEOUT) do
+            # begin
+            #   Timeout.timeout(THREAD_TIMEOUT) do
                 method_args = Marshal.load(@method_proxy_parent.recv(RECV_MAX_LEN))
                 result = self.send(*method_args)
                 data = Marshal.dump(result)
                 @method_proxy_parent.send(data, 0)
-              end
-            rescue Timeout::Error
-            end
+            #   end
+            # rescue Timeout::Error
+            # end
           end
         end
 
@@ -254,8 +264,8 @@ class Server
 
       @method_proxy_thread = ThreadPool.thread("#{self.name}-method-proxy-parent") do
         loop do
-          begin
-            Timeout.timeout(THREAD_TIMEOUT) do
+          # begin
+          #   Timeout.timeout(THREAD_TIMEOUT) do
               method_args = Marshal.load(@method_rproxy_child.recv(RECV_MAX_LEN))
               result = if Object.constants.include?(method_args.first)
                 Object.const_get(method_args.first).send(*method_args[1..-1])
@@ -264,9 +274,9 @@ class Server
               end
               data = Marshal.dump(result)
               @method_rproxy_child.send(data, 0)
-            end
-          rescue Timeout::Error
-          end
+          #   end
+          # rescue Timeout::Error
+          # end
         end
       end
 
@@ -502,14 +512,14 @@ class Server
 
   def rcon_command(command:)
     if parent? && child_alive?
-      begin
-        Timeout.timeout(THREAD_TIMEOUT.div(2)) do
+      # begin
+      #   Timeout.timeout(THREAD_TIMEOUT.div(2)) do
           method_proxy(:rcon_command, command: command)
-        end
-      rescue Timeout::Error
-        self.stop_process!
-        nil
-      end
+      #   end
+      # rescue Timeout::Error
+      #   self.stop_process!
+      #   nil
+      # end
     elsif child?
       return if unavailable?
       packet_fields = @rcon.enqueue_packet(command)

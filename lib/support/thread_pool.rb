@@ -110,9 +110,7 @@ class ThreadPool
       task     = schedule.task
       server   = schedule.server
 
-      # return if !server.nil? && server.unavailable?
-      # return if !task && (server.nil? || server.unavailable?)
-      # return if !task && (server.nil? || server.unavailable?)
+      return if !server.nil? && server.unavailable?
 
       run_thread(schedule, server)
 

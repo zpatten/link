@@ -2,7 +2,6 @@
 %table
   %tr
     %th PID
-    %th ID
     %th Name
     %th Status
     %th Priority
@@ -10,7 +9,6 @@
   - @threads.each do |thread|
     %tr
       %td= thread.pid
-      %td= thread.object_id
       %td.align-left
         %pre= thread.name
       %td= thread.status
