@@ -32,7 +32,7 @@ class Server
   attr_reader :research
   attr_reader :child_pid
   attr_reader :id
-  attr_reader :source_id
+  attr_reader :network_id
 
   RECV_MAX_LEN = 64 * 1024
 
@@ -41,7 +41,7 @@ class Server
   def initialize(name, details)
     @name                = name
     @id                  = Zlib::crc32(@name.to_s)
-    @source_id           = [@id].pack("L").unpack("l").first
+    @network_id          = [@id].pack("L").unpack("l").first
 
     @details             = details
     @active              = details['active']
@@ -53,6 +53,9 @@ class Server
     @factorio_port       = details['factorio_port']
     @host                = details['host']
     @research            = details['research']
+
+    @rx_signals_initalized = false
+    @tx_signals_initalized = false
 
     @method_proxy_mutex  = Mutex.new
     @method_rproxy_mutex = Mutex.new
@@ -222,36 +225,48 @@ class Server
 
         schedule_chat
         schedule_id
+        schedule_logistics
         schedule_ping
-        schedule_requests
         schedule_research
         schedule_research_current
         schedule_signals
 
         ThreadPool.thread("#{self.name}-method-proxy-child") do
           loop do
-            method_args = Marshal.load(@method_proxy_parent.recv(RECV_MAX_LEN))
-            result = self.send(*method_args)
-            data = Marshal.dump(result)
-            @method_proxy_parent.send(data, 0)
+            begin
+              Timeout.timeout(THREAD_TIMEOUT) do
+                method_args = Marshal.load(@method_proxy_parent.recv(RECV_MAX_LEN))
+                result = self.send(*method_args)
+                data = Marshal.dump(result)
+                @method_proxy_parent.send(data, 0)
+              end
+            rescue Timeout::Error
+            end
           end
         end
 
         ThreadPool.execute
       end
+      Process.detach(@child_pid)
+
       @method_proxy_parent.close
       @method_rproxy_parent.close
 
-      ThreadPool.thread("#{self.name}-method-proxy-parent") do
+      @method_proxy_thread = ThreadPool.thread("#{self.name}-method-proxy-parent") do
         loop do
-          method_args = Marshal.load(@method_rproxy_child.recv(RECV_MAX_LEN))
-          result = if Object.constants.include?(method_args.first)
-            Object.const_get(method_args.first).send(*method_args[1..-1])
-          else
-            self.send(*method_args)
+          begin
+            Timeout.timeout(THREAD_TIMEOUT) do
+              method_args = Marshal.load(@method_rproxy_child.recv(RECV_MAX_LEN))
+              result = if Object.constants.include?(method_args.first)
+                Object.const_get(method_args.first).send(*method_args[1..-1])
+              else
+                self.send(*method_args)
+              end
+              data = Marshal.dump(result)
+              @method_rproxy_child.send(data, 0)
+            end
+          rescue Timeout::Error
           end
-          data = Marshal.dump(result)
-          @method_rproxy_child.send(data, 0)
         end
       end
 
@@ -261,6 +276,7 @@ class Server
   def stop_process!
     if child_alive?
       Process.kill('INT', @child_pid)
+      @method_proxy_thread.exit
     end
   end
 
@@ -336,9 +352,6 @@ class Server
     # puts "command=#{command}"
     system command
 
-    $rx_signals_initalized[self.name] = nil
-    $tx_signals_initalized[self.name] = nil
-
     running!(false)
 
     true
@@ -366,10 +379,11 @@ class Server
   end
 
   def parent?
-    Process.pid == @parent_pid
+    (Process.pid == @parent_pid) || master?
   end
 
   def child?
+    #(Process.pid == @child_pid)
     !parent?
   end
 
@@ -473,25 +487,32 @@ class Server
   end
 
 
-  def rcon_command_nonblock(command:, callback: nil, data: nil, what: nil)
+  def rcon_command_nonblock(command:)
     if parent? && child_alive?
-      method_proxy(:rcon_command_nonblock, command: command, callback: callback, data: data, what: what)
+      method_proxy(:rcon_command_nonblock, command: command)
     elsif child?
       return if unavailable?
       callback ||= method(:rcon_print)
       data ||= self
-      @rcon.enqueue_packet(command, callback, data, what)
+      @rcon.enqueue_packet(command)
 
       true
     end
   end
 
-  def rcon_command(command:, data: nil, what: nil)
+  def rcon_command(command:)
     if parent? && child_alive?
-      method_proxy(:rcon_command, command: command, data: data, what: what)
+      begin
+        Timeout.timeout(THREAD_TIMEOUT.div(2)) do
+          method_proxy(:rcon_command, command: command)
+        end
+      rescue Timeout::Error
+        self.stop_process!
+        nil
+      end
     elsif child?
       return if unavailable?
-      packet_fields = @rcon.enqueue_packet(command, nil, data, what)
+      packet_fields = @rcon.enqueue_packet(command)
       response = @rcon.find_response(packet_fields.id)
       response.payload.strip
     end

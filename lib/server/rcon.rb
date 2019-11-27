@@ -21,11 +21,16 @@ class Server
 
 ################################################################################
 
+    attr_reader :name
+    attr_reader :id
+
     def initialize(name, host, port, password)
       @name           = name
       @host           = host
       @port           = port
       @password       = password
+
+      @id = Zlib::crc32(@name.to_s)
 
       @authenticated  = false
 
@@ -43,10 +48,6 @@ class Server
     end
 
 ################################################################################
-
-    def id
-      @id ||= Zlib::crc32(@name.to_s)
-    end
 
     def rcon_tag
       # "#{@name}@#{@host}:#{@port}"

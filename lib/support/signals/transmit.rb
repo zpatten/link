@@ -36,7 +36,7 @@ class Signals
       signals
     end
 
-    def tx(network_id=0, source_id: nil, force: false)
+    def tx(network_id=0, server_id: nil, force: false)
       network_id = scrub_network_id(network_id)
       if network_id == :inventory
         Signals.update_inventory_signals
@@ -47,7 +47,7 @@ class Signals
       current_signals = calculate_signals(network_id)
 
       unless (network_id == :inventory)
-        local_id = (source_id.nil? ? nil : source_id)
+        local_id = (server_id.nil? ? nil : server_id)
         signal_data = {
           "link-signal-epoch" => Time.now.to_i,
           "link-signal-local-id" => local_id,
@@ -59,7 +59,7 @@ class Signals
       # index the signals
       current_signals = index_signals(current_signals)
 
-      cache_key = [ "signals-tx-previous", source_id, network_id ].compact.join("-")
+      cache_key = [ "signals-tx-previous", server_id, network_id ].compact.join("-")
       previous_signals = MemoryCache.read(cache_key)
       network_signals = Array.new
       if !!previous_signals && !force

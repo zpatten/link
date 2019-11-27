@@ -11,35 +11,41 @@ class Storage
     # @@storage_item_mutex ||= Hash.new
     @@storage_statistics ||= Hash.new
 
-    def storage_item_synchronize(item_name, &block)
-      @@storage_item_mutex[item_name] ||= Mutex.new
-      @@storage_item_mutex[item_name].synchronize(&block)
-    end
+    # def storage_item_synchronize(item_name, &block)
+    #   @@storage_item_mutex[item_name] ||= Mutex.new
+    #   @@storage_item_mutex[item_name].synchronize(&block)
+    # end
 
-    def storage_items_synchronize(item_names, &block)
-      item_names.each do |item_name|
-        @@storage_item_mutex[item_name] ||= Mutex.new
-        @@storage_item_mutex[item_name].lock
-      end
+    # def storage_items_synchronize(item_names, &block)
+    #   item_names.each do |item_name|
+    #     @@storage_item_mutex[item_name] ||= Mutex.new
+    #     @@storage_item_mutex[item_name].lock
+    #   end
 
-      block.call
+    #   block.call
 
-      item_names.each do |item_name|
-        @@storage_item_mutex[item_name].unlock
-      end
+    #   item_names.each do |item_name|
+    #     @@storage_item_mutex[item_name].unlock
+    #   end
 
-      true
-    end
+    #   true
+    # end
 
-    def storage_synchronize_all(&block)
-      @@storage_global_mutex.synchronize(&block)
-    end
+    # def storage_synchronize_all(&block)
+    #   @@storage_global_mutex.synchronize(&block)
+    # end
 
     def [](item_name)
-      @@storage.nil? and load
+      # @@storage.nil? and load
 
-      @@storage[item_name]
+      self.storage[item_name]
     end
+
+    # def []=(item_name, item_count)
+    #   # @@storage.nil? and load
+
+    #   self.storage[item_name] = item_count
+    # end
 
     def storage
       @@storage.nil? and load
@@ -111,7 +117,7 @@ class Storage
     end
 
     def add(item_name, item_count)
-      storage.nil? and load
+      # storage.nil? and load
 
       # @@storage_mutex.synchronize do
       #   storage[item_name] ||= 0
@@ -138,9 +144,16 @@ class Storage
       item_count
     end
 
+    def bulk_add(items)
+      self.storage.merge!(items) { |k,o,n| o + n }
+      Storage.save
+
+      true
+    end
+
     def bulk_remove(items)
       # storage_items_synchronize(items.keys) do
-        self.storage.merge!(items) { |k,o,n| o - n }
+      self.storage.merge!(items) { |k,o,n| o - n }
       # end
       Storage.save
 
@@ -148,7 +161,7 @@ class Storage
     end
 
     def remove(item_name, item_count)
-      storage.nil? and load
+      # storage.nil? and load
 
       removed_count = 0
       # storage_item_synchronize(item_name) do
@@ -227,13 +240,12 @@ class Storage
     end
 
     def calculate_delta
-      storage.nil? and load
       $logger.debug(:storage) { "Calculating Deltas" }
 
       # @@storage_mutex.synchronize do
         @@previous_storage ||= self.clone #deep_clone(self.storage)  # first run
 
-        @@storage.keys.each do |item_name|
+        self.storage.keys.each do |item_name|
           count_delta = (self.storage[item_name] - (@@previous_storage[item_name] || 0))
           @@storage_delta_history[item_name] << count_delta
           delta_counts = [@@storage_delta_history[item_name].size, 60].min
@@ -251,7 +263,7 @@ class Storage
           storage_delta_instrumentation(item_name, sec_rate)
         end
 
-        @@previous_storage = deep_clone(@@storage)
+        @@previous_storage = self.clone #deep_clone(@@storage)
       # end
       # storage_synchronize_all do
       #   @@previous_storage ||= deep_clone(@@storage)  # first run

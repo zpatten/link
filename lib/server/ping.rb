@@ -4,7 +4,7 @@ class Server
   module Ping
 
     def schedule_ping
-      ThreadPool.schedule_task(:ping, server: self) do |server|
+      ThreadPool.schedule_server(:ping, server: self) do |server|
         # Calculate round-trip time to RCON
         command = %(/#{rcon_executor} remote.call('link', 'ping'))
         started_at = Time.now.to_f

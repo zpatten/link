@@ -5,30 +5,27 @@
 class Server
   module Signals
 
-    $rx_signals_initalized ||= false
-    $tx_signals_initalized ||= false
-
     def handle_transmitter_combinators(unit_network_list)
       if unit_network_list["noop"].nil?
         network_ids = unit_network_list.values.map(&:keys).flatten.uniq.sort
-        $logger.debug(:combinator_tx) { "[#{self.id}] Received signals for circuit networks: #{network_ids.ai}" }
+        $logger.debug(:combinator_tx) { "[#{self.name}] Received signals for circuit networks: #{network_ids.ai}" }
         # signals received from transmitters
         self.method_proxy(
           :Signals,
           :rx,
           unit_network_list,
-          source_id: self.source_id
+          server_id: self.network_id
         )
-        $tx_signals_initalized = true
+        @tx_signals_initalized = true
       else
-        $logger.debug(:combinator_tx) { "[#{self.id}] NOOP" }
+        $logger.debug(:combinator_tx) { "[#{self.name}] NOOP" }
       end
     end
 
     def handle_receiver_combinators(network_ids)
-      $logger.debug(:signals_rx) { "[#{self.id}] Transmitting signals for circuit networks: #{network_ids.ai}" }
+      $logger.debug(:signals_rx) { "[#{self.name}] Transmitting signals for circuit networks: #{network_ids.ai}" }
 
-      force = !$rx_signals_initalized
+      force = !@rx_signals_initalized
       networks = Hash.new
       network_ids.each do |network_id|
         # signals to transmit to receivers
@@ -36,7 +33,7 @@ class Server
           :Signals,
           :tx,
           network_id,
-          source_id: self.source_id,
+          server_id: self.network_id,
           force: force
         )
         unless network_signals.nil? || network_signals.empty?
@@ -48,13 +45,13 @@ class Server
         # update rx signals with the signal networks
         command = %(/#{rcon_executor} remote.call('link', 'set_receiver_combinator', #{force}, '#{networks.to_json}'))
         self.rcon_command(command: command)
-        $rx_signals_initalized = true
+        @rx_signals_initalized = true
       end
     end
 
     def schedule_signals
-      ThreadPool.schedule_task(:signals, server: self) do
-        force = !$tx_signals_initalized
+      ThreadPool.schedule_server(:signals, server: self) do
+        force = !@tx_signals_initalized
         command = %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', #{force}))
         payload = self.rcon_command(command: command)
         unless payload.nil? || payload.empty?

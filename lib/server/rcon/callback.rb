@@ -5,12 +5,10 @@ class Server
 
     module Callback
 
-      def register_packet_callback(packet_id, callback, data=nil, what=nil)
+      def register_packet_callback(packet_id, callback)
         @callbacks[packet_id] = OpenStruct.new(
           id: packet_id,
-          callback: callback,
-          data: data,
-          what: what
+          callback: callback
         )
       end
 
@@ -19,7 +17,7 @@ class Server
           @responses.delete(pc.id)
           tag = [rcon_tag, 'callback', pc.what, pc.id].compact.join('-')
           ThreadPool.thread(tag, priority: 3) do
-            pc.callback.call(@name, packet_fields, pc.data)
+            pc.callback.call(@name, packet_fields)
           end
         end
       end

@@ -21,7 +21,7 @@ class Servers
     def find(what, except: [])
       what = what.to_sym
       servers = case what
-      when :commands, :chat, :ping, :command_whitelist, :logistics, :signals, :id, :requests, :providables
+      when :commands, :chat, :ping, :command_whitelist, :logistics, :signals, :id
         all.select { |s| !!Config.server_value(s.name, what) }
       when :research, :research_current
         all.select { |s| s.research }
@@ -73,10 +73,10 @@ class Servers
       true
     end
 
-    def rcon_command_nonblock(what:, command:, callback: nil, except: [])
+    def rcon_command_nonblock(what:, command:, except: [])
       self.find(what, except: except).each do |server|
         unless server.unavailable?
-          server.rcon_command_nonblock(command: command, callback: callback)
+          server.rcon_command_nonblock(command: command)
         end
       end
 

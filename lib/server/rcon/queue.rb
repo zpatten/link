@@ -5,10 +5,10 @@ class Server
 
     module Queue
 
-      def enqueue_packet(payload, callback=nil, data=nil, what=nil, type=RCon::PACKET_TYPE_COMMAND)
+      def enqueue_packet(payload, callback: nil, type: RCon::PACKET_TYPE_COMMAND)
         packet_fields = build_packet(payload, type)
         unless callback.nil?
-          register_packet_callback(packet_fields.id, callback, data, what)
+          register_packet_callback(packet_fields.id, callback)
         end
         @packet_queue << OpenStruct.new(packet_fields: packet_fields)
         packet_fields

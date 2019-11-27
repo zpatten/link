@@ -44,7 +44,7 @@ class Signals
       true
     end
 
-    def rx(signal_lists, source_id: nil)
+    def rx(signal_lists, server_id: nil)
       signal_lists.each do |unit_number, networks|
         networks.each do |network_id, signals|
           network_id = scrub_network_id(network_id)
@@ -55,7 +55,7 @@ class Signals
             signal_data = {
               "link-signal-epoch" => nil,
               "link-signal-network-id" => network_id,
-              "link-signal-source-id" => source_id
+              "link-signal-source-id" => server_id
             }
             signals = scrub_signals(signals, signal_data)
           end

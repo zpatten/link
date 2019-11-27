@@ -14,12 +14,12 @@ class Server
       end
 
       def authenticate
-        enqueue_packet(@password, method(:authenticate_callback), nil, nil, RCon::PACKET_TYPE_LOGIN)
+        enqueue_packet(@password, callback: method(:authenticate_callback), type: RCon::PACKET_TYPE_LOGIN)
       end
 
-      def authenticate_callback(host, packet_fields, data)
+      def authenticate_callback(host, packet_fields)
         @authenticated = true
-        $logger.info(:rcon) { "[#{self.id}] Authenticated to #{host_tag}" }
+        $logger.info(:rcon) { "[#{rcon_tag}] Authenticated to #{host_tag}" }
       end
 
     end

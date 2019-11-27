@@ -79,15 +79,15 @@ class ThreadPool
         thread_instrumentation(thread_name) do
           trap_signals
           expires_in                  = [(schedule.frequency * 2), 10.0].max
-          expires_at                  = Time.now.to_f + expires_in
+          expires_at                  = Time.now.to_f + THREAD_TIMEOUT
           Thread.current[:expires_at] = expires_at
           Thread.current[:started_at] = Time.now.to_f
 
           schedule_log(:thread, :starting, schedule, Thread.current)
           schedule.block.call(*args)
           schedule_log(:thread, :stopping, schedule, Thread.current)
+          Thread.exit
         end
-        Thread.exit
       end
       @@thread_group.add(thread)
 
@@ -100,23 +100,9 @@ class ThreadPool
       task     = schedule.task
       server   = schedule.options[:server]
 
-      servers = if server.nil?
-        Servers.find(what)
-      else
-        [server]
-      end
+      return if !task && (server.nil? || server.unavailable?)
 
-      # servers  = Servers.find(what)
-      servers.delete_if { |server| server.unavailable? } unless servers.nil?
-      return if !task && (servers.nil? || servers.count == 0)
-
-      if parallel
-        servers.each do |server|
-          run_thread(schedule, server)
-        end
-      else
-        run_thread(schedule, servers)
-      end
+      run_thread(schedule, server)
 
       Metrics[:thread_count].set(
         @@thread_group.list.count,
@@ -126,14 +112,14 @@ class ThreadPool
       true
     end
 
-    def schedule_task(what, parallel: false, **options, &block)
+    def schedule_task(what, **options, &block)
       $logger.info(:scheduler) { "Scheduling task #{what.to_s.inspect}" }
-      register(what, parallel: parallel, task: true, **options, &block)
+      register(what, task: true, **options, &block)
     end
 
-    def schedule_servers(what, parallel: true, **options, &block)
+    def schedule_server(what, **options, &block)
       $logger.info(:scheduler) { "Scheduling servers #{what.to_s.inspect}" }
-      register(what, parallel: parallel, priority: 0, **options, &block)
+      register(what, priority: 0, **options, &block)
     end
 
     def server_names(*args)
@@ -232,24 +218,14 @@ class ThreadPool
       end
       schedule_task_prometheus
 
-      # schedule_server_chats
-      # schedule_server_command_whitelist
-      # schedule_server_commands
-      # schedule_server_current_research
-      # schedule_server_id
-      # schedule_server_requests
-      # schedule_server_providables
-      # schedule_server_ping
-      # schedule_server_research
-      # schedule_server_signals
-      # schedule_task_backup
-      # schedule_task_prometheus
-      # schedule_task_statistics
-
       last_checked_threads_at = Time.now.to_f
       next_run_at = Array.new
 
       loop do
+        @@thread_group.list.each do |thread|
+          thread.exit if thread[:expires_at] <= Time.now.to_f
+        end
+
         next_run_at = []
         @@thread_schedules.each do |schedule|
           if schedule.next_run_at <= Time.now.to_f

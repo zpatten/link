@@ -20,7 +20,7 @@ class Server
     end
 
     def schedule_chat
-      ThreadPool.schedule_task(:chat, server: self) do
+      ThreadPool.schedule_server(:chat, server: self) do
         command = %(/#{rcon_executor} remote.call('link', 'get_chats'))
         payload = self.rcon_command(command: command)
         unless payload.nil? || payload.empty?
