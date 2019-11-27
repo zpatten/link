@@ -1,20 +1,20 @@
 # frozen_string_literal: true
 
-def get_providables(host, packet_fields, server)
-  payload = packet_fields.payload
-  unless payload.nil? || payload.empty?
-    providables = JSON.parse(payload)
-    unless providables.empty?
-      $logger.debug(:providables) { "[#{server.name}] providables: #{providables.ai}" }
-      providables.each do |item_name, item_count|
-        if item_name =~ /link-fluid-(?!.*(provider|requester)).*/
-          item_name.gsub!('link-fluid-', '')
-        end
-        Storage.add(item_name, item_count)
-      end
-    end
-  end
-end
+# def get_providables(host, packet_fields, server)
+#   payload = packet_fields.payload
+#   unless payload.nil? || payload.empty?
+#     providables = JSON.parse(payload)
+#     unless providables.empty?
+#       $logger.debug(:providables) { "[#{server.name}] providables: #{providables.ai}" }
+#       providables.each do |item_name, item_count|
+#         if item_name =~ /link-fluid-(?!.*(provider|requester)).*/
+#           item_name.gsub!('link-fluid-', '')
+#         end
+#         Storage.add(item_name, item_count)
+#       end
+#     end
+#   end
+# end
 
 
 # Link Factorio Server Perform Fulfillments and Get New Requests
@@ -55,8 +55,44 @@ end
 # end
 
 
-def schedule_server_logistics
-  ThreadPool.schedule_servers(:logistics) do |server|
+# def schedule_server_logistics
+#   ThreadPool.schedule_servers(:logistics) do |server|
+
+#     command = %(/#{rcon_executor} remote.call('link', 'get_requests'))
+#     payload = server.rcon_command(command)
+#     unless payload.nil? || payload.empty?
+#       requests = JSON.parse(payload)
+#       unless requests.nil? || requests.empty?
+#         $logger.debug(:logistics) { "[#{server.name}] requests: #{requests.ai}" }
+#         logistics = Logistics.new(requests)
+#         logistics.fulfill do |fulfillments|
+#           command = %(/#{rcon_executor} remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
+#           server.rcon_command(command)
+#         end
+#       end
+#     end
+
+#     command = %(/#{rcon_executor} remote.call('link', 'get_providables'))
+#     # server.rcon_command_nonblock(command, method(:get_providables))
+#     payload = server.rcon_command(command)
+#     unless payload.nil? || payload.empty?
+#       providables = JSON.parse(payload)
+#       unless providables.nil? || providables.empty?
+#         $logger.debug(:logistics) { "[#{server.name}] providables: #{providables.ai}" }
+#         providables.each do |item_name, item_count|
+#           if item_name =~ /link-fluid-(?!.*(provider|requester)).*/
+#             item_name = item_name.gsub('link-fluid-', '')
+#           end
+#           Storage.add(item_name, item_count)
+#         end
+#       end
+#     end
+
+#   end
+# end
+
+def schedule_server_requests
+  ThreadPool.schedule_servers(:requests) do |server|
 
     command = %(/#{rcon_executor} remote.call('link', 'get_requests'))
     payload = server.rcon_command(command)
@@ -72,24 +108,31 @@ def schedule_server_logistics
       end
     end
 
-    command = %(/#{rcon_executor} remote.call('link', 'get_providables'))
-    # server.rcon_command_nonblock(command, method(:get_providables))
-    payload = server.rcon_command(command)
-    unless payload.nil? || payload.empty?
-      providables = JSON.parse(payload)
-      unless providables.nil? || providables.empty?
-        $logger.debug(:logistics) { "[#{server.name}] providables: #{providables.ai}" }
-        providables.each do |item_name, item_count|
-          if item_name =~ /link-fluid-(?!.*(provider|requester)).*/
-            item_name = item_name.gsub('link-fluid-', '')
-          end
-          Storage.add(item_name, item_count)
-        end
-      end
-    end
+  end
+end
+
+def schedule_server_providables
+  ThreadPool.schedule_servers(:providables) do |server|
+
+    # command = %(/#{rcon_executor} remote.call('link', 'get_providables'))
+    # # server.rcon_command_nonblock(command, method(:get_providables))
+    # payload = server.rcon_command(command)
+    # unless payload.nil? || payload.empty?
+    #   providables = JSON.parse(payload)
+    #   unless providables.nil? || providables.empty?
+    #     $logger.debug(:logistics) { "[#{server.name}] providables: #{providables.ai}" }
+    #     providables.each do |item_name, item_count|
+    #       if item_name =~ /link-fluid-(?!.*(provider|requester)).*/
+    #         item_name = item_name.gsub('link-fluid-', '')
+    #       end
+    #       Storage.add(item_name, item_count)
+    #     end
+    #   end
+    # end
 
   end
 end
+
 
 
 # def schedule_server_providables

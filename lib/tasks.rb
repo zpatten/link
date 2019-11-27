@@ -18,8 +18,6 @@ end
 
 def schedule_task_prometheus
   ThreadPool.schedule_task(:prometheus) do
-    RescueRetry.attempt do
-      Prometheus::Client::Push.new('link', 'master', 'http://127.0.0.1:9091').add($prometheus)
-    end
+    Metrics.push
   end
 end

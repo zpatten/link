@@ -131,7 +131,7 @@ if $stop
   end
 
   begin
-    Process.kill('INT', IO.read('link.pid').to_i)
+    Process.kill('TERM', IO.read('link.pid').to_i)
   rescue Errno::ESRCH, Errno::ENOENT
     puts "Failed to find Link process!"
   end

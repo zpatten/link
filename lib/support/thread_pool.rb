@@ -5,6 +5,7 @@ class ThreadPool
   module ClassMethods
 
     @@thread_group ||= ThreadGroup.new
+    # @@thread_group_2 ||= ThreadGroup.new
     @@thread_schedules ||= Array.new #ThreadSafeArray.new
 
     def thread_group
@@ -19,14 +20,20 @@ class ThreadPool
       schedule_log(:thread, :starting, name)
 
       thread = Thread.new do
+        Thread.current[:started_at] = Time.now.to_f
+
         trap_signals
         block.call
+        Thread.exit
       end
       thread.name     = name
       thread.priority = options.fetch(:priority, 0)
-      # @@thread_group.add(thread)
+      # @@thread_group_2.add(thread)
 
-      $metric_thread_count.set(@@thread_group.list.count)
+      Metrics[:thread_count].set(
+        @@thread_group.list.count,
+        labels: { name: Thread.current.name }
+      )
 
       thread
     end
@@ -48,10 +55,10 @@ class ThreadPool
     end
 
     def thread_instrumentation(thread_name, &block)
-      if $thread_execution && $thread_timing
+      if Metrics[:thread_execution] && Metrics[:thread_timing]
         elapsed_time = Benchmark.realtime(&block)
-        $thread_execution.observe(elapsed_time, labels: { name: thread_name })
-        $thread_timing.set(elapsed_time, labels: { name: thread_name })
+        Metrics[:thread_execution].observe(elapsed_time, labels: { name: thread_name })
+        Metrics[:thread_timing].set(elapsed_time, labels: { name: thread_name })
       else
         block.call
       end
@@ -74,11 +81,13 @@ class ThreadPool
           expires_in                  = [(schedule.frequency * 2), 10.0].max
           expires_at                  = Time.now.to_f + expires_in
           Thread.current[:expires_at] = expires_at
+          Thread.current[:started_at] = Time.now.to_f
 
           schedule_log(:thread, :starting, schedule, Thread.current)
           schedule.block.call(*args)
           schedule_log(:thread, :stopping, schedule, Thread.current)
         end
+        Thread.exit
       end
       @@thread_group.add(thread)
 
@@ -89,8 +98,15 @@ class ThreadPool
       parallel = schedule.parallel
       what     = schedule.what
       task     = schedule.task
+      server   = schedule.options[:server]
 
-      servers  = Servers.find(what)
+      servers = if server.nil?
+        Servers.find(what)
+      else
+        [server]
+      end
+
+      # servers  = Servers.find(what)
       servers.delete_if { |server| server.unavailable? } unless servers.nil?
       return if !task && (servers.nil? || servers.count == 0)
 
@@ -102,7 +118,10 @@ class ThreadPool
         run_thread(schedule, servers)
       end
 
-      $metric_thread_count.set(@@thread_group.list.count)
+      Metrics[:thread_count].set(
+        @@thread_group.list.count,
+        labels: { name: Thread.current.name }
+      )
 
       true
     end
@@ -114,7 +133,7 @@ class ThreadPool
 
     def schedule_servers(what, parallel: true, **options, &block)
       $logger.info(:scheduler) { "Scheduling servers #{what.to_s.inspect}" }
-      register(what, parallel: parallel, priority: 2, **options, &block)
+      register(what, parallel: parallel, priority: 0, **options, &block)
     end
 
     def server_names(*args)
@@ -161,6 +180,9 @@ class ThreadPool
 
     def shutdown!
       @@thread_schedules = Array.new
+      Thread.list.each do |thread|
+        thread.exit unless thread == Thread.main
+      end
     end
 
     def running?
@@ -184,56 +206,67 @@ class ThreadPool
 
       trap_signals
 
-      at_exit do
-        $logger.fatal(:at_exit) { 'Shutting down!' }
-        shutdown!
-      end
+      # at_exit do
+      #   $logger.fatal(:at_exit) { 'Shutting down!' }
+      #   shutdown!
+      # end
 
-      thread = ThreadPool.thread("sinatra", priority: -100) do
-        require_relative '../web_server'
-        # require_relative '../web_server'
-        ::WebServer.run! do |server|
-          ::Servers.all.each { |s| s.running? && s.start_rcon! }
+      if Process.pid == MASTER_PID
+        $logger.info { "In main process #{Process.pid}" }
+
+        thread = ThreadPool.thread("sinatra") do
+          # require_relative '../web_server'
+          ::WebServer.run! do |server|
+          end
         end
-      end
+        ::Servers.all.each do |s|
+          if s.running?
+            s.start_process!
+            s.start_rcon!
+          end
+        end
 
-      schedule_server_chats
-      schedule_server_command_whitelist
-      schedule_server_commands
-      schedule_server_current_research
-      schedule_server_id
-      schedule_server_logistics
-      schedule_server_ping
-      schedule_server_research
-      schedule_server_signals
-      schedule_task_backup
+        schedule_task_backup
+        schedule_task_statistics
+      else
+      end
       schedule_task_prometheus
-      schedule_task_statistics
+
+      # schedule_server_chats
+      # schedule_server_command_whitelist
+      # schedule_server_commands
+      # schedule_server_current_research
+      # schedule_server_id
+      # schedule_server_requests
+      # schedule_server_providables
+      # schedule_server_ping
+      # schedule_server_research
+      # schedule_server_signals
+      # schedule_task_backup
+      # schedule_task_prometheus
+      # schedule_task_statistics
 
       last_checked_threads_at = Time.now.to_f
+      next_run_at = Array.new
+
       loop do
+        next_run_at = []
         @@thread_schedules.each do |schedule|
           if schedule.next_run_at <= Time.now.to_f
             run(schedule)
             schedule_next_run(schedule)
           end
+          next_run_at << schedule.next_run_at
         end
+        sleep_for = (next_run_at.min - Time.now.to_f)
+        sleep sleep_for if sleep_for > 0.0
 
-        if last_checked_threads_at < (Time.now.to_f - 1.0)
-          $logger.debug(:thread) { "Checking for stale threads" }
-          @@thread_group.list.each do |thread|
-            if thread.key?(:expires_at) && (Time.now.to_f > thread[:expires_at])
-              $logger.fatal(:thread) { "Thread #{thread.name.inspect} expired!" }
-              thread.exit
-            end
-          end
-          last_checked_threads_at = Time.now.to_f
-        end
-
-        sleep SLEEP_TIME
-
-        $metric_thread_count.set(@@thread_group.list.count)
+        Metrics[:thread_count].set(
+          @@thread_group.list.count,
+          labels: { name: Thread.current.name }
+        )
       end
+
     end
 
   end

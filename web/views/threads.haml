@@ -1,15 +1,18 @@
 %h1 Threads
 %table
   %tr
-    %th Thread ID
-    %th Thread Name
-    %th Thread Status
-    %th Thread Priority
-  / - ThreadPool.thread_group.list.each do |thread|
+    %th PID
+    %th ID
+    %th Name
+    %th Status
+    %th Priority
+    %th Run Time
   - @threads.each do |thread|
     %tr
+      %td= thread.pid
       %td= thread.object_id
       %td.align-left
         %pre= thread.name
       %td= thread.status
       %td= thread.priority
+      %td= (Time.now.to_f - thread.started_at).round(1)

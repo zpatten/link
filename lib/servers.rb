@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "server"
-
 class Servers
 
   module ClassMethods
@@ -20,18 +18,19 @@ class Servers
       all.find { |s| s.id == id.to_i }
     end
 
-    def find(what)
+    def find(what, except: [])
       what = what.to_sym
-      case what
-      when :commands, :chats, :ping, :command_whitelist, :logistics, :signals, :id
+      servers = case what
+      when :commands, :chat, :ping, :command_whitelist, :logistics, :signals, :id, :requests, :providables
         all.select { |s| !!Config.server_value(s.name, what) }
-      when :research, :current_research
+      when :research, :research_current
         all.select { |s| s.research }
       when :non_research
         all.select { |s| !s.research }
       else
-        nil
+        []
       end
+      servers.delete_if { |s| except.include?(s.name) }
     end
 
 ################################################################################
@@ -60,6 +59,28 @@ class Servers
 
     def restart!
       self.all.each(&:restart!)
+    end
+
+################################################################################
+
+    def rcon_command(what:, command:, except: [])
+      self.find(what, except: except).each do |server|
+        unless server.unavailable?
+          server.rcon_command(command: command)
+        end
+      end
+
+      true
+    end
+
+    def rcon_command_nonblock(what:, command:, callback: nil, except: [])
+      self.find(what, except: except).each do |server|
+        unless server.unavailable?
+          server.rcon_command_nonblock(command: command, callback: callback)
+        end
+      end
+
+      true
     end
 
 ################################################################################
@@ -298,8 +319,8 @@ class Servers
 ################################################################################
 
     def shutdown!
-      all.each do |server|
-        server.shutdown!
+      self.all.each do |server|
+        server.stop_rcon!
         $logger.info(:servers) { "[#{server.id}] Shutdown server #{server.host_tag}" }
       end
     end
@@ -313,23 +334,15 @@ class Servers
     end
 
     def available
-      all.select { |s| s.available? }
+      self.all.select { |s| s.available? }
     end
 
     def available?
-      all.map(&:available?).any?(true)
+      self.all.map(&:available?).any?(true)
     end
 
     def unavailable?
       !available?
-    end
-
-################################################################################
-
-    def rcon_command_nonblock(command, cserversback, data=nil)
-      self.available.each do |server|
-        server.rcon_command_nonblock(command, cserversback, data)
-      end
     end
 
 ################################################################################

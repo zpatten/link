@@ -1,37 +1,32 @@
 # frozen_string_literal: true
 
-class ThreadSafeArray
-  def initialize
-    @array = Array.new
-    @mutex = Mutex.new
-  end
-
-  def method_missing(method_name, *method_args, &block)
-    @mutex.synchronize { @array.send(method_name, *method_args, &block) }
-  end
-end
-
-
-
 require_relative "support/config"
 require_relative "support/logistics"
 require_relative "support/memory_cache"
-require_relative "support/metric"
+require_relative "support/metrics"
 require_relative "support/requests"
 require_relative "support/storage"
 require_relative "support/thread_pool"
 
-# def running!
-#   $shutdown = false
-# end
+def master?
+  Process.pid == MASTER_PID
+end
 
 def shutdown!
   $shutdown = true
+  # EventMachine.stop
   ThreadPool.shutdown!
-  sleep SLEEP_TIME while running?
-  Servers.shutdown!
-  Storage.save
+  # sleep 3
+  # sleep SLEEP_TIME while running?
+
+  if master?
+    # Servers.shutdown!
+    # Storage.save
+  else
+  end
+
   $logger.close
+  # Process.kill('TERM', Process.pid)
 end
 
 def running?
@@ -99,9 +94,9 @@ def countsize(size)
 end
 
 # Displays RCON response packets for debugging or other uses (i.e. when we do not care about the response)
-def rcon_print(host, packet_fields, data)
-  # $logger.debug { "RCON Received Packet: #{packet_fields.inspect}" }
-end
+# def rcon_print(host, packet_fields, data)
+#   # $logger.debug { "RCON Received Packet: #{packet_fields.inspect}" }
+# end
 
 def deep_clone(object)
   Marshal.load(Marshal.dump(object))
@@ -135,7 +130,9 @@ def trap_signals
       else
         $stderr.puts "[#{Thread.current.name}] Caught Signal: #{signal}"
       end
-      exit
+      # $logger.fatal(signal) { 'Shutting down!' }
+      shutdown!
+      exit!
     end
   end
 end

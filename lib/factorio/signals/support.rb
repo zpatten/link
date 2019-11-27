@@ -117,7 +117,7 @@ class Signals
       cache_key = "rcon-item-type-#{item_name}"
       item_type = MemoryCache.fetch(cache_key) do
         command = %(/#{rcon_executor} remote.call('link', 'lookup_item_type', '#{item_name}'))
-        Servers.random.rcon_command(command)
+        Servers.random.rcon_command(command: command)
       end
     end
 

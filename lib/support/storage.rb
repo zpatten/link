@@ -4,11 +4,11 @@ class Storage
 
   module ClassMethods
 
-    @@storage = Hash.new(0)
+    @@storage = Concurrent::Hash.new(0) #Hash.new(0)
     @@storage_delta_history ||= Hash.new { |h,k| h[k] = Array.new }
     @@storage_delta ||= Hash.new(0)
     @@storage_mutex ||= Mutex.new
-    @@storage_item_mutex ||= Hash.new
+    # @@storage_item_mutex ||= Hash.new
     @@storage_statistics ||= Hash.new
 
     def storage_item_synchronize(item_name, &block)
@@ -72,17 +72,17 @@ class Storage
 
     def storage_item_instrumentation(item_name, item_count)
       if item_name == 'electricity'
-        $electrical_count.set(item_count, labels: { name: item_name })
+        Metrics[:electrical_count].set(item_count, labels: { name: item_name })
       else
-        $storage_item_count.set(item_count, labels: { name: item_name })
+        Metrics[:storage_item_count].set(item_count, labels: { name: item_name })
       end
     end
 
     def storage_delta_instrumentation(item_name, item_count)
       if item_name == 'electricity'
-        $electrical_delta_count.set(item_count, labels: { name: item_name })
+        Metrics[:electrical_delta_count].set(item_count, labels: { name: item_name })
       else
-        $storage_delta_count.set(item_count, labels: { name: item_name })
+        Metrics[:storage_delta_count].set(item_count, labels: { name: item_name })
       end
     end
 
@@ -100,7 +100,7 @@ class Storage
     end
 
     def update_websocket(item_name, item_count)
-      WebServer.settings.storage_sockets.each do |s|
+      ::WebServer.settings.storage_sockets.each do |s|
         s.send({
           name: item_name,
           count: countsize(item_count),
@@ -117,9 +117,10 @@ class Storage
       #   storage[item_name] ||= 0
       #   storage[item_name] += item_count
       # end
-      storage_item_synchronize(item_name) do
+      # storage_item_synchronize(item_name) do
         self.storage[item_name] += item_count
-      end
+      # end
+      Storage.save
 
       # $logger.info(:storage) { "#{item_name}: +#{item_count}" }
 
@@ -138,9 +139,10 @@ class Storage
     end
 
     def bulk_remove(items)
-      storage_items_synchronize(items.keys) do
+      # storage_items_synchronize(items.keys) do
         self.storage.merge!(items) { |k,o,n| o - n }
-      end
+      # end
+      Storage.save
 
       true
     end
@@ -149,7 +151,7 @@ class Storage
       storage.nil? and load
 
       removed_count = 0
-      storage_item_synchronize(item_name) do
+      # storage_item_synchronize(item_name) do
         removed_count = if self.storage[item_name] < item_count
           self.storage[item_name]
         else
@@ -159,7 +161,8 @@ class Storage
         if self.storage[item_name] == 0
           self.storage.delete(item_name)
         end
-      end
+      # end
+      Storage.save
 
       # @@storage_mutex.synchronize do
       #   storage[item_name] ||= 0

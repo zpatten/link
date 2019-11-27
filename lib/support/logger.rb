@@ -43,13 +43,13 @@ $logger = Logger.new("link.log")
 $logger.datetime_format = '%Y-%m-%d %H:%M:%S.%6N'
 
 # $logger = Logger.new("link.log")
-Format = "%s [%s] %s: %s %s\n".freeze
+Format = "%s [%s] %d %s: %s %s\n".freeze
 
 $logger.formatter = proc do |severity, datetime, progname, msg|
   progname = "[#{progname.to_s.upcase.gsub("_", "-")}]"
   thread_name = Thread.current.name || "main"
   datetime = Time.now.strftime('%Y-%m-%d %H:%M:%S.%6N')
-  message = Format % [severity[0..0], datetime, thread_name, progname, msg]
+  message = Format % [severity[0..0], datetime, Process.pid, thread_name, progname, msg]
   if defined?(WebServer)
     # EM.next_tick do
       WebServer.settings.sockets.each do |s|

@@ -1,8 +1,23 @@
 # frozen_string_literal: true
 
-require_relative "rcon"
+require_relative 'server/chat'
+require_relative 'server/id'
+require_relative 'server/logistics'
+require_relative 'server/ping'
+require_relative 'server/rcon'
+require_relative 'server/research'
+require_relative 'server/signals'
 
 class Server
+
+################################################################################
+
+  include Server::Chat
+  include Server::ID
+  include Server::Logistics
+  include Server::Ping
+  include Server::Research
+  include Server::Signals
 
 ################################################################################
 
@@ -15,6 +30,9 @@ class Server
   attr_reader :name
   attr_reader :rcon
   attr_reader :research
+  attr_reader :child_pid
+
+  RECV_MAX_LEN = 64 * 1024
 
 ################################################################################
 
@@ -31,9 +49,10 @@ class Server
     @host              = details['host']
     @research          = details['research']
 
-    @paused = false
+    @method_proxy_mutex = Mutex.new
+    @method_rproxy_mutex = Mutex.new
 
-    @rcon = RCon.new(@name, @host, @client_port, @client_password)
+    @parent_pid = Process.pid
   end
 
 ################################################################################
@@ -47,7 +66,7 @@ class Server
   end
 
   def update_websocket
-    WebServer.settings.server_sockets.each do |s|
+    ::WebServer.settings.server_sockets.each do |s|
       s.send({
         name: @name,
         connected: connected?,
@@ -63,9 +82,15 @@ class Server
   end
 
   def rtt=(value)
-    @rtt = value
-    update_websocket
-    @rtt
+    if parent?
+      @rtt = value
+      update_websocket
+      @rtt
+    elsif child?
+      self.method_proxy(:rtt=, value)
+    else
+      raise "#rtt= called out of context!"
+    end
   end
 
 ################################################################################
@@ -81,18 +106,6 @@ class Server
   end
 
 ################################################################################
-
-  def pause
-    @paused = true
-  end
-
-  def unpause
-    @paused = false
-  end
-
-  def paused?
-    @paused
-  end
 
   def running!(running=false)
     unless Config.servers[@name].nil?
@@ -168,13 +181,96 @@ class Server
     self.start!
   end
 
+  def method_proxy(*method_args)
+    result = nil
+    if parent?
+      @method_proxy_mutex.synchronize do
+        @method_proxy_child.send(Marshal.dump(method_args), 0)
+        result = Marshal.load(@method_proxy_child.recv(RECV_MAX_LEN))
+        $logger.debug(:mproxy) { "#{method_args.inspect} == #{result.inspect}" }
+      end
+    elsif child?
+      @method_rproxy_mutex.synchronize do
+        @method_rproxy_parent.send(Marshal.dump(method_args), 0)
+        result = Marshal.load(@method_rproxy_parent.recv(RECV_MAX_LEN))
+        $logger.debug(:mrproxy) { "#{method_args.inspect} == #{result.inspect}" }
+      end
+    else
+      raise "#method_proxy call out of context!"
+    end
+    result
+  end
+
+  def child_alive?
+    !!Process.kill(0, @child_pid) rescue false
+  end
+
+  def start_process!
+    unless child_alive?
+      @method_proxy_child, @method_proxy_parent = UNIXSocket.pair(:DGRAM)
+      @method_rproxy_child, @method_rproxy_parent = UNIXSocket.pair(:DGRAM)
+
+      @child_pid = Process.fork do
+        Thread.list.each do |thread|
+          thread.exit unless thread == Thread.main
+        end
+        @method_proxy_child.close
+        @method_rproxy_child.close
+        $0 = "Link Server: #{self.name}"
+        Thread.current.name = self.name
+
+        @rcon = RCon.new(@name, @host, @client_port, @client_password)
+
+        schedule_chat
+        schedule_id
+        schedule_ping
+        schedule_requests
+        schedule_research
+        schedule_research_current
+
+        ThreadPool.thread("#{self.name}-method-proxy-child") do
+          loop do
+            method_args = Marshal.load(@method_proxy_parent.recv(RECV_MAX_LEN))
+            result = self.send(*method_args)
+            data = Marshal.dump(result)
+            @method_proxy_parent.send(data, 0)
+          end
+        end
+
+        ThreadPool.execute
+      end
+      @method_proxy_parent.close
+      @method_rproxy_parent.close
+
+      ThreadPool.thread("#{self.name}-method-proxy-parent") do
+        loop do
+          method_args = Marshal.load(@method_rproxy_child.recv(RECV_MAX_LEN))
+          result = if Object.constants.include?(method_args.first)
+            Object.const_get(method_args.first).send(*method_args[1..-1])
+          else
+            self.send(*method_args)
+          end
+          # result = self.send(*method_args)
+          data = Marshal.dump(result)
+          @method_rproxy_child.send(data, 0)
+        end
+      end
+
+    end
+  end
+
+  def stop_process!
+    if child_alive?
+      Process.kill('INT', @child_pid)
+    end
+  end
+
   def start!
     return if self.available?
 
     self.start_container!
+    self.start_process!
     self.start_rcon!
-
-    self.unpause
 
     Timeout.timeout(60) do
       sleep SLEEP_TIME while self.unavailable?
@@ -182,13 +278,12 @@ class Server
   end
 
   def stop!
-    # return if self.unavailable?
+    return if self.unavailable?
 
-    self.pause
-
-    ThreadPool.wait_on_server_threads(self.name)
+    # ThreadPool.wait_on_server_threads(self.name)
 
     self.stop_rcon!
+    self.stop_process!
     self.stop_container!
 
     Timeout.timeout(60) do
@@ -252,58 +347,155 @@ class Server
 
 ################################################################################
 
+  def threads
+    if parent? && child_alive?
+      method_proxy(:threads)
+    elsif child?
+      Thread.list.collect do |t|
+        OpenStruct.new(
+          pid: Process.pid,
+          object_id: t.object_id,
+          name: t.name,
+          status: t.status,
+          priority: t.priority,
+          started_at: t[:started_at] || Time.now.to_i
+        )
+      end
+    else
+      []
+    end
+  end
+
+  def parent?
+    Process.pid == @parent_pid
+  end
+
+  def child?
+    !parent?
+  end
+
   def start_rcon!
-    @rcon.startup!
+    if parent? && child_alive?
+      method_proxy(:start_rcon!)
+      # send_to_child(:start_rcon)
+    elsif child?
+      @rcon.startup!
+    end
+
+    true
   end
 
   def stop_rcon!
-    @rcon.shutdown!
-    self.rtt = nil
+    if parent? && child_alive?
+      method_proxy(:stop_rcon!)
+      self.rtt = nil
+    elsif child?
+      @rcon.shutdown!
+    end
+    # @rcon.shutdown!
+    # self.rtt = nil
+
+    true
   end
 
 ################################################################################
 
   def connected?
-    @rcon.connected?
+    if parent? && child_alive?
+      method_proxy(:connected?)
+    elsif child?
+      @rcon.connected?
+    else
+      false
+    end
   end
 
   def disconnected?
-    @rcon.disconnected?
+    if parent? && child_alive?
+      method_proxy(:disconnected?)
+    elsif child?
+      @rcon.disconnected?
+    else
+      true
+    end
   end
 
 ################################################################################
 
   def authenticated?
-    @rcon.authenticated?
+    if parent? && child_alive?
+      method_proxy(:authenticated?)
+    elsif child?
+      @rcon.authenticated?
+    else
+      false
+    end
   end
 
   def unauthenticated?
-    @rcon.unauthenticated?
+    if parent? && child_alive?
+      method_proxy(:unauthenticated?)
+    elsif child?
+      @rcon.unauthenticated?
+    else
+      true
+    end
   end
 
 ################################################################################
 
   def available?
-    !self.paused? && @rcon.available?
+    # !self.paused? && @rcon.available?
+    if parent? && child_alive?
+      method_proxy(:available?)
+    elsif child?
+      @rcon.available?
+    else
+      false
+    end
   end
 
   def unavailable?
-    self.paused? || @rcon.unavailable?
+    # self.paused? || @rcon.unavailable?
+    if parent? && child_alive?
+      method_proxy(:unavailable?)
+    elsif child?
+      @rcon.unavailable?
+    else
+      true
+    end
   end
 
 ################################################################################
 
-  def rcon_command_nonblock(command, callback, data=nil)
-    return if unavailable?
-    data = self if data.nil?
-    @rcon.enqueue_packet(command, callback, data)
+  # Displays RCON response packets for debugging or other uses (i.e. when we do not care about the response)
+  def rcon_print(host, packet_fields, data)
+    # $logger.debug { "RCON Received Packet: #{packet_fields.inspect}" }
   end
 
-  def rcon_command(command)
-    return if unavailable?
-    packet_fields = @rcon.enqueue_packet(command)
-    response = @rcon.find_response(packet_fields.id)
-    response.payload.strip
+
+  def rcon_command_nonblock(command:, callback: nil, data: nil, what: nil)
+    if parent? && child_alive?
+      method_proxy(:rcon_command_nonblock, command: command, callback: callback, data: data, what: what)
+    elsif child?
+      return if unavailable?
+      callback ||= method(:rcon_print)
+      data ||= self
+      @rcon.enqueue_packet(command, callback, data, what)
+
+      true
+    end
+  end
+
+  def rcon_command(command:, data: nil, what: nil)
+    if parent? && child_alive?
+      method_proxy(:rcon_command, command: command, data: data, what: what)
+    elsif child?
+      return if unavailable?
+      packet_fields = @rcon.enqueue_packet(command, nil, data, what)
+      response = @rcon.find_response(packet_fields.id)
+      response.payload.strip
+    end
   end
 
 ################################################################################

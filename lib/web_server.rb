@@ -71,7 +71,20 @@ class WebServer < Sinatra::Application
 
   get "/threads" do
     @threads = Thread.list.dup.delete_if { |t| t.nil? || t.name.nil? }
-    @threads = @threads.sort_by { |t| t.name }
+    @threads.collect! do |t|
+      OpenStruct.new(
+        pid: Process.pid,
+        object_id: t.object_id,
+        name: t.name,
+        status: t.status,
+        priority: t.priority,
+        started_at: t[:started_at] || Time.now.to_i
+      )
+    end
+    Servers.all.each do |s|
+      @threads += s.threads
+    end
+    @threads = @threads.sort_by { |t| [t.pid, t.name].join }
     haml :threads
   end
 

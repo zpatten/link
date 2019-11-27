@@ -4,11 +4,9 @@ class Logistics
 
 ################################################################################
 
-  def initialize(item_requests)
+  def initialize(server, item_requests)
     @item_requests = item_requests
-    calculate_item_totals
-    calculate_item_ratios
-    calculate_fulfillment_items
+    @server        = server
   end
 
 ################################################################################
@@ -30,10 +28,11 @@ class Logistics
     @item_totals.each do |item_name, item_count|
       # puts "#{item_name.inspect}=#{item_count.inspect}"
       # item_ratio = Storage[item_name].to_f / item_count.to_f
-      item_ratio = if Storage[item_name] >= item_count
+      storage_count = @server.method_proxy(:Storage, :[], item_name)
+      item_ratio = if storage_count >= item_count
         1.0
-      elsif Storage[item_name] > 0
-        Storage[item_name].to_f / item_count.to_f
+      elsif storage_count > 0
+        storage_count.to_f / item_count.to_f
       else
         0.0
       end
@@ -50,6 +49,10 @@ class Logistics
     @item_ratios.all? { |item_name, item_ratio| item_ratio >= 1.0 }
   end
 
+  def can_fulfill_item?(item_name)
+    @item_ratios[item_name] >= 1.0
+  end
+
   def count_to_fulfill(item_name, item_count)
     if @item_ratios[item_name] >= 1.0
       item_count
@@ -61,19 +64,22 @@ class Logistics
   end
 
   def acquire_item(item_name, item_count)
-    Storage.remove(item_name, item_count)
+    @server.method_proxy(:Storage, :remove, item_name, item_count)
+    # Storage.remove(item_name, item_count)
   end
 
   def calculate_fulfillment_items
     @items_to_fulfill = Hash.new
     if can_fulfill_all?
       @items_to_fulfill = @item_requests
-      Storage.bulk_remove(@item_totals)
+      # Storage.bulk_remove(@item_totals)
+      @server.method_proxy(:Storage, :bulk_remove, @item_totals)
     else
       @item_requests.each do |unit_number, items|
         items.each do |item_name, item_count|
           if (fulfill_count = count_to_fulfill(item_name, item_count)) > 0
-            if (actual_count = Storage.remove(item_name, fulfill_count)) > 0
+            if (actual_count = @server.method_proxy(:Storage, :remove, item_name, fulfill_count)) > 0
+              # Storage.remove(item_name, fulfill_count)) > 0
               @items_to_fulfill[unit_number] ||= Hash.new
               @items_to_fulfill[unit_number][item_name] = actual_count
             end
@@ -81,7 +87,6 @@ class Logistics
         end
       end
     end
-    Storage.save
 
     true
   end
@@ -89,10 +94,18 @@ class Logistics
 ################################################################################
 
   def fulfill(&block)
-    $logger.debug(:logistics) { "Fulfillments: #{@items_to_fulfill.ai}" }
-    block.call(@items_to_fulfill)
+    calculate_item_totals
+    calculate_item_ratios
+    calculate_fulfillment_items
 
-    true
+    if block_given?
+      $logger.debug(:logistics) { "Fulfillments: #{@items_to_fulfill.ai}" }
+      block.call(@items_to_fulfill)
+
+      true
+    else
+      @items_to_fulfill
+    end
   end
 
 ################################################################################
