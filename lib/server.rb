@@ -288,7 +288,7 @@ class Server
     self.start_rcon!
 
     Timeout.timeout(60) do
-      sleep SLEEP_TIME while self.unavailable?
+      sleep 1 while self.unavailable?
     end
   end
 
@@ -302,7 +302,7 @@ class Server
     self.stop_container!
 
     Timeout.timeout(60) do
-      sleep SLEEP_TIME while self.available?
+      sleep 1 while self.available?
     end
   end
 

@@ -38,14 +38,14 @@ class ThreadPool
       thread
     end
 
-    def register(what, parallel: false, task: false, **options, &block)
+    def register(what, task: false, server: nil, **options, &block)
       schedule = OpenStruct.new(
         block: block,
         frequency: Config.master_value(:scheduler, what),
         next_run_at: Time.now.to_f,
         options: options,
-        parallel: parallel,
         task: task,
+        server: server,
         what: what
       )
       @@thread_schedules << schedule
@@ -55,20 +55,29 @@ class ThreadPool
     end
 
     def thread_instrumentation(thread_name, &block)
-      if Metrics[:thread_execution] && Metrics[:thread_timing]
-        elapsed_time = Benchmark.realtime(&block)
-        Metrics[:thread_execution].observe(elapsed_time, labels: { name: thread_name })
-        Metrics[:thread_timing].set(elapsed_time, labels: { name: thread_name })
-      else
-        block.call
-      end
+      elapsed_time = Benchmark.realtime(&block)
+      Metrics[:thread_timing].set(elapsed_time, labels: { name: thread_name })
+
+      # if Metrics[:thread_execution] && Metrics[:thread_timing]
+      #   elapsed_time = Benchmark.realtime(&block)
+      #   Metrics[:thread_execution].observe(elapsed_time, labels: { name: thread_name })
+      #   Metrics[:thread_timing].set(elapsed_time, labels: { name: thread_name })
+      # else
+      #   block.call
+      # end
+
+      true
     end
 
-    def run_thread(schedule, *args)
-      thread_name = [
-        server_names(*args),
-        schedule.what.to_s
-      ].compact.join(":")
+    def run_thread(schedule, server)
+      thread_name = Array.new
+      thread_name << if server.nil?
+        Thread.current.name
+      else
+        server.name
+      end
+      thread_name << schedule.what.to_s
+      thread_name = thread_name.compact.join(':')
 
       return false if @@thread_group.list.map(&:name).compact.include?(thread_name)
 
@@ -84,10 +93,11 @@ class ThreadPool
           Thread.current[:started_at] = Time.now.to_f
 
           schedule_log(:thread, :starting, schedule, Thread.current)
-          schedule.block.call(*args)
+          schedule.block.call #(server)
           schedule_log(:thread, :stopping, schedule, Thread.current)
-          Thread.exit
         end
+
+        Thread.exit
       end
       @@thread_group.add(thread)
 
@@ -98,9 +108,11 @@ class ThreadPool
       parallel = schedule.parallel
       what     = schedule.what
       task     = schedule.task
-      server   = schedule.options[:server]
+      server   = schedule.server
 
-      return if !task && (server.nil? || server.unavailable?)
+      # return if !server.nil? && server.unavailable?
+      # return if !task && (server.nil? || server.unavailable?)
+      # return if !task && (server.nil? || server.unavailable?)
 
       run_thread(schedule, server)
 
@@ -118,8 +130,8 @@ class ThreadPool
     end
 
     def schedule_server(what, **options, &block)
-      $logger.info(:scheduler) { "Scheduling servers #{what.to_s.inspect}" }
-      register(what, priority: 0, **options, &block)
+      $logger.info(:scheduler) { "Scheduling server #{what.to_s.inspect}" }
+      register(what, **options, &block)
     end
 
     def server_names(*args)
@@ -139,14 +151,14 @@ class ThreadPool
         what = schedule.what.to_s.downcase
         next_run_at = schedule.next_run_at
         frequency = schedule.frequency
-        parallel = schedule.parallel
+        # parallel = schedule.parallel
         block = schedule.block
 
         log_fields = [
-          (thread.nil? ? nil : "thread_id:#{thread.object_id}"),
+          # (thread.nil? ? nil : "thread:#{thread.name}"),
           "next_run_at:#{next_run_at}",
           "frequency:#{frequency}",
-          "parallel:#{parallel}",
+          # "parallel:#{parallel}",
           "block:#{block}"
         ].compact.join(", ")
 
@@ -197,7 +209,7 @@ class ThreadPool
       #   shutdown!
       # end
 
-      if Process.pid == MASTER_PID
+      if master?
         $logger.info { "In main process #{Process.pid}" }
 
         thread = ThreadPool.thread("sinatra") do
@@ -223,7 +235,9 @@ class ThreadPool
 
       loop do
         @@thread_group.list.each do |thread|
-          thread.exit if thread[:expires_at] <= Time.now.to_f
+          unless thread[:expires_at].nil? || Time.now.to_f < thread[:expires_at]
+            thread.exit
+          end
         end
 
         next_run_at = []
