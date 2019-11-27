@@ -2,7 +2,7 @@ require 'prometheus/client'
 require 'prometheus/client/push'
 require 'prometheus/client/data_stores/direct_file_store'
 
-METRIC_PATH = File.expand_path(File.join(Dir.pwd, 'metrics'))
+METRIC_PATH = File.expand_path(File.join(LINK_ROOT, 'metrics'))
 begin
   FileUtils.rm_r(METRIC_PATH)
 rescue Errno::ENOENT

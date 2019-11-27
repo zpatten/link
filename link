@@ -22,16 +22,11 @@ require 'concurrent'
 
 ################################################################################
 
-SLEEP_TIME = 0.001
-# SLEEP_TIME = 0.01
-LINK_ROOT = Dir.pwd
+GIGAJOULE  = 10 ** 9
 INT_32_MAX = (2**32).div(2) - 1
-GIGAJOULE = 10 ** 9
+LINK_ROOT  = Dir.pwd
 MASTER_PID = Process.pid
-
-# STDOUT.sync = true
-# Thread.abort_on_exception = true
-
+SLEEP_TIME = 0.001
 
 ################################################################################
 
@@ -43,16 +38,8 @@ require_relative 'lib/support'
 require_relative 'lib/tasks'
 require_relative 'lib/web_server'
 
-
-# $logger.level = Logger::INFO
-
-################################################################################
-
 ################################################################################
 
 require_relative 'lib/options'
-
-################################################################################
-
 
 ################################################################################

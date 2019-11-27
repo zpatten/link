@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-# require 'sinatra/custom_logger'
 require 'sinatra'
-# require 'sinatra-contrib'
 require 'sinatra-websocket'
 require 'sinatra/json'
 require 'sinatra/respond_with'
