@@ -4,9 +4,9 @@ class Signals
   module Receive
 
     def update_signal(network_id, unit_number, signal)
-      circuit_network_synchronize(network_id) do
-        signal_networks[network_id] ||= Hash.new
-        signal_networks[network_id][unit_number] ||= Array.new
+      # circuit_network_synchronize(network_id) do
+        signal_networks[network_id] ||= Concurrent::Hash.new
+        signal_networks[network_id][unit_number] ||= Concurrent::Array.new
 
         unit_signals = signal_networks[network_id][unit_number]
 
@@ -29,7 +29,7 @@ class Signals
             $logger.debug(:signals_rx) { "Update Signal[#{network_id}]: #{name} (#{previous_count} -> #{current_count})" }
           end
         end
-      end
+      # end
 
       true
     end
@@ -44,7 +44,7 @@ class Signals
       true
     end
 
-    def rx(signal_lists, server=nil)
+    def rx(signal_lists, source_id: nil)
       signal_lists.each do |unit_number, networks|
         networks.each do |network_id, signals|
           network_id = scrub_network_id(network_id)
@@ -55,7 +55,7 @@ class Signals
             signal_data = {
               "link-signal-epoch" => nil,
               "link-signal-network-id" => network_id,
-              "link-signal-source-id" => server.network_id
+              "link-signal-source-id" => source_id
             }
             signals = scrub_signals(signals, signal_data)
           end

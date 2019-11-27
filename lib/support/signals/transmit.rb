@@ -30,24 +30,24 @@ class Signals
         $logger.debug(:signals_tx) { "Calculated #{signals.count} signals for network-id #{network_id}." }
 
       else
-        $logger.warn(:signals_tx) { "No signals exist for network-id #{pp_inline(network_id)}!" }
+        $logger.warn(:signals_tx) { "No signals exist for network-id #{network_id.ai}!" }
       end
 
       signals
     end
 
-    def tx(network_id=0, server=nil, force=false)
+    def tx(network_id=0, source_id: nil, force: false)
       network_id = scrub_network_id(network_id)
       if network_id == :inventory
         Signals.update_inventory_signals
       end
 
-      $logger.debug(:signals_tx) { "Processing Circuit Network ID: #{pp_inline(network_id)}" }
+      $logger.debug(:signals_tx) { "Processing Circuit Network ID: #{network_id.ai}" }
 
       current_signals = calculate_signals(network_id)
 
       unless (network_id == :inventory)
-        local_id = (server.nil? ? nil : server.network_id)
+        local_id = (source_id.nil? ? nil : source_id)
         signal_data = {
           "link-signal-epoch" => Time.now.to_i,
           "link-signal-local-id" => local_id,
@@ -59,8 +59,7 @@ class Signals
       # index the signals
       current_signals = index_signals(current_signals)
 
-      server_name = (server.nil? ? nil : server.name)
-      cache_key = [ "signals-tx-previous", server_name, network_id ].compact.join("-")
+      cache_key = [ "signals-tx-previous", source_id, network_id ].compact.join("-")
       previous_signals = MemoryCache.read(cache_key)
       network_signals = Array.new
       if !!previous_signals && !force

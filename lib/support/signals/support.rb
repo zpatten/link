@@ -3,11 +3,11 @@
 class Signals
   module Support
 
-    def circuit_network_synchronize(network_id, &block)
-      @@circuit_network_mutex ||= Hash.new
-      @@circuit_network_mutex[network_id] ||= Mutex.new
-      @@circuit_network_mutex[network_id].synchronize(&block)
-    end
+    # def circuit_network_synchronize(network_id, &block)
+    #   @@circuit_network_mutex ||= Hash.new
+    #   @@circuit_network_mutex[network_id] ||= Mutex.new
+    #   @@circuit_network_mutex[network_id].synchronize(&block)
+    # end
 
     def signal_networks
       @@signal_networks ||= Hash.new
@@ -117,7 +117,7 @@ class Signals
       cache_key = "rcon-item-type-#{item_name}"
       item_type = MemoryCache.fetch(cache_key) do
         command = %(/#{rcon_executor} remote.call('link', 'lookup_item_type', '#{item_name}'))
-        Servers.random.rcon_command(command: command)
+        Servers.random.rcon_command(command: command).chomp
       end
     end
 
@@ -139,10 +139,10 @@ class Signals
         signals << build_signal(item_name, item_count, item_type)
       end
 
-      circuit_network_synchronize(:inventory) do
-        signal_networks[:inventory] ||= Hash.new
+      # circuit_network_synchronize(:inventory) do
+        signal_networks[:inventory] ||= Concurrent::Hash.new
         signal_networks[:inventory][0] = deep_clone(signals)
-      end
+      # end
 
       signals
     end
@@ -157,24 +157,27 @@ class Signals
     end
 
     def clone(network_id)
-      circuit_network_synchronize(network_id) do
+      # circuit_network_synchronize(network_id) do
         deep_clone(signal_networks[network_id])
-      end
+      # end
     end
 
-    def clone_all
-      networks = Hash.new
-      get_network_ids.each do |nid|
-        networks.merge!(circuit_network_synchronize(nid) do
-          signals = deep_clone(signal_networks[nid])
-          if signals.nil? || signals.empty?
-            {}
-          else
-            { nid => signals }
-          end
-        end)
-      end
-    end
+    # def clone_all
+    #   networks = Hash.new
+    #   get_network_ids.each do |nid|
+    #     # circuit_network_synchronize(nid) do
+    #     network_signals = begin
+    #       signals = deep_clone(signal_networks[nid])
+    #       if signals.nil? || signals.empty?
+    #         {}
+    #       else
+    #         { nid => signals }
+    #       end
+    #     end
+    #     # end)
+    #     networks.merge!(network_signals)
+    #   end
+    # end
 
   end
 end

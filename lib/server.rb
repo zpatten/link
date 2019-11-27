@@ -31,39 +31,36 @@ class Server
   attr_reader :rcon
   attr_reader :research
   attr_reader :child_pid
+  attr_reader :id
+  attr_reader :source_id
 
   RECV_MAX_LEN = 64 * 1024
 
 ################################################################################
 
   def initialize(name, details)
-    @name              = name
-    @details           = details
-    @active            = details['active']
-    @chats             = details['chats']
-    @client_password   = details['client_password']
-    @client_port       = details['client_port']
-    @command_whitelist = details['command_whitelist']
-    @commands          = details['commands']
-    @factorio_port     = details['factorio_port']
-    @host              = details['host']
-    @research          = details['research']
+    @name                = name
+    @id                  = Zlib::crc32(@name.to_s)
+    @source_id           = [@id].pack("L").unpack("l").first
 
-    @method_proxy_mutex = Mutex.new
+    @details             = details
+    @active              = details['active']
+    @chats               = details['chats']
+    @client_password     = details['client_password']
+    @client_port         = details['client_port']
+    @command_whitelist   = details['command_whitelist']
+    @commands            = details['commands']
+    @factorio_port       = details['factorio_port']
+    @host                = details['host']
+    @research            = details['research']
+
+    @method_proxy_mutex  = Mutex.new
     @method_rproxy_mutex = Mutex.new
 
-    @parent_pid = Process.pid
+    @parent_pid          = Process.pid
   end
 
 ################################################################################
-
-  def id
-    Zlib::crc32(@name.to_s)
-  end
-
-  def network_id
-    [self.id].pack("L").unpack("l").first
-  end
 
   def update_websocket
     ::WebServer.settings.server_sockets.each do |s|
@@ -214,8 +211,10 @@ class Server
         Thread.list.each do |thread|
           thread.exit unless thread == Thread.main
         end
+
         @method_proxy_child.close
         @method_rproxy_child.close
+
         $0 = "Link Server: #{self.name}"
         Thread.current.name = self.name
 
@@ -227,6 +226,7 @@ class Server
         schedule_requests
         schedule_research
         schedule_research_current
+        schedule_signals
 
         ThreadPool.thread("#{self.name}-method-proxy-child") do
           loop do
@@ -250,7 +250,6 @@ class Server
           else
             self.send(*method_args)
           end
-          # result = self.send(*method_args)
           data = Marshal.dump(result)
           @method_rproxy_child.send(data, 0)
         end

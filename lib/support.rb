@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
-require_relative "support/config"
-require_relative "support/logistics"
-require_relative "support/memory_cache"
-require_relative "support/metrics"
-require_relative "support/requests"
-require_relative "support/storage"
-require_relative "support/thread_pool"
+require_relative 'support/config'
+require_relative 'support/logger'
+require_relative 'support/logistics'
+require_relative 'support/memory_cache'
+require_relative 'support/metrics'
+require_relative 'support/requests'
+require_relative 'support/signals'
+require_relative 'support/storage'
+require_relative 'support/thread_pool'
 
 def master?
   Process.pid == MASTER_PID
@@ -67,10 +69,6 @@ class Object
   end
 end
 
-def pp_inline(object)
-  object.ai
-end
-
 def filesize(size)
   units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'Pib', 'EiB']
 
@@ -93,11 +91,6 @@ def countsize(size)
   "%.#{decimal[exp]}f %s" % [size.to_f / 1000 ** exp, units[exp]]
 end
 
-# Displays RCON response packets for debugging or other uses (i.e. when we do not care about the response)
-# def rcon_print(host, packet_fields, data)
-#   # $logger.debug { "RCON Received Packet: #{packet_fields.inspect}" }
-# end
-
 def deep_clone(object)
   Marshal.load(Marshal.dump(object))
 end
@@ -114,12 +107,12 @@ end
 # RCON Executor
 # Switch between using 'c' or 'silent-command' depending on the debug flag.
 def rcon_executor
-  # (debug? ? "c" : "silent-command")
-  "silent-command"
+  # (debug? ? 'c' : 'silent-command')
+  'silent-command'
 end
 
 def debug?
-  !!ENV["DEBUG"]
+  !!ENV['DEBUG']
 end
 
 def trap_signals

@@ -30,8 +30,6 @@ SLEEP_TIME = 0.001
 
 ################################################################################
 
-require_relative "lib/support/logger"
-
 require_relative 'lib/server'
 require_relative 'lib/servers'
 require_relative 'lib/support'

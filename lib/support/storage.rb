@@ -87,7 +87,7 @@ class Storage
     end
 
     def clone
-      storage.nil? and load
+      # storage.nil? and load
 
       # storage_clone = nil
       # @@storage_mutex.synchronize do

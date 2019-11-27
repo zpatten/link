@@ -6,7 +6,7 @@ class ThreadPool
 
     @@thread_group ||= ThreadGroup.new
     # @@thread_group_2 ||= ThreadGroup.new
-    @@thread_schedules ||= Array.new #ThreadSafeArray.new
+    @@thread_schedules ||= Concurrent::Array.new #ThreadSafeArray.new
 
     def thread_group
       @@thread_group
