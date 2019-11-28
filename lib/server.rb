@@ -196,6 +196,7 @@ class Server
 
         $0 = "Link Server: #{self.name}"
         Thread.current.name = self.name
+        Thread.current[:started_at] = Time.now.to_f
 
         @rcon = RCon.new(@name, @host, @client_port, @client_password)
 
@@ -308,7 +309,6 @@ class Server
   def threads
     if parent? && child_alive?
       self.method_proxy.threads
-      # method_proxy(:threads)
     elsif child?
       Thread.list.collect do |t|
         OpenStruct.new(
@@ -330,15 +330,12 @@ class Server
   end
 
   def child?
-    #(Process.pid == @child_pid)
     !parent?
   end
 
   def start_rcon!
     if parent? && child_alive?
       self.method_proxy.start_rcon!
-      # method_proxy(:start_rcon!)
-      # send_to_child(:start_rcon)
     elsif child?
       self.rcon.startup!
     end
@@ -349,13 +346,10 @@ class Server
   def stop_rcon!
     if parent? && child_alive?
       self.method_proxy.stop_rcon!
-      # method_proxy(:stop_rcon!)
       self.rtt = nil
     elsif child?
       self.rcon.shutdown!
     end
-    # @rcon.shutdown!
-    # self.rtt = nil
 
     true
   end
@@ -365,7 +359,6 @@ class Server
   def connected?
     if parent? && child_alive?
       self.method_proxy.connected?
-      # method_proxy(:connected?)
     elsif child?
       self.rcon.connected?
     else
@@ -376,7 +369,6 @@ class Server
   def disconnected?
     if parent? && child_alive?
       self.method_proxy.disconnected?
-      # method_proxy(:disconnected?)
     elsif child?
       self.rcon.disconnected?
     else
@@ -389,7 +381,6 @@ class Server
   def authenticated?
     if parent? && child_alive?
       self.method_proxy.authenticated?
-      # method_proxy(:authenticated?)
     elsif child?
       self.rcon.authenticated?
     else
@@ -400,7 +391,6 @@ class Server
   def unauthenticated?
     if parent? && child_alive?
       self.method_proxy.unauthenticated?
-      # method_proxy(:unauthenticated?)
     elsif child?
       self.rcon.unauthenticated?
     else
@@ -411,10 +401,8 @@ class Server
 ################################################################################
 
   def available?
-    # !self.paused? && @rcon.available?
     if parent? && child_alive?
       self.method_proxy.available?
-      # method_proxy(:available?)
     elsif child?
       self.rcon.available?
     else
@@ -423,10 +411,8 @@ class Server
   end
 
   def unavailable?
-    # self.paused? || @rcon.unavailable?
     if parent? && child_alive?
       self.method_proxy.unavailable?
-      # method_proxy(:unavailable?)
     elsif child?
       self.rcon.unavailable?
     else
@@ -436,22 +422,12 @@ class Server
 
 ################################################################################
 
-  # Displays RCON response packets for debugging or other uses (i.e. when we do not care about the response)
-  def rcon_print(host, packet_fields, data)
-    # $logger.debug { "RCON Received Packet: #{packet_fields.inspect}" }
-  end
-
-
   def rcon_command_nonblock(command:)
     if parent? && child_alive?
       self.method_proxy.rcon_command_nonblock(command: command)
-      # method_proxy(:rcon_command_nonblock, command: command)
     elsif child?
       return if unavailable?
       self.rcon.command_nonblock(command: command)
-      # callback ||= method(:rcon_print)
-      # data ||= self
-      # @rcon.enqueue_packet(command)
 
       true
     end
@@ -460,21 +436,9 @@ class Server
   def rcon_command(command:)
     if parent? && child_alive?
       self.method_proxy.rcon_command(command: command)
-          # method_proxy(:rcon_command, command: command)
-
-      # begin
-      #   Timeout.timeout(TIMEOUT_THREAD.div(2)) do
-      #   end
-      # rescue Timeout::Error
-      #   self.stop_process!
-      #   nil
-      # end
     elsif child?
       return if unavailable?
       self.rcon.command(command: command)
-      # packet_fields = @rcon.enqueue_packet(command)
-      # response = @rcon.find_response(packet_fields.id)
-      # response.payload.strip
     end
   end
 

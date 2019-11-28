@@ -137,14 +137,14 @@ class MethodProxy
   def method_missing(*args)
     if parent?
       exception_wrapper do
-    id = send_request(*args)
-    $logger.debug(:mproxy) { "[#{@name}] method_missing(#{id}): #{args.ai}" }
-    recv_response(id)
+        id = send_request(*args)
+        $logger.debug(:mproxy) { "[#{@name}] method_missing(#{id}): #{args.ai}" }
+        recv_response(id)
       end
     else
-    id = send_request(*args)
-    $logger.debug(:mproxy) { "[#{@name}] method_missing(#{id}): #{args.ai}" }
-    recv_response(id)
+      id = send_request(*args)
+      $logger.debug(:mproxy) { "[#{@name}] method_missing(#{id}): #{args.ai}" }
+      recv_response(id)
     end
   end
 
