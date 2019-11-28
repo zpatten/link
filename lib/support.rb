@@ -100,15 +100,8 @@ def rcon_redirect(host, packet_fields, (player_index, command, origin_host))
   origin = Servers.find_by_name(origin_host)
   payload = packet_fields.payload.strip
   message = %(#{host}#{command}: #{payload})
-  command = %(/#{rcon_executor} game.players[#{player_index}].print(#{message.dump}, {r = 1, g = 1, b = 1}))
+  command = %(game.players[#{player_index}].print(#{message.dump}, {r = 1, g = 1, b = 1}))
   origin.rcon_command_nonblock(command, method(:rcon_print))
-end
-
-# RCON Executor
-# Switch between using 'c' or 'silent-command' depending on the debug flag.
-def rcon_executor
-  # (debug? ? 'c' : 'silent-command')
-  'silent-command'
 end
 
 def debug?

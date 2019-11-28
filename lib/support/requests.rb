@@ -201,7 +201,7 @@ class Requests
       $logger.debug(:logistics) { "Requests: #{self.unfulfilled.ai}" }
       self.fulfill do |host, fulfillments|
         server = Servers.find_by_name(host)
-        command = %(/#{rcon_executor} remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
+        command = %(remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
         server.rcon_command_nonblock(command, method(:rcon_print))
       end
       self.reset

@@ -6,13 +6,13 @@ class Server
     def schedule_ping
       ThreadPool.schedule_server(:ping, server: self) do |server|
         # Calculate round-trip time to RCON
-        command = %(/#{rcon_executor} remote.call('link', 'ping'))
+        command = %(remote.call('link', 'ping'))
         started_at = Time.now.to_f
         self.rcon_command(command: command)
         response_time = (Time.now.to_f - started_at)
 
         # Update Factorio Server with our current RTT
-        command = %(/#{rcon_executor} remote.call('link', 'rtt', '#{response_time}'))
+        command = %(remote.call('link', 'rtt', '#{response_time}'))
         self.rcon_command(command: command)
 
         # Update Link Server with our current RTT

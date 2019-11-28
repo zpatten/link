@@ -26,7 +26,7 @@ end
 ################################################################################
 def schedule_server_commands
   ThreadPool.schedule_servers(:commands) do |server|
-    command = %(/#{rcon_executor} remote.call('link', 'get_commands'))
+    command = %(remote.call('link', 'get_commands'))
     server.rcon_command_nonblock(command, method(:get_commands))
   end
 end
@@ -36,7 +36,7 @@ end
 def schedule_server_command_whitelist
   ThreadPool.schedule_servers(:command_whitelist) do |server|
     command_whitelist = Config.server_value(server.name, :command_whitelist)
-    command = %(/#{rcon_executor} remote.call('link', 'set_command_whitelist', '#{command_whitelist.to_json}'))
+    command = %(remote.call('link', 'set_command_whitelist', '#{command_whitelist.to_json}'))
     server.rcon_command_nonblock(command, method(:rcon_print))
   end
 end

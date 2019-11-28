@@ -9,7 +9,7 @@ def get_chats(host, packet_fields, data)
       (Servers.find(:chats) - [origin_server]).each do |server|
         chat_events.each do |chat_event|
           message = %(#{chat_event["player_name"]}@#{host}: #{chat_event["message"]})
-          command = %(/#{rcon_executor} game.print('#{message}', {r = 1, g = 0, b = 1, a = 0.5}))
+          command = %(game.print('#{message}', {r = 1, g = 0, b = 1, a = 0.5}))
           server.rcon_command_nonblock(command, method(:rcon_print))
         end
       end
@@ -21,7 +21,7 @@ end
 ################################################################################
 def schedule_server_chats
   ThreadPool.schedule_servers(:chats) do |server|
-    command = %(/#{rcon_executor} remote.call('link', 'get_chats'))
+    command = %(remote.call('link', 'get_chats'))
     server.rcon_command_nonblock(command, method(:get_chats))
   end
 end

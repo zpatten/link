@@ -22,7 +22,7 @@
 # def schedule_server_logistics
 #   ThreadPool.schedule_servers(:logistics, parallel: false) do |servers|
 
-#     command = %(/#{rcon_executor} remote.call('link', 'get_requests'))
+#     command = %(remote.call('link', 'get_requests'))
 #     servers.each do |server|
 #       payload = server.rcon_command(command) #, method(:get_requests))
 #       unless payload.nil? || payload.empty?
@@ -36,7 +36,7 @@
 
 #     Requests.process
 
-#     command = %(/#{rcon_executor} remote.call('link', 'get_providables'))
+#     command = %(remote.call('link', 'get_providables'))
 #     servers.each do |server|
 #       server.rcon_command_nonblock(command, method(:get_providables))
 #       # payload = server.rcon_command(command) #, method(:get_providables))
@@ -58,7 +58,7 @@
 # def schedule_server_logistics
 #   ThreadPool.schedule_servers(:logistics) do |server|
 
-#     command = %(/#{rcon_executor} remote.call('link', 'get_requests'))
+#     command = %(remote.call('link', 'get_requests'))
 #     payload = server.rcon_command(command)
 #     unless payload.nil? || payload.empty?
 #       requests = JSON.parse(payload)
@@ -66,13 +66,13 @@
 #         $logger.debug(:logistics) { "[#{server.name}] requests: #{requests.ai}" }
 #         logistics = Logistics.new(requests)
 #         logistics.fulfill do |fulfillments|
-#           command = %(/#{rcon_executor} remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
+#           command = %(remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
 #           server.rcon_command(command)
 #         end
 #       end
 #     end
 
-#     command = %(/#{rcon_executor} remote.call('link', 'get_providables'))
+#     command = %(remote.call('link', 'get_providables'))
 #     # server.rcon_command_nonblock(command, method(:get_providables))
 #     payload = server.rcon_command(command)
 #     unless payload.nil? || payload.empty?
@@ -94,7 +94,7 @@
 def schedule_server_requests
   ThreadPool.schedule_servers(:requests) do |server|
 
-    command = %(/#{rcon_executor} remote.call('link', 'get_requests'))
+    command = %(remote.call('link', 'get_requests'))
     payload = server.rcon_command(command)
     unless payload.nil? || payload.empty?
       requests = JSON.parse(payload)
@@ -102,7 +102,7 @@ def schedule_server_requests
         $logger.debug(:logistics) { "[#{server.name}] requests: #{requests.ai}" }
         logistics = Logistics.new(requests)
         logistics.fulfill do |fulfillments|
-          command = %(/#{rcon_executor} remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
+          command = %(remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
           server.rcon_command(command)
         end
       end
@@ -114,7 +114,7 @@ end
 def schedule_server_providables
   ThreadPool.schedule_servers(:providables) do |server|
 
-    # command = %(/#{rcon_executor} remote.call('link', 'get_providables'))
+    # command = %(remote.call('link', 'get_providables'))
     # # server.rcon_command_nonblock(command, method(:get_providables))
     # payload = server.rcon_command(command)
     # unless payload.nil? || payload.empty?
@@ -138,7 +138,7 @@ end
 # def schedule_server_providables
 #   ThreadPool.schedule_servers(:providables) do |server|
 
-#     command = %(/#{rcon_executor} remote.call('link', 'get_providables'))
+#     command = %(remote.call('link', 'get_providables'))
 #     # server.rcon_command_nonblock(command, method(:get_providables))
 #     payload = server.rcon_command(command)
 #     unless payload.nil? || payload.empty?

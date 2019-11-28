@@ -55,12 +55,23 @@ class Server
 
 ################################################################################
 
+    # RCON Executor
+    # Switch between using 'c' or 'silent-command' depending on the debug flag.
+    def rcon_executor
+      # (debug? ? 'c' : 'silent-command')
+      'silent-command'
+    end
+
+    def build_command(command)
+      %(/#{rcon_executor} #{command})
+    end
+
     def command_nonblock(command:)
-      enqueue_packet(command)
+      enqueue_packet(build_command(command))
     end
 
     def command(command:)
-      packet_fields = enqueue_packet(command)
+      packet_fields = enqueue_packet(build_command(command))
       response = find_response(packet_fields.id)
       response.payload.strip
     end

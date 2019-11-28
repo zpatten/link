@@ -6,7 +6,7 @@ class Server
     def schedule_logistics
       ThreadPool.schedule_server(:logistics, server: self) do
 
-        command = %(/#{rcon_executor} remote.call('link', 'get_providables'))
+        command = %(remote.call('link', 'get_providables'))
         payload = self.rcon_command(command: command)
         unless payload.nil? || payload.empty?
           providables = JSON.parse(payload)
@@ -23,7 +23,7 @@ class Server
           end
         end
 
-        command = %(/#{rcon_executor} remote.call('link', 'get_requests'))
+        command = %(remote.call('link', 'get_requests'))
         payload = self.rcon_command(command: command)
         unless payload.nil? || payload.empty?
           requests = JSON.parse(payload)
@@ -31,7 +31,7 @@ class Server
             $logger.debug(:logistics) { "[#{self.name}] requests: #{requests.ai}" }
             logistics = ::Logistics.new(self, requests)
             fulfillments = logistics.fulfill
-            command = %(/#{rcon_executor} remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
+            command = %(remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
             self.rcon_command(command: command)
             $logger.debug(:logistics) { "[#{self.name}] fulfillments: #{fulfillments.ai}" }
           end

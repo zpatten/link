@@ -41,7 +41,7 @@ class Server
 
       if networks.count > 0
         # update rx signals with the signal networks
-        command = %(/#{rcon_executor} remote.call('link', 'set_receiver_combinator', #{force}, '#{networks.to_json}'))
+        command = %(remote.call('link', 'set_receiver_combinator', #{force}, '#{networks.to_json}'))
         self.rcon_command(command: command)
         @rx_signals_initalized = true
       end
@@ -50,7 +50,7 @@ class Server
     def schedule_signals
       ThreadPool.schedule_server(:signals, server: self) do
         force = !@tx_signals_initalized
-        command = %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', #{force}))
+        command = %(remote.call('link', 'get_transmitter_combinator', #{force}))
         payload = self.rcon_command(command: command)
         unless payload.nil? || payload.empty?
           unit_network_list = JSON.parse(payload)
@@ -59,7 +59,7 @@ class Server
           end
         end
 
-        command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
+        command = %(remote.call('link', 'get_receiver_combinator_network_ids'))
         payload = self.rcon_command(command: command)
         unless payload.nil? || payload.empty?
           network_ids = JSON.parse(payload)

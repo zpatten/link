@@ -36,7 +36,7 @@ def set_receiver_combinator(host, packet_fields, server)
 
       if networks.count > 0
         # update rx signals with the signal networks
-        command = %(/#{rcon_executor} remote.call('link', 'set_receiver_combinator', #{force}, '#{networks.to_json}'))
+        command = %(remote.call('link', 'set_receiver_combinator', #{force}, '#{networks.to_json}'))
         server.rcon_command_nonblock(command, method(:rcon_print))
         $rx_signals_initalized[server.name] = true
       end
@@ -70,11 +70,11 @@ end
 def schedule_server_signals
   ThreadPool.schedule_servers(:signals) do |server|
     force = !$tx_signals_initalized[server.name]
-    command = %(/#{rcon_executor} remote.call('link', 'get_transmitter_combinator', #{force}))
+    command = %(remote.call('link', 'get_transmitter_combinator', #{force}))
     server.rcon_command_nonblock(command, method(:get_transmitter_combinator))
     $tx_signals_initalized[server.name] = true
 
-    command = %(/#{rcon_executor} remote.call('link', 'get_receiver_combinator_network_ids'))
+    command = %(remote.call('link', 'get_receiver_combinator_network_ids'))
     server.rcon_command_nonblock(command, method(:set_receiver_combinator))
   end
 end

@@ -8,13 +8,13 @@ class Server
     def schedule_research_current
       if self.research
         ThreadPool.schedule_server(:research_current, server: self) do
-          command = %(/#{rcon_executor} remote.call('link', 'get_current_research'))
+          command = %(remote.call('link', 'get_current_research'))
           payload = self.rcon_command(command: command)
           unless payload.nil? || payload.empty?
             current_research = JSON.parse(payload)
             unless current_research.nil? || current_research.empty?
               $logger.debug(:research) { "[#{self.name}] current research: #{current_research.ai}" }
-              command = %(/#{rcon_executor} remote.call('link', 'set_current_research', '#{current_research.to_json}'))
+              command = %(remote.call('link', 'set_current_research', '#{current_research.to_json}'))
 
               self.method_proxy.Servers(
                 :rcon_command_nonblock,
@@ -30,13 +30,13 @@ class Server
     def schedule_research
       if self.research
         ThreadPool.schedule_server(:research, server: self) do
-          command = %(/#{rcon_executor} remote.call('link', 'get_research'))
+          command = %(remote.call('link', 'get_research'))
           payload = self.rcon_command(command: command)
           unless payload.nil? || payload.empty?
             research = JSON.parse(payload)
             unless research.nil? || research.empty?
               $logger.debug(:research) { "[#{self.name}] research: #{research.ai}" }
-              command = %(/#{rcon_executor} remote.call('link', 'set_research', '#{research.to_json}'))
+              command = %(remote.call('link', 'set_research', '#{research.to_json}'))
 
               self.method_proxy.Servers(
                 :rcon_command_nonblock,
