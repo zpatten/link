@@ -23,14 +23,14 @@ class ThreadPool
       schedule_log(:thread, :starting, name)
 
       thread = Thread.new do
+        # trap_signals
+
+        Thread.current.name         = name
+        Thread.current.priority     = options.fetch(:priority, 0)
         Thread.current[:started_at] = Time.now.to_f
 
-        trap_signals
         block.call
-        Thread.exit
       end
-      thread.name     = name
-      thread.priority = options.fetch(:priority, 0)
 
       Metrics[:thread_count].set(
         @@thread_group.list.count,
@@ -84,11 +84,11 @@ class ThreadPool
       return false if @@thread_group.list.map(&:name).compact.include?(thread_name)
 
       thread = Thread.new do
+        # trap_signals
         Thread.current.name = thread_name
         Thread.current.priority = schedule.options.fetch(:priority, 0)
 
         thread_instrumentation(thread_name) do
-          trap_signals
           expires_in                  = [(schedule.frequency * 2), 10.0].max
           expires_at                  = Time.now.to_f + TIMEOUT_THREAD
           Thread.current[:expires_at] = expires_at
@@ -98,8 +98,6 @@ class ThreadPool
           schedule.block.call #(server)
           schedule_log(:thread, :stopping, schedule, Thread.current)
         end
-
-        Thread.exit
       end
       @@thread_group.add(thread)
 
@@ -185,19 +183,6 @@ class ThreadPool
 
     def running?
       @@thread_group.list.size > 0
-    end
-
-    def wait_on_server_threads(server_name)
-      sleep 1
-      sleep SLEEP_TIME while server_thread_running?(server_name)
-    end
-
-    def server_thread_running?(server_name)
-      @@thread_group.list.each do |thread|
-        return true if thread.name =~ /server_name/i
-      end
-
-      false
     end
 
     def execute

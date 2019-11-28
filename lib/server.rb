@@ -193,8 +193,6 @@ class Server
   def stop!
     return if self.unavailable?
 
-    # ThreadPool.wait_on_server_threads(self.name)
-
     self.stop_rcon!
     self.stop_process!
     self.stop_container!
@@ -361,19 +359,17 @@ class Server
 
   def container_alive?
     key = [self.name, 'container-alive'].join('-')
-    result = MemoryCache.fetch(key, expires_in: 3) do
+    MemoryCache.fetch(key, expires_in: 10) do
       command = Array.new
       command << %(sudo)
       command << %(docker inspect)
       command << %(-f '{{.State.Running}}')
       command << self.name
       command = command.flatten.compact.join(' ')
-      %x(#{command}).strip == 'true'
+      result = (%x(#{command}).strip == 'true')
+      $logger.debug(:server) { "[#{self.name}] #{command.inspect} == #{result}" }
+      result
     end
-
-    $logger.info(:server) { "[#{self.name}] #{command.inspect} == #{result}" }
-
-    result
   end
 
   def container_dead?
