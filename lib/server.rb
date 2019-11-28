@@ -21,7 +21,6 @@ class Server
 
 ################################################################################
 
-  # attr_accessor :rtt
   attr_reader :client_password
   attr_reader :client_port
   attr_reader :details
@@ -71,6 +70,7 @@ class Server
         connected: connected?,
         authenticated: authenticated?,
         available: available?,
+        container: container_alive?,
         rtt: @rtt.nil? ? '-' : "#{@rtt} ms"
       }.to_json)
     end
@@ -181,12 +181,36 @@ class Server
     self.start!
   end
 
-  def child_alive?
-    !!Process.kill(0, @child_pid) rescue false
+  def start!
+    return if self.available?
+
+    self.start_container!
+    self.start_process!
+    self.start_rcon!
+
+    Timeout.timeout(60) do
+      sleep 1 while self.unavailable?
+    end
   end
 
+  def stop!
+    return if self.unavailable?
+
+    # ThreadPool.wait_on_server_threads(self.name)
+
+    self.stop_rcon!
+    self.stop_process!
+    self.stop_container!
+
+    Timeout.timeout(60) do
+      sleep 1 while self.available?
+    end
+  end
+
+################################################################################
+
   def start_process!
-    unless child_alive?
+    unless alive?
       @method_proxy = MethodProxy.new(self, Process.pid)
 
       @child_pid = Process.fork do
@@ -221,35 +245,9 @@ class Server
   end
 
   def stop_process!
-    if child_alive?
+    if alive?
       Process.kill('INT', @child_pid)
       self.method_proxy.stop
-    end
-  end
-
-  def start!
-    return if self.available?
-
-    self.start_container!
-    self.start_process!
-    self.start_rcon!
-
-    Timeout.timeout(60) do
-      sleep 1 while self.unavailable?
-    end
-  end
-
-  def stop!
-    return if self.unavailable?
-
-    # ThreadPool.wait_on_server_threads(self.name)
-
-    self.stop_rcon!
-    self.stop_process!
-    self.stop_container!
-
-    Timeout.timeout(60) do
-      sleep 1 while self.available?
     end
   end
 
@@ -306,8 +304,31 @@ class Server
 
 ################################################################################
 
+  def start_rcon!
+    if parent? && alive?
+      self.method_proxy.start_rcon!
+    elsif child?
+      self.rcon.startup!
+    end
+
+    true
+  end
+
+  def stop_rcon!
+    if parent? && alive?
+      self.method_proxy.stop_rcon!
+      self.rtt = nil
+    elsif child?
+      self.rcon.shutdown!
+    end
+
+    true
+  end
+
+################################################################################
+
   def threads
-    if parent? && child_alive?
+    if parent? && alive?
       self.method_proxy.threads
     elsif child?
       Thread.list.collect do |t|
@@ -325,6 +346,8 @@ class Server
     end
   end
 
+################################################################################
+
   def parent?
     (Process.pid == @parent_pid) || master?
   end
@@ -333,31 +356,43 @@ class Server
     !parent?
   end
 
-  def start_rcon!
-    if parent? && child_alive?
-      self.method_proxy.start_rcon!
-    elsif child?
-      self.rcon.startup!
+################################################################################
+
+  def container_alive?
+    key = [self.name, 'container-alive'].join('-')
+    result = MemoryCache.fetch(key, expires_in: 3) do
+      command = Array.new
+      command << %(sudo)
+      command << %(docker inspect)
+      command << %(-f '{{.State.Running}}')
+      command << self.name
+      command = command.flatten.compact.join(' ')
+      %x(#{command}).strip == 'true'
     end
 
-    true
+    $logger.info(:server) { "[#{self.name}] #{command.inspect} == #{result}" }
+
+    result
   end
 
-  def stop_rcon!
-    if parent? && child_alive?
-      self.method_proxy.stop_rcon!
-      self.rtt = nil
-    elsif child?
-      self.rcon.shutdown!
-    end
+  def container_dead?
+    !container_alive?
+  end
 
-    true
+################################################################################
+
+  def alive?
+    !!Process.kill(0, @child_pid) rescue false
+  end
+
+  def dead?
+    !alive?
   end
 
 ################################################################################
 
   def connected?
-    if parent? && child_alive?
+    if parent? && alive?
       self.method_proxy.connected?
     elsif child?
       self.rcon.connected?
@@ -367,7 +402,7 @@ class Server
   end
 
   def disconnected?
-    if parent? && child_alive?
+    if parent? && alive?
       self.method_proxy.disconnected?
     elsif child?
       self.rcon.disconnected?
@@ -379,7 +414,7 @@ class Server
 ################################################################################
 
   def authenticated?
-    if parent? && child_alive?
+    if parent? && alive?
       self.method_proxy.authenticated?
     elsif child?
       self.rcon.authenticated?
@@ -389,7 +424,7 @@ class Server
   end
 
   def unauthenticated?
-    if parent? && child_alive?
+    if parent? && alive?
       self.method_proxy.unauthenticated?
     elsif child?
       self.rcon.unauthenticated?
@@ -401,7 +436,7 @@ class Server
 ################################################################################
 
   def available?
-    if parent? && child_alive?
+    if parent? && alive?
       self.method_proxy.available?
     elsif child?
       self.rcon.available?
@@ -411,7 +446,7 @@ class Server
   end
 
   def unavailable?
-    if parent? && child_alive?
+    if parent? && alive?
       self.method_proxy.unavailable?
     elsif child?
       self.rcon.unavailable?
@@ -423,7 +458,7 @@ class Server
 ################################################################################
 
   def rcon_command_nonblock(command:)
-    if parent? && child_alive?
+    if parent? && alive?
       self.method_proxy.rcon_command_nonblock(command: command)
     elsif child?
       return if unavailable?
@@ -434,7 +469,7 @@ class Server
   end
 
   def rcon_command(command:)
-    if parent? && child_alive?
+    if parent? && alive?
       self.method_proxy.rcon_command(command: command)
     elsif child?
       return if unavailable?

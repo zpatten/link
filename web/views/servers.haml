@@ -20,6 +20,7 @@
     %th Connected?
     %th Authenticated?
     %th Available?
+    %th Running?
     %th RTT
     %th Actions
   - Servers.all.sort_by { |server| server.name }.each do |server|
@@ -33,19 +34,20 @@
       %td{ id: "#{server.name}-connected" }= server.connected?
       %td{ id: "#{server.name}-authenticated" }= server.authenticated?
       %td{ id: "#{server.name}-available" }= server.available?
+      %td{ id: "#{server.name}-container" }= server.container_alive?
       %td{ id: "#{server.name}-rtt" }
         - if server.rtt.nil?
           \-
         - else
           #{server.rtt} ms
       %td
-        - if server.unavailable?
+        - if server.unavailable? && server.container_dead?
           %a{ href: "/servers/start/#{server.name}", title: "Start Server '#{server.name}'" } START
           |
-        - if server.available?
+        - if server.available? || server.container_alive?
           %a{ href: "/servers/stop/#{server.name}", title: "Stop Server '#{server.name}'", onclick: "return confirm('WARNING: Are you sure you want to stop the server \\'#{server.name}\\'?')" } STOP
           |
-        - if server.available?
+        - if server.available? || server.container_alive?
           %a{ href: "/servers/restart/#{server.name}", title: "Restart Server '#{server.name}'", onclick: "return confirm('WARNING: Are you sure you want to restart the server \\'#{server.name}\\'?')" } RESTART
           |
         %a{ href: "/servers/delete/#{server.name}", title: "Delete Server '#{server.name}'", onclick: "return confirm('WARNING: Are you sure you want to delete the server \\'#{server.name}\\'?')" } DELETE
@@ -62,6 +64,8 @@
         el.innerHTML = server.authenticated;
         var el = document.getElementById(server.name + "-available");
         el.innerHTML = server.available;
+        var el = document.getElementById(server.name + "-container");
+        el.innerHTML = server.container;
         var el = document.getElementById(server.name + "-rtt");
         el.innerHTML = server.rtt;
       };

@@ -5,8 +5,7 @@ class ThreadPool
   module ClassMethods
 
     @@thread_group ||= ThreadGroup.new
-    # @@thread_group_2 ||= ThreadGroup.new
-    @@thread_schedules ||= Concurrent::Array.new #ThreadSafeArray.new
+    @@thread_schedules ||= Concurrent::Array.new
 
     def thread_group
       @@thread_group
@@ -28,7 +27,6 @@ class ThreadPool
       end
       thread.name     = name
       thread.priority = options.fetch(:priority, 0)
-      # @@thread_group_2.add(thread)
 
       Metrics[:thread_count].set(
         @@thread_group.list.count,
