@@ -3,12 +3,12 @@
 Known Network IDs: #{signals.get_network_ids}
 %br
 - signals.get_network_ids.each do |nid|
-  - s = signals.tx(nid, nil, true)
+  - s = signals.tx(nid, force: true)
   Network ID #{nid} - #{s.count} Signals
   %br
 %hr
 - signals.get_network_ids.each do |nid|
-  - s = signals.tx(nid, nil, true)
+  - s = signals.tx(nid, force: true)
   %h2 Network ID #{nid}
   %hr
   - if s.nil?

@@ -50,8 +50,19 @@ class Server
 ################################################################################
 
     def rcon_tag
-      # "#{@name}@#{@host}:#{@port}"
       @name
+    end
+
+################################################################################
+
+    def command_nonblock(command:)
+      enqueue_packet(command)
+    end
+
+    def command(command:)
+      packet_fields = enqueue_packet(command)
+      response = find_response(packet_fields.id)
+      response.payload.strip
     end
 
 ################################################################################

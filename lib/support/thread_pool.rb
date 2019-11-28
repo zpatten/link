@@ -88,7 +88,7 @@ class ThreadPool
         thread_instrumentation(thread_name) do
           trap_signals
           expires_in                  = [(schedule.frequency * 2), 10.0].max
-          expires_at                  = Time.now.to_f + THREAD_TIMEOUT
+          expires_at                  = Time.now.to_f + TIMEOUT_THREAD
           Thread.current[:expires_at] = expires_at
           Thread.current[:started_at] = Time.now.to_f
 

@@ -10,7 +10,7 @@ class Signals
     # end
 
     def signal_networks
-      @@signal_networks ||= Hash.new
+      @@signal_networks ||= Concurrent::Hash.new
     end
 
     def extract_circuit_network_id(signals)

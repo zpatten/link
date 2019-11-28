@@ -9,8 +9,7 @@ class Server
       chat_events.each do |chat_event|
         message = %(#{chat_event["player_name"]}@#{self.name}: #{chat_event["message"]})
         command = %(/#{rcon_executor} game.print('#{message}', {r = 1, g = 0, b = 1, a = 0.5}))
-        self.method_proxy(
-          :Servers,
+        self.method_proxy.Servers(
           :rcon_command_nonblock,
           what: :chat,
           except: [self.name],

@@ -10,8 +10,7 @@ class Server
         network_ids = unit_network_list.values.map(&:keys).flatten.uniq.sort
         $logger.debug(:combinator_tx) { "[#{self.name}] Received signals for circuit networks: #{network_ids.ai}" }
         # signals received from transmitters
-        self.method_proxy(
-          :Signals,
+        self.method_proxy.Signals(
           :rx,
           unit_network_list,
           server_id: self.network_id
@@ -29,8 +28,7 @@ class Server
       networks = Hash.new
       network_ids.each do |network_id|
         # signals to transmit to receivers
-        network_signals = self.method_proxy(
-          :Signals,
+        network_signals = self.method_proxy.Signals(
           :tx,
           network_id,
           server_id: self.network_id,

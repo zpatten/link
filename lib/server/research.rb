@@ -16,8 +16,7 @@ class Server
               $logger.debug(:research) { "[#{self.name}] current research: #{current_research.ai}" }
               command = %(/#{rcon_executor} remote.call('link', 'set_current_research', '#{current_research.to_json}'))
 
-              self.method_proxy(
-                :Servers,
+              self.method_proxy.Servers(
                 :rcon_command_nonblock,
                 what: :non_research,
                 command: command
@@ -39,8 +38,7 @@ class Server
               $logger.debug(:research) { "[#{self.name}] research: #{research.ai}" }
               command = %(/#{rcon_executor} remote.call('link', 'set_research', '#{research.to_json}'))
 
-              self.method_proxy(
-                :Servers,
+              self.method_proxy.Servers(
                 :rcon_command_nonblock,
                 what: :non_research,
                 command: command

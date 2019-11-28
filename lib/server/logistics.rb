@@ -19,11 +19,7 @@ class Server
                 item_name
               end
             end
-            self.method_proxy(
-              :Storage,
-              :bulk_add,
-              providables
-            )
+            self.method_proxy.Storage(:bulk_add, providables)
           end
         end
 

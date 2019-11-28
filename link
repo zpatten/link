@@ -18,17 +18,21 @@ require 'socket'
 require 'timeout'
 require 'zlib'
 
+################################################################################
+
 require 'awesome_print'
 require 'concurrent'
 
 ################################################################################
 
-GIGAJOULE      = 10 ** 9
-INT_32_MAX     = (2**32).div(2) - 1
-LINK_ROOT      = Dir.pwd
-MASTER_PID     = Process.pid
-SLEEP_TIME     = 0.001
-THREAD_TIMEOUT = 10
+GIGAJOULE            = 10 ** 9
+INT_32_MAX           = (2**32).div(2) - 1
+LINK_ROOT            = Dir.pwd
+MASTER_PID           = Process.pid
+SLEEP_TIME           = 0.001
+TIMEOUT_THREAD       = 10
+TIMEOUT_METHOD_PROXY = TIMEOUT_THREAD.div(2)
+TIMEOUT_RESPONSE     = 60
 
 ################################################################################
 
