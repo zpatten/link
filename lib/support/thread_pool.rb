@@ -5,10 +5,14 @@ class ThreadPool
   module ClassMethods
 
     @@thread_group ||= ThreadGroup.new
-    @@thread_schedules ||= Concurrent::Array.new
+    # @@thread_schedules ||= Concurrent::Array.new
 
     def thread_group
       @@thread_group
+    end
+
+    def clear_schedules
+      @@thread_schedules = Concurrent::Array.new
     end
 
     def thread_schedules
@@ -173,7 +177,7 @@ class ThreadPool
     end
 
     def shutdown!
-      @@thread_schedules = Array.new
+      clear_schedules
       Thread.list.each do |thread|
         thread.exit unless thread == Thread.main
       end
@@ -197,7 +201,6 @@ class ThreadPool
     end
 
     def execute
-
       trap_signals
 
       # at_exit do
@@ -209,29 +212,28 @@ class ThreadPool
         $logger.info { "In main process #{Process.pid}" }
 
         thread = ThreadPool.thread("sinatra") do
-          # require_relative '../web_server'
           ::WebServer.run! do |server|
+            # NOOP
           end
         end
+
         ::Servers.all.each do |s|
           if s.running?
             s.start_process!
             s.start_rcon!
           end
         end
-
-        schedule_task_backup
-        schedule_task_statistics
-      else
       end
-      schedule_task_prometheus
 
-      last_checked_threads_at = Time.now.to_f
-      next_run_at = Array.new
+      clear_schedules
+      schedule_task_prometheus
+      schedule_task_backup if master?
+      schedule_task_statistics if master?
+      yield if block_given?
 
       loop do
         @@thread_group.list.each do |thread|
-          unless thread[:expires_at].nil? || Time.now.to_f < thread[:expires_at]
+          unless thread[:expires_at].nil? || Time.now.to_f <= thread[:expires_at]
             thread.exit
           end
         end

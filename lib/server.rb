@@ -87,9 +87,6 @@ class Server
       @rtt
     elsif child?
       self.method_proxy.rtt = value
-      # self.method_proxy(:rtt=, value)
-    else
-      raise "#rtt= called out of context!"
     end
   end
 
@@ -224,17 +221,21 @@ class Server
 
         @rcon = RCon.new(@name, @host, @client_port, @client_password)
 
-        schedule_chat
-        schedule_id
-        schedule_logistics
-        schedule_ping
-        schedule_research
-        schedule_research_current
-        schedule_signals
+        self.method_proxy.start do |e|
+          unless e.class == Timeout::Error
+            Process.exit!
+          end
+        end
 
-        self.method_proxy.start
-
-        ThreadPool.execute
+        ThreadPool.execute do
+          schedule_chat
+          schedule_id
+          schedule_logistics
+          schedule_ping
+          schedule_research
+          schedule_research_current
+          schedule_signals
+        end
       end
       Process.detach(@child_pid)
 

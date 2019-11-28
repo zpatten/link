@@ -4,11 +4,15 @@ class Storage
 
   module ClassMethods
 
+################################################################################
+
     @@storage = Concurrent::Hash.new(0)
     @@storage_delta_history ||= Hash.new { |h,k| h[k] = Array.new }
     @@storage_delta ||= Hash.new(0)
     @@storage_mutex ||= Mutex.new
     @@storage_statistics ||= Hash.new
+
+################################################################################
 
     def [](item_name)
       self.storage[item_name]
@@ -23,6 +27,8 @@ class Storage
     def filename
       File.join(LINK_ROOT, "storage.json")
     end
+
+################################################################################
 
     def load
       @@storage_mutex.synchronize do
@@ -43,36 +49,13 @@ class Storage
       # Process.detach(pid)
     end
 
-    def storage_item_instrumentation(item_name, item_count)
-      if item_name == 'electricity'
-        Metrics[:electrical_count].set(item_count, labels: { name: item_name })
-      else
-        Metrics[:storage_item_count].set(item_count, labels: { name: item_name })
-      end
-    end
-
-    def storage_delta_instrumentation(item_name, item_count)
-      if item_name == 'electricity'
-        Metrics[:electrical_delta_count].set(item_count, labels: { name: item_name })
-      else
-        Metrics[:storage_delta_count].set(item_count, labels: { name: item_name })
-      end
-    end
+################################################################################
 
     def clone
       deep_clone(self.storage)
     end
 
-    def update_websocket(item_name, item_count)
-      ::WebServer.settings.storage_sockets.each do |s|
-        s.send({
-          name: item_name,
-          count: countsize(item_count),
-          delta_s: delta[item_name][0],
-          delta_m: delta[item_name][1]
-        }.to_json)
-      end
-    end
+################################################################################
 
     def add(item_name, item_count)
       self.storage[item_name] += item_count
@@ -82,20 +65,6 @@ class Storage
       storage_item_instrumentation(item_name, self.storage[item_name])
 
       item_count
-    end
-
-    def bulk_add(items)
-      self.storage.merge!(items) { |k,o,n| o + n }
-      Storage.save
-
-      true
-    end
-
-    def bulk_remove(items)
-      self.storage.merge!(items) { |k,o,n| o - n }
-      Storage.save
-
-      true
     end
 
     def remove(item_name, item_count)
@@ -115,6 +84,24 @@ class Storage
 
       removed_count
     end
+
+################################################################################
+
+    def bulk_add(items)
+      self.storage.merge!(items) { |k,o,n| o + n }
+      Storage.save
+
+      true
+    end
+
+    def bulk_remove(items)
+      self.storage.merge!(items) { |k,o,n| o - n }
+      Storage.save
+
+      true
+    end
+
+################################################################################
 
     def format_delta_count(delta_count)
       if delta_count.nil?
@@ -159,6 +146,37 @@ class Storage
 
       true
     end
+
+################################################################################
+
+    def storage_item_instrumentation(item_name, item_count)
+      if item_name == 'electricity'
+        Metrics[:electrical_count].set(item_count, labels: { name: item_name })
+      else
+        Metrics[:storage_item_count].set(item_count, labels: { name: item_name })
+      end
+    end
+
+    def storage_delta_instrumentation(item_name, item_count)
+      if item_name == 'electricity'
+        Metrics[:electrical_delta_count].set(item_count, labels: { name: item_name })
+      else
+        Metrics[:storage_delta_count].set(item_count, labels: { name: item_name })
+      end
+    end
+
+    def update_websocket(item_name, item_count)
+      ::WebServer.settings.storage_sockets.each do |s|
+        s.send({
+          name: item_name,
+          count: countsize(item_count),
+          delta_s: delta[item_name][0],
+          delta_m: delta[item_name][1]
+        }.to_json)
+      end
+    end
+
+################################################################################
 
   end
 

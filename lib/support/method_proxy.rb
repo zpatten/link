@@ -40,18 +40,21 @@ class MethodProxy
     loop do
       data = socket.recv(RECV_MAX_LEN)
       data = Marshal.load(data)
+      id = data[:id]
       $logger.debug(:mproxy) { "[#{@name}] #{data.ai}" }
       case data[:type]
       when :request
         args = data[:args]
-        tag = args.map(&:to_s).join('-')
+        tag = args.first.downcase #map(&:to_s).join('-')
         ThreadPool.thread("#{@name}-method-call-#{tag}") do
           result = call_method(*args)
-          send_response(data[:id], result)
+          send_response(id, result)
         end
       when :response
-        @responses[data[:id]] = data
-        @responses.delete_if { |k,v| v[:expires_at] <= Time.now.to_f }
+        unless @responses[id].nil?
+          @responses[id].fulfill(data[:result])
+          $logger.debug(:mproxy) { "[#{@name}] Fulfilled Response (#{id})" }
+        end
       else
         raise "Invalid Type"
       end
@@ -71,6 +74,7 @@ class MethodProxy
 
   def send_request(*args)
     id = @id.increment
+    @responses[id] = Concurrent::Promises.resolvable_future
     data = {
       type: :request,
       id: id,
@@ -82,12 +86,15 @@ class MethodProxy
   end
 
   def recv_response(id)
-    while (response = @responses.delete(id)).nil? do
-      $logger.debug(:mproxy) { "Waiting on response #{id}" }
-      sleep SLEEP_TIME
-    end
-    $logger.debug(:mproxy) { "Found response #{id}" }
-    response[:result]
+    # resolve_on_timeout = [false, nil, Timeout::Error]
+    # value!(FUTURE_TIMEOUT, nil, resolve_on_timeout)
+    result = @responses[id].value
+    $logger.debug(:mproxy) { "[#{@name}] Resolved Response(#{id})" }
+
+    result
+
+  ensure
+    @responses.delete(id)
   end
 
   def thread
@@ -135,17 +142,17 @@ class MethodProxy
   end
 
   def method_missing(*args)
-    if parent?
+    # if parent?
       exception_wrapper do
         id = send_request(*args)
         $logger.debug(:mproxy) { "[#{@name}] method_missing(#{id}): #{args.ai}" }
         recv_response(id)
       end
-    else
-      id = send_request(*args)
-      $logger.debug(:mproxy) { "[#{@name}] method_missing(#{id}): #{args.ai}" }
-      recv_response(id)
-    end
+    # else
+    #   id = send_request(*args)
+    #   $logger.debug(:mproxy) { "[#{@name}] method_missing(#{id}): #{args.ai}" }
+    #   recv_response(id)
+    # end
   end
 
 end

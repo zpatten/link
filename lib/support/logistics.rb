@@ -65,21 +65,18 @@ class Logistics
 
   def acquire_item(item_name, item_count)
     @server.method_proxy.Storage(:remove, item_name, item_count)
-    # Storage.remove(item_name, item_count)
   end
 
   def calculate_fulfillment_items
     @items_to_fulfill = Hash.new
     if can_fulfill_all?
       @items_to_fulfill = @item_requests
-      # Storage.bulk_remove(@item_totals)
       @server.method_proxy.Storage(:bulk_remove, @item_totals)
     else
       @item_requests.each do |unit_number, items|
         items.each do |item_name, item_count|
           if (fulfill_count = count_to_fulfill(item_name, item_count)) > 0
-            if (actual_count = @server.method_proxy.Storage(:remove, item_name, fulfill_count)) > 0
-              # Storage.remove(item_name, fulfill_count)) > 0
+            if (actual_count = acquire_item(item_name, fulfill_count)) > 0
               @items_to_fulfill[unit_number] ||= Hash.new
               @items_to_fulfill[unit_number][item_name] = actual_count
             end
