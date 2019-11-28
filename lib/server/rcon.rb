@@ -63,7 +63,11 @@ class Server
     end
 
     def build_command(command)
-      %(/#{rcon_executor} #{command})
+      if command[0] == '/'
+        command
+      else
+        %(/#{rcon_executor} #{command})
+      end
     end
 
     def command_nonblock(command:)
