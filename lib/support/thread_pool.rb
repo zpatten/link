@@ -4,14 +4,17 @@ class ThreadPool
 
   module ClassMethods
 
-    @@thread_group ||= ThreadGroup.new
-    # @@thread_schedules ||= Concurrent::Array.new
+    @@thread_group_persistent ||= ThreadGroup.new
+    @@thread_group_scheduled ||= ThreadGroup.new
+    @@thread_schedules ||= Concurrent::Array.new
 
-    def thread_group
-      @@thread_group
+    def thread_group_scheduled
+      @@thread_group_scheduled
     end
 
-    def clear_schedules
+    def reset
+      @@thread_group_persistent = ThreadGroup.new
+      @@thread_group_scheduled = ThreadGroup.new
       @@thread_schedules = Concurrent::Array.new
     end
 
@@ -19,11 +22,22 @@ class ThreadPool
       @@thread_schedules
     end
 
+    def update_thread_count_metric(thread_group)
+      thread_count = thread_group.list.count
+
+      Metrics[:thread_count].set(
+        thread_count,
+        labels: { name: Thread.current.name }
+      )
+
+      true
+    end
+
     def thread(name, options={}, &block)
       schedule_log(:thread, :starting, name)
 
       thread = Thread.new do
-        # trap_signals
+        trap_signals
 
         Thread.current.name         = name
         Thread.current.priority     = options.fetch(:priority, 0)
@@ -31,11 +45,9 @@ class ThreadPool
 
         block.call
       end
+      @@thread_group_persistent.add(thread)
 
-      Metrics[:thread_count].set(
-        @@thread_group.list.count,
-        labels: { name: Thread.current.name }
-      )
+      update_thread_count_metric(@@thread_group_persistent)
 
       thread
     end
@@ -81,10 +93,11 @@ class ThreadPool
       thread_name << schedule.what.to_s
       thread_name = thread_name.compact.join(':')
 
-      return false if @@thread_group.list.map(&:name).compact.include?(thread_name)
+      return false if @@thread_group_scheduled.list.map(&:name).compact.include?(thread_name)
 
       thread = Thread.new do
         # trap_signals
+
         Thread.current.name = thread_name
         Thread.current.priority = schedule.options.fetch(:priority, 0)
 
@@ -99,7 +112,9 @@ class ThreadPool
           schedule_log(:thread, :stopping, schedule, Thread.current)
         end
       end
-      @@thread_group.add(thread)
+      @@thread_group_scheduled.add(thread)
+
+      update_thread_count_metric(@@thread_group_scheduled)
 
       true
     end
@@ -115,7 +130,7 @@ class ThreadPool
       run_thread(schedule, server)
 
       Metrics[:thread_count].set(
-        @@thread_group.list.count,
+        @@thread_group_scheduled.list.count,
         labels: { name: Thread.current.name }
       )
 
@@ -175,31 +190,24 @@ class ThreadPool
     end
 
     def shutdown!
-      clear_schedules
+      reset
       while running?
-        $stderr.puts "Waiting for threads to finish..."
+        $logger.fatal(:thread) { "Waiting for threads to exit..." }
         sleep 1
       end
-      Thread.list.each do |thread|
-        thread.exit unless thread == Thread.main
-      end
-      Thread.main.exit
     end
 
     def running?
-      @@thread_group.list.size > 0
+      @@thread_group_scheduled.list.size > 0
     end
 
     def execute
       trap_signals
 
-      # at_exit do
-      #   $logger.fatal(:at_exit) { 'Shutting down!' }
-      #   shutdown!
-      # end
+      reset
 
       if master?
-        $logger.info { "In main process #{Process.pid}" }
+        $logger.info(:thread) { "Master Startup" }
 
         thread = ThreadPool.thread("sinatra") do
           ::WebServer.run! do |server|
@@ -215,7 +223,6 @@ class ThreadPool
         end
       end
 
-      clear_schedules
       schedule_task_prometheus
       schedule_task_autosave if master?
       schedule_task_backup if master?
@@ -223,7 +230,7 @@ class ThreadPool
       yield if block_given?
 
       loop do
-        @@thread_group.list.each do |thread|
+        @@thread_group_scheduled.list.each do |thread|
           unless thread[:expires_at].nil? || Time.now.to_f <= thread[:expires_at]
             $logger.fatal(:thread) { "Thread Expired: #{thread.name}" }
             thread.exit
@@ -240,11 +247,6 @@ class ThreadPool
         end
         sleep_for = (next_run_at.min - Time.now.to_f)
         sleep sleep_for if sleep_for > 0.0
-
-        Metrics[:thread_count].set(
-          @@thread_group.list.count,
-          labels: { name: Thread.current.name }
-        )
       end
 
     end

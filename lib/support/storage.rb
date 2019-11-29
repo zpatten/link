@@ -38,15 +38,12 @@ class Storage
     end
 
     def save
-      # pid = Process.fork do
       unless @@storage.nil?
         @@storage_mutex.synchronize do
           @@storage.delete_if { |k,v| v == 0 }
           IO.write(filename, JSON.pretty_generate(@@storage.sort.to_h))
         end
       end
-      # end
-      # Process.detach(pid)
     end
 
 ################################################################################
@@ -61,9 +58,19 @@ class Storage
       end
     end
 
+    def sanitize_item_name(item_name)
+      if item_name =~ /link-fluid-(?!.*(provider|requester)).*/
+        item_name.gsub('link-fluid-', '')
+      else
+        item_name
+      end
+    end
+
 ################################################################################
 
     def add(item_name, item_count)
+      item_name = sanitize_item_name(item_name)
+
       self.storage[item_name] += item_count
 
       item_count
@@ -86,6 +93,10 @@ class Storage
 ################################################################################
 
     def bulk_add(items)
+      items.transform_keys! do |item_name|
+        sanitize_item_name(item_name)
+      end
+
       self.storage.merge!(items) { |k,o,n| o + n }
 
       true
@@ -116,8 +127,6 @@ class Storage
     end
 
     def calculate_delta
-      $logger.debug(:storage) { "Calculating Deltas" }
-
       @@previous_storage ||= self.clone
 
       self.storage.clone.each do |item_name, item_count|
@@ -180,3 +189,5 @@ class Storage
 
   extend(ClassMethods)
 end
+
+Storage.load

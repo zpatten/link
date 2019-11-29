@@ -321,8 +321,12 @@ class Servers
 
     def shutdown!
       self.all.each do |server|
-        server.stop_rcon!
-        $logger.warn(:servers) { "[#{server.id}] Shutdown server #{server.host_tag}" }
+        $logger.warn(:servers) {
+          "[#{server.name}] Shutdown server #{server.host_tag}"
+        }
+        # server.stop_rcon!
+        # sleep 1 while server.available?
+        server.stop_process!
       end
     end
 

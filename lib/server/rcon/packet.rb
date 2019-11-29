@@ -25,26 +25,16 @@ class Server
       def recv_packet_data(length)
         return nil if disconnected?
 
-        buffer = '' # StringIO.new
-        # socket.recv(length)
+        buffer = ''
         while buffer.length < length do
           begin
             len = (length - buffer.length)
             buffer += socket.recvmsg_nonblock(len).first
-            # buffer.write(data)
           rescue IO::WaitReadable
             IO.select([socket])
             retry
           end
-          # data = @socket_mutex.synchronize { socket.recv_nonblock(length, 0, nil, exception: false) }
-          # if data == :wait_readable
-          #   IO.select([socket])
-          #   next
-          # end
-          # buffer.write(data)
         end
-        # buffer.rewind
-        # buffer.read
         buffer
       rescue Errno::ECONNABORTED, Errno::ESHUTDOWN
         # server is shutting down
@@ -97,11 +87,6 @@ class Server
           IO.select(nil, [socket])
           retry
         end
-        # begin
-        #   buffer.seek(total_sent)
-        #   total_sent += @socket_mutex.synchronize { socket.send(buffer.read, 0) }
-        # end while total_sent < buffer.length
-        # total_sent = socket.send(encoded_packet, 0)
 
         $logger.debug(:rcon) { %([#{rcon_tag}:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 

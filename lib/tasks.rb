@@ -21,7 +21,6 @@ def schedule_task_prometheus
   end
 end
 
-
 def schedule_task_autosave
   ThreadPool.schedule_task(:autosave) do
     ItemType.save

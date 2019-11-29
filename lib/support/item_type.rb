@@ -21,8 +21,9 @@ class ItemType
           end
           type.strip!
           self.item_type[item_name] = type
+
+          $logger.debug(:item_type) { "#{item_name} == #{self.item_type[item_name]}" }
         end
-        # $logger.debug(:item_type) { "#{item_name} == #{self.item_type[item_name]}" }
 
         type
       end
@@ -66,3 +67,5 @@ class ItemType
 
   extend(ClassMethods)
 end
+
+ItemType.load

@@ -2,8 +2,6 @@ class MethodProxy
 
   RECV_MAX_LEN = (64 * 1024)
 
-  attr_reader :thread
-
   def initialize(object, parent_pid)
     @object = object
     @name = object.name

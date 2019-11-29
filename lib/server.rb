@@ -255,27 +255,24 @@ class Server
     $logger.info(:server) { "[#{self.name}] Command: #{command.inspect}" }
     system command
 
-    command = Array.new
-    command << %(sudo)
-    command << %(docker run)
-    command << %(--rm)
-    command << %(--detach)
-    command << %(--name="#{self.name}")
-    command << %(--network=host)
-    command << %(-e FACTORIO_PORT="#{self.factorio_port}")
-    command << %(-e FACTORIO_RCON_PASSWORD="#{self.client_password}")
-    command << %(-e FACTORIO_RCON_PORT="#{self.client_port}")
-    command << %(-e PGID="$(id -g)")
-    command << %(-e PUID="$(id -u)")
-    command << %(-e RUN_CHOWN="false")
-    command << %(--volume=#{self.config_path}:/opt/factorio/config)
-    command << %(--volume=#{self.mods_path}:/opt/factorio/mods)
-    command << %(--volume=#{self.saves_path}:/opt/factorio/saves)
-    command << Config.factorio_docker_image
-    command = command.flatten.compact.join(' ')
-
-    $logger.info(:server) { "[#{self.name}] Command: #{command.inspect}" }
-    system command
+    run_command(:server, self.name,
+      %(sudo),
+      %(docker run),
+      %(--rm),
+      %(--detach),
+      %(--name="#{self.name}"),
+      %(--network=host),
+      %(-e FACTORIO_PORT="#{self.factorio_port}"),
+      %(-e FACTORIO_RCON_PASSWORD="#{self.client_password}"),
+      %(-e FACTORIO_RCON_PORT="#{self.client_port}"),
+      %(-e PGID="$(id -g)"),
+      %(-e PUID="$(id -u)"),
+      %(-e RUN_CHOWN="false"),
+      %(--volume=#{self.config_path}:/opt/factorio/config),
+      %(--volume=#{self.mods_path}:/opt/factorio/mods),
+      %(--volume=#{self.saves_path}:/opt/factorio/saves),
+      Config.factorio_docker_image
+    )
 
     running!(true)
 
@@ -355,15 +352,13 @@ class Server
   def container_alive?
     key = [self.name, 'container-alive'].join('-')
     MemoryCache.fetch(key, expires_in: 10) do
-      command = Array.new
-      command << %(sudo)
-      command << %(docker inspect)
-      command << %(-f '{{.State.Running}}')
-      command << self.name
-      command = command.flatten.compact.join(' ')
-      result = (%x(#{command}).strip == 'true')
-      $logger.debug(:server) { "[#{self.name}] #{command.inspect} == #{result}" }
-      result
+      output = run_command(:server, self.name,
+        %(sudo),
+        %(docker inspect),
+        %(-f '{{.State.Running}}'),
+        self.name
+      )
+      (output == 'true')
     end
   end
 

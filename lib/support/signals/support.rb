@@ -117,7 +117,7 @@ class Signals
       signals = Array.new
       Storage.clone.each do |item_name, item_count|
         item_name = 'link-signal-electricity' if item_name == 'electricity'
-        item_type = ItemType[item_name] #rcon_lookup_item_type(item_name)
+        item_type = ItemType[item_name]
         item_count = if item_name == 'link-signal-electricity'
           item_count.div(GIGAJOULE)
         else
