@@ -47,8 +47,6 @@ class ThreadPool
       end
       @@thread_group_persistent.add(thread)
 
-      update_thread_count_metric
-
       thread
     end
 
@@ -113,8 +111,6 @@ class ThreadPool
         end
       end
       @@thread_group_scheduled.add(thread)
-
-      update_thread_count_metric
 
       true
     end
@@ -242,6 +238,9 @@ class ThreadPool
           end
           next_run_at << schedule.next_run_at
         end
+
+        update_thread_count_metric
+
         sleep_for = (next_run_at.min - Time.now.to_f)
         sleep sleep_for if sleep_for > 0.0
       end
