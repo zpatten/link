@@ -100,8 +100,9 @@ class ThreadPool
         Thread.current.priority = schedule.options.fetch(:priority, 0)
 
         thread_instrumentation(thread_name) do
-          expires_in                  = [(schedule.frequency * 2), 10.0].max
-          expires_at                  = Time.now.to_f + THREAD_TIMEOUT
+          # expires_in                  = [(schedule.frequency * 2), 10.0].max
+          thread_timeout = schedule.options.fetch(:timeout, THREAD_TIMEOUT)
+          expires_at                  = Time.now.to_f + thread_timeout
           Thread.current[:expires_at] = expires_at
           Thread.current[:started_at] = Time.now.to_f
 
@@ -212,14 +213,19 @@ class ThreadPool
         end
 
         ::Servers.all.each do |server|
-          server.start!(false)
+          if server.container_alive?
+            server.start!(false)
+          end
         end
       end
 
       schedule_task_prometheus
-      schedule_task_autosave if master?
-      schedule_task_backup if master?
-      schedule_task_statistics if master?
+      if master?
+        schedule_task_autosave
+        schedule_task_backup
+        schedule_task_statistics
+        schedule_task_watchdog
+      end
       yield if block_given?
 
       loop do

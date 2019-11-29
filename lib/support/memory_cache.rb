@@ -75,6 +75,8 @@ class MemoryCache
     end
 
     def expired?(expires_at)
+      expires_at ||= -1
+
       return false if (expires_at == -1)
 
       ((expires_at <= Time.now.to_i) ? true : false)

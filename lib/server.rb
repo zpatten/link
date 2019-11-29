@@ -45,6 +45,7 @@ class Server
     @id                  = Zlib::crc32(@name.to_s)
     @network_id          = [@id].pack("L").unpack("l").first
     @pinged_at           = 0
+    @started_at          = 0
 
     @details             = details
     @active              = details['active']
@@ -94,14 +95,6 @@ class Server
     end
   end
 
-  def unresponsive?
-    ((@pinged_at + PING_TIMEOUT) < Time.now.to_f)
-  end
-
-  def responsive?
-    !unresponsive?
-  end
-
 ################################################################################
 
   def host_tag
@@ -113,20 +106,6 @@ class Server
   def method_missing(method_name, *method_args, &block)
     @details[method_name.to_s]
   end
-
-################################################################################
-
-  # def running!(running=false)
-  #   unless Config.servers[@name].nil?
-  #     Config.servers[@name]['running'] = running
-  #     Config.save!
-  #   end
-  #   running
-  # end
-
-  # def running?
-  #   !!Config.servers[@name]['running']
-  # end
 
 ################################################################################
 
@@ -184,34 +163,27 @@ class Server
 
 ################################################################################
 
-  def restart!
-    self.stop!
+  def restart!(container=true)
+    self.stop!(container)
     sleep 1
-    self.start!
+    self.start!(container)
   end
 
   def start!(container=true)
     Timeout.timeout(60) do
-      if container
-        self.start_container!
-        sleep 1 while container_dead?
-      end
-      if container_alive?
-        self.start_process!
-        self.start_rcon!
+      self.start_container! if container
+      self.start_process!
+      self.start_rcon!
 
-        sleep 1 while self.unavailable?
-      end
+      sleep 1 while self.unavailable?
     end
   end
 
   def stop!(container=true)
     Timeout.timeout(60) do
-      if container_alive?
-        self.stop_rcon!
-        self.stop_process!
-        self.stop_container! if container
-      end
+      self.stop_rcon!
+      self.stop_process!
+      self.stop_container! if container
 
       sleep 1 while self.available?
     end
@@ -220,9 +192,10 @@ class Server
 ################################################################################
 
   def start_process!
-    return true if alive?
+    return true if process_alive?
 
     @method_proxy = MethodProxy.new(self, Process.pid)
+    @pinged_at = Time.now.to_f
 
     @child_pid = Process.fork do
       Thread.list.each do |thread|
@@ -242,10 +215,11 @@ class Server
       end
 
       ThreadPool.execute do
+        schedule_ping
+
         schedule_chat
         schedule_id
         schedule_logistics
-        schedule_ping
         schedule_research
         schedule_research_current
         schedule_signals
@@ -257,18 +231,11 @@ class Server
       self.stop!(false)
     end
 
-    ThreadPool.thread("#{@name}-watchdog") do
-      sleep PING_TIMEOUT
-      sleep 1 while responsive?
-      $logger.fatal(:server) { "[#{@name}] Watchdog Stopping" }
-      self.stop!(false)
-    end
-
     true
   end
 
   def stop_process!
-    return true if dead?
+    return true if process_dead?
 
     Process.kill('INT', @child_pid)
     self.method_proxy.stop
@@ -311,8 +278,6 @@ class Server
       Config.factorio_docker_image
     )
 
-    # running!(true)
-
     true
   end
 
@@ -325,15 +290,13 @@ class Server
       self.name
     )
 
-    # running!(false)
-
     true
   end
 
 ################################################################################
 
   def start_rcon!
-    if parent? && alive?
+    if parent? && process_alive?
       self.method_proxy.start_rcon!
     elsif child?
       self.rcon.startup!
@@ -343,7 +306,7 @@ class Server
   end
 
   def stop_rcon!
-    if parent? && alive?
+    if parent? && process_alive?
       self.method_proxy.stop_rcon!
       self.rtt = nil
     elsif child?
@@ -356,7 +319,7 @@ class Server
 ################################################################################
 
   def threads
-    if parent? && alive?
+    if parent? && process_alive?
       self.method_proxy.threads
     elsif child?
       Thread.list.collect do |t|
@@ -385,6 +348,20 @@ class Server
 
 ################################################################################
 
+  def starting?
+    ((@started_at + PING_TIMEOUT) < Time.now.to_f)
+  end
+
+  def unresponsive?
+    ((@pinged_at + PING_TIMEOUT) < Time.now.to_f)
+  end
+
+  def responsive?
+    !unresponsive?
+  end
+
+################################################################################
+
   def container_alive?
     key = [self.name, 'container-alive'].join('-')
     MemoryCache.fetch(key, expires_in: 10) do
@@ -404,18 +381,18 @@ class Server
 
 ################################################################################
 
-  def alive?
+  def process_alive?
     !!Process.kill(0, @child_pid) rescue false
   end
 
-  def dead?
-    !alive?
+  def process_dead?
+    !process_alive?
   end
 
 ################################################################################
 
   def connected?
-    if parent? && alive?
+    if parent? && process_alive?
       self.method_proxy.connected?
     elsif child?
       self.rcon.connected?
@@ -425,7 +402,7 @@ class Server
   end
 
   def disconnected?
-    if parent? && alive?
+    if parent? && process_alive?
       self.method_proxy.disconnected?
     elsif child?
       self.rcon.disconnected?
@@ -437,7 +414,7 @@ class Server
 ################################################################################
 
   def authenticated?
-    if parent? && alive?
+    if parent? && process_alive?
       self.method_proxy.authenticated?
     elsif child?
       self.rcon.authenticated?
@@ -447,7 +424,7 @@ class Server
   end
 
   def unauthenticated?
-    if parent? && alive?
+    if parent? && process_alive?
       self.method_proxy.unauthenticated?
     elsif child?
       self.rcon.unauthenticated?
@@ -459,7 +436,7 @@ class Server
 ################################################################################
 
   def available?
-    if parent? && alive?
+    if parent? && process_alive?
       self.method_proxy.available?
     elsif child?
       self.rcon.available?
@@ -469,7 +446,7 @@ class Server
   end
 
   def unavailable?
-    if parent? && alive?
+    if parent? && process_alive?
       self.method_proxy.unavailable?
     elsif child?
       self.rcon.unavailable?
@@ -481,7 +458,7 @@ class Server
 ################################################################################
 
   def rcon_command_nonblock(command:)
-    if parent? && alive?
+    if parent? && process_alive?
       self.method_proxy.rcon_command_nonblock(command: command)
     elsif child?
       return if unavailable?
@@ -492,7 +469,7 @@ class Server
   end
 
   def rcon_command(command:)
-    if parent? && alive?
+    if parent? && process_alive?
       self.method_proxy.rcon_command(command: command)
     elsif child?
       return if unavailable?

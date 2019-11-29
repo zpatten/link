@@ -97,6 +97,7 @@ def deep_clone(object)
 end
 
 def run_command(tag, name, *args)
+  args << %(2>/dev/null)
   command = args.flatten.compact.join(' ')
   output = %x(#{command}).strip
   $logger.debug(tag) { "[#{name}] Command: #{command.inspect} -> #{output.inspect}" }

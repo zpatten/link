@@ -27,3 +27,24 @@ def schedule_task_autosave
     Storage.save
   end
 end
+
+def schedule_task_watchdog
+  ThreadPool.schedule_task(:watchdog, timeout: 300) do
+    Servers.all.each do |server|
+      if server.process_alive? && server.unresponsive?
+        $logger.warn(:servers) {
+          "[#{server.name}] Detected Unresponsive Server - Restarting"
+        }
+        server.restart!
+      end
+      # unless server.starting?
+      #   if server.unresponsive && (server.process_alive? || server.container_alive?)
+      #     $logger.warn(:servers) {
+      #       "[#{server.name}] Detected Unresponsive Server - Restarting"
+      #     }
+      #     server.restart!
+      #   end
+      # end
+    end
+  end
+end

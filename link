@@ -32,7 +32,7 @@ MASTER_PID           = Process.pid
 THREAD_TIMEOUT       = 10
 METHOD_PROXY_TIMEOUT = THREAD_TIMEOUT.div(2)
 FUTURE_TIMEOUT       = 60
-PING_TIMEOUT         = 10
+PING_TIMEOUT         = 30
 RESPONSE_TIMEOUT     = 60
 
 ################################################################################
