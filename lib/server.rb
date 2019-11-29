@@ -31,6 +31,7 @@ class Server
   attr_reader :child_pid
   attr_reader :id
   attr_reader :network_id
+  attr_reader :pinged_at
 
   attr_reader :method_proxy
   attr_reader :rcon
@@ -43,6 +44,7 @@ class Server
     @name                = name
     @id                  = Zlib::crc32(@name.to_s)
     @network_id          = [@id].pack("L").unpack("l").first
+    @pinged_at           = 0
 
     @details             = details
     @active              = details['active']
@@ -71,6 +73,7 @@ class Server
         authenticated: authenticated?,
         available: available?,
         container: container_alive?,
+        responsive: responsive?,
         rtt: @rtt.nil? ? '-' : "#{@rtt} ms"
       }.to_json)
     end
@@ -82,12 +85,21 @@ class Server
 
   def rtt=(value)
     if parent?
-      @rtt = value
+      @pinged_at = Time.now.to_f unless value.nil?
+      @rtt       = value
       update_websocket
       @rtt
     elsif child?
       self.method_proxy.rtt = value
     end
+  end
+
+  def unresponsive?
+    ((@pinged_at + PING_TIMEOUT) < Time.now.to_f)
+  end
+
+  def responsive?
+    !unresponsive?
   end
 
 ################################################################################
@@ -104,17 +116,17 @@ class Server
 
 ################################################################################
 
-  def running!(running=false)
-    unless Config.servers[@name].nil?
-      Config.servers[@name]['running'] = running
-      Config.save!
-    end
-    running
-  end
+  # def running!(running=false)
+  #   unless Config.servers[@name].nil?
+  #     Config.servers[@name]['running'] = running
+  #     Config.save!
+  #   end
+  #   running
+  # end
 
-  def running?
-    !!Config.servers[@name]['running']
-  end
+  # def running?
+  #   !!Config.servers[@name]['running']
+  # end
 
 ################################################################################
 
@@ -178,22 +190,29 @@ class Server
     self.start!
   end
 
-  def start!
-    self.start_container!
-    self.start_process!
-    self.start_rcon!
-
+  def start!(container=true)
     Timeout.timeout(60) do
-      sleep 1 while self.unavailable?
+      if container
+        self.start_container!
+        sleep 1 while container_dead?
+      end
+      if container_alive?
+        self.start_process!
+        self.start_rcon!
+
+        sleep 1 while self.unavailable?
+      end
     end
   end
 
-  def stop!
-    self.stop_rcon!
-    self.stop_process!
-    self.stop_container!
-
+  def stop!(container=true)
     Timeout.timeout(60) do
+      if container_alive?
+        self.stop_rcon!
+        self.stop_process!
+        self.stop_container! if container
+      end
+
       sleep 1 while self.available?
     end
   end
@@ -201,59 +220,77 @@ class Server
 ################################################################################
 
   def start_process!
-    unless alive?
-      @method_proxy = MethodProxy.new(self, Process.pid)
+    return true if alive?
 
-      @child_pid = Process.fork do
-        Thread.list.each do |thread|
-          thread.exit unless thread == Thread.main
-        end
+    @method_proxy = MethodProxy.new(self, Process.pid)
 
-        $0 = "Link Server: #{self.name}"
-        Thread.current.name = self.name
-        Thread.current[:started_at] = Time.now.to_f
-
-        @rcon = RCon.new(@name, @host, @client_port, @client_password)
-
-        self.method_proxy.start do |e|
-          unless e.class == Timeout::Error
-            Process.exit!
-          end
-        end
-
-        ThreadPool.execute do
-          schedule_chat
-          schedule_id
-          schedule_logistics
-          schedule_ping
-          schedule_research
-          schedule_research_current
-          schedule_signals
-        end
+    @child_pid = Process.fork do
+      Thread.list.each do |thread|
+        thread.exit unless thread == Thread.main
       end
-      Process.detach(@child_pid)
+
+      $0 = "Link Server: #{self.name}"
+      Thread.current.name = self.name
+      Thread.current[:started_at] = Time.now.to_f
+
+      @rcon = RCon.new(@name, @host, @client_port, @client_password)
 
       self.method_proxy.start do |e|
-        self.stop_process!
+        unless e.class == Timeout::Error
+          Process.exit!
+        end
+      end
+
+      ThreadPool.execute do
+        schedule_chat
+        schedule_id
+        schedule_logistics
+        schedule_ping
+        schedule_research
+        schedule_research_current
+        schedule_signals
       end
     end
+    Process.detach(@child_pid)
+
+    self.method_proxy.start do |e|
+      self.stop!(false)
+    end
+
+    ThreadPool.thread("#{@name}-watchdog") do
+      sleep PING_TIMEOUT
+      sleep 1 while responsive?
+      $logger.fatal(:server) { "[#{@name}] Watchdog Stopping" }
+      self.stop!(false)
+    end
+
+    true
   end
 
   def stop_process!
-    if alive?
-      Process.kill('INT', @child_pid)
-      self.method_proxy.stop
-    end
+    return true if dead?
+
+    Process.kill('INT', @child_pid)
+    self.method_proxy.stop
+    @rtt = nil
+
+    true
   end
 
 ################################################################################
 
   def start_container!
+    return true if container_alive?
+
     FileUtils.cp_r(Servers.factorio_mods, self.path)
 
-    command = %(/usr/bin/env chcon -Rt svirt_sandbox_file_t #{self.path})
-    $logger.info(:server) { "[#{self.name}] Command: #{command.inspect}" }
-    system command
+    run_command(:server, self.name,
+      %(/usr/bin/env),
+      %(chcon),
+      %(-Rt),
+      %(svirt_sandbox_file_t),
+      self.path
+    )
 
     run_command(:server, self.name,
       %(sudo),
@@ -274,22 +311,21 @@ class Server
       Config.factorio_docker_image
     )
 
-    running!(true)
+    # running!(true)
 
     true
   end
 
   def stop_container!
-    command = Array.new
-    command << %(sudo)
-    command << %(docker stop)
-    command << self.name
-    command = command.flatten.compact.join(' ')
+    return true if container_dead?
 
-    $logger.info(:server) { "[#{self.name}] Command: #{command.inspect}" }
-    system command
+    run_command(:server, self.name,
+      %(sudo),
+      %(docker stop),
+      self.name
+    )
 
-    running!(false)
+    # running!(false)
 
     true
   end

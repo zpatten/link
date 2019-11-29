@@ -21,6 +21,7 @@
     %th Authenticated?
     %th Available?
     %th Running?
+    %th Responsive?
     %th RTT
     %th Actions
   - Servers.all.sort_by { |server| server.name }.each do |server|
@@ -35,6 +36,7 @@
       %td{ id: "#{server.name}-authenticated" }= server.authenticated?
       %td{ id: "#{server.name}-available" }= server.available?
       %td{ id: "#{server.name}-container" }= server.container_alive?
+      %td{ id: "#{server.name}-responsive" }= server.responsive?
       %td{ id: "#{server.name}-rtt" }
         - if server.rtt.nil?
           \-
@@ -66,6 +68,8 @@
         el.innerHTML = server.available;
         var el = document.getElementById(server.name + "-container");
         el.innerHTML = server.container;
+        var el = document.getElementById(server.name + "-responsive");
+        el.innerHTML = server.responsive;
         var el = document.getElementById(server.name + "-rtt");
         el.innerHTML = server.rtt;
       };

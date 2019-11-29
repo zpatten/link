@@ -24,7 +24,7 @@ class MethodProxy
   def exception_wrapper(&block)
     result = nil
     begin
-      Timeout::timeout(TIMEOUT_METHOD_PROXY) do
+      Timeout::timeout(METHOD_PROXY_TIMEOUT) do
         result = block.call
       end
     rescue Exception => e
@@ -66,7 +66,7 @@ class MethodProxy
       type: :response,
       id: id,
       result: result,
-      expires_at: Time.now.to_f + TIMEOUT_RESPONSE
+      expires_at: Time.now.to_f + RESPONSE_TIMEOUT
     }
     data = Marshal.dump(data)
     socket.send(data, 0)

@@ -22,11 +22,11 @@ class ThreadPool
       @@thread_schedules
     end
 
-    def update_thread_count_metric(thread_group)
-      thread_count = thread_group.list.count
+    def update_thread_count_metric
+      thread_list = Thread.list.dup.delete_if { |t| t.nil? || t.name.nil? }
 
       Metrics[:thread_count].set(
-        thread_count,
+        thread_list.count,
         labels: { name: Thread.current.name }
       )
 
@@ -47,7 +47,7 @@ class ThreadPool
       end
       @@thread_group_persistent.add(thread)
 
-      update_thread_count_metric(@@thread_group_persistent)
+      update_thread_count_metric
 
       thread
     end
@@ -103,7 +103,7 @@ class ThreadPool
 
         thread_instrumentation(thread_name) do
           expires_in                  = [(schedule.frequency * 2), 10.0].max
-          expires_at                  = Time.now.to_f + TIMEOUT_THREAD
+          expires_at                  = Time.now.to_f + THREAD_TIMEOUT
           Thread.current[:expires_at] = expires_at
           Thread.current[:started_at] = Time.now.to_f
 
@@ -114,7 +114,7 @@ class ThreadPool
       end
       @@thread_group_scheduled.add(thread)
 
-      update_thread_count_metric(@@thread_group_scheduled)
+      update_thread_count_metric
 
       true
     end
@@ -215,11 +215,8 @@ class ThreadPool
           end
         end
 
-        ::Servers.all.each do |s|
-          if s.running?
-            s.start_process!
-            s.start_rcon!
-          end
+        ::Servers.all.each do |server|
+          server.start!(false)
         end
       end
 

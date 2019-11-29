@@ -326,7 +326,7 @@ class Servers
         }
         # server.stop_rcon!
         # sleep 1 while server.available?
-        server.stop_process!
+        server.stop!(false)
       end
     end
 

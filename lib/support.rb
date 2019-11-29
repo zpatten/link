@@ -119,7 +119,11 @@ end
 at_exit do
   $logger.fatal(:at_exit) { 'Shutting down!' }
   ThreadPool.shutdown!
-  Servers.shutdown! if master?
+  if master?
+    Servers.shutdown!
+    ItemType.save
+    Storage.save
+  end
 end
 
 def trap_signals
