@@ -179,8 +179,6 @@ class Server
   end
 
   def start!
-    return if self.available?
-
     self.start_container!
     self.start_process!
     self.start_rcon!
@@ -191,8 +189,6 @@ class Server
   end
 
   def stop!
-    return if self.unavailable?
-
     self.stop_rcon!
     self.stop_process!
     self.stop_container!
@@ -255,6 +251,10 @@ class Server
   def start_container!
     FileUtils.cp_r(Servers.factorio_mods, self.path)
 
+    command = %(/usr/bin/env chcon -Rt svirt_sandbox_file_t #{self.path})
+    $logger.info(:server) { "[#{self.name}] Command: #{command.inspect}" }
+    system command
+
     command = Array.new
     command << %(sudo)
     command << %(docker run)
@@ -274,10 +274,7 @@ class Server
     command << Config.factorio_docker_image
     command = command.flatten.compact.join(' ')
 
-    # $logger.info {%(chcon -Rt svirt_sandbox_file_t #{self.server_path})}
-    system %(/usr/bin/env chcon -Rt svirt_sandbox_file_t #{self.path})
-    # puts "command=#{command}"
-    $logger.info(:server) { "command=#{command}" }
+    $logger.info(:server) { "[#{self.name}] Command: #{command.inspect}" }
     system command
 
     running!(true)
@@ -292,8 +289,7 @@ class Server
     command << self.name
     command = command.flatten.compact.join(' ')
 
-    $logger.info(:server) { "command=#{command}" }
-    # puts "command=#{command}"
+    $logger.info(:server) { "[#{self.name}] Command: #{command.inspect}" }
     system command
 
     running!(false)
@@ -333,7 +329,6 @@ class Server
       Thread.list.collect do |t|
         OpenStruct.new(
           pid: Process.pid,
-          object_id: t.object_id,
           name: t.name,
           status: t.status,
           priority: t.priority,

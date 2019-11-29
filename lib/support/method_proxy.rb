@@ -31,7 +31,7 @@ class MethodProxy
       end
     rescue Exception => e
       @block.call(e) unless @block.nil?
-      $logger.fatal(:mproxy) { "Exception: #{e.message}" }
+      $logger.fatal(:mproxy) { "[#{tag}] Exception: #{e.message}" }
     end
     result
   end
@@ -41,19 +41,21 @@ class MethodProxy
       data = socket.recv(RECV_MAX_LEN)
       data = Marshal.load(data)
       id = data[:id]
-      $logger.debug(:mproxy) { "[#{@name}] #{data.ai}" }
+      $logger.debug(:mproxy) { "[#{tag}] #{data.ai}" }
       case data[:type]
       when :request
         args = data[:args]
-        tag = args.first.downcase #map(&:to_s).join('-')
-        ThreadPool.thread("#{@name}-method-call-#{tag}") do
-          result = call_method(*args)
-          send_response(id, result)
+        t = [tag, 'call', args.first.downcase].join('-')
+        ThreadPool.thread(t) do
+          # exception_wrapper do
+            result = call_method(*args)
+            send_response(id, result)
+          # end
         end
       when :response
         unless @responses[id].nil?
           @responses[id].fulfill(data[:result])
-          $logger.debug(:mproxy) { "[#{@name}] Fulfilled Response (#{id})" }
+          $logger.debug(:mproxy) { "[#{tag}] Fulfilled Response (#{id})" }
         end
       else
         raise "Invalid Type"
@@ -89,7 +91,7 @@ class MethodProxy
     # resolve_on_timeout = [false, nil, Timeout::Error]
     # value!(FUTURE_TIMEOUT, nil, resolve_on_timeout)
     result = @responses[id].value
-    $logger.debug(:mproxy) { "[#{@name}] Resolved Response(#{id})" }
+    $logger.debug(:mproxy) { "[#{tag}] Resolved Response(#{id})" }
 
     result
 
@@ -101,12 +103,21 @@ class MethodProxy
     (parent? ? @parent_thread : @child_thread)
   end
 
+  def tag
+    @tag ||= begin
+      t = Array.new
+      t << @name
+      t << 'mproxy'
+      t << (parent? ? 'parent' : 'child')
+      t.flatten.compact.map(&:to_s).map(&:downcase).join('-')
+    end
+  end
+
   def start(&block)
     @block = block
     (parent? ? @parent_socket : @child_socket).close
-    tag = parent? ? 'parent' : 'child'
 
-    event_thread = ThreadPool.thread("#{@name}-method-proxy-#{tag}") do
+    event_thread = ThreadPool.thread(tag) do
       event_loop
     end
 
@@ -145,7 +156,7 @@ class MethodProxy
     # if parent?
       exception_wrapper do
         id = send_request(*args)
-        $logger.debug(:mproxy) { "[#{@name}] method_missing(#{id}): #{args.ai}" }
+        $logger.debug(:mproxy) { "[#{tag}] method_missing(#{id}): #{args.ai}" }
         recv_response(id)
       end
     # else

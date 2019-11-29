@@ -113,21 +113,11 @@ class Signals
       signals
     end
 
-    def rcon_lookup_item_type(item_name)
-      cache_key = "rcon-item-type-#{item_name}"
-      item_type = MemoryCache.fetch(cache_key) do
-        command = %(remote.call('link', 'lookup_item_type', '#{item_name}'))
-        type = Servers.random.rcon_command(command: command)
-        redo if type.nil?
-        type.chomp
-      end
-    end
-
     def update_inventory_signals
       signals = Array.new
       Storage.clone.each do |item_name, item_count|
         item_name = 'link-signal-electricity' if item_name == 'electricity'
-        item_type = rcon_lookup_item_type(item_name)
+        item_type = ItemType[item_name] #rcon_lookup_item_type(item_name)
         item_count = if item_name == 'link-signal-electricity'
           item_count.div(GIGAJOULE)
         else

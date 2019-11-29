@@ -86,6 +86,7 @@ class Servers
 ################################################################################
 
     def backup
+      $logger.debug(:servers) { "Backing up servers..." }
       self.all.each do |server|
         server.backup(true) if server.available?
       end
@@ -111,7 +112,7 @@ class Servers
     end
 
     def trim_save_files
-      $logger.info(:backup) { "Trimming save files..." }
+      $logger.debug(:servers) { "Trimming save files..." }
       save_file_hash = Hash.new
       save_files = Dir.glob(File.join(factorio_saves, "*.zip"), File::FNM_CASEFOLD)
       save_files.each do |save_file|
@@ -160,7 +161,7 @@ class Servers
 
         delete_save_files.flatten!.uniq!
         delete_save_files.each do |delete_save_file|
-          $logger.debug(:backup) { "Trimming save file #{File.basename(delete_save_file).inspect}" }
+          $logger.debug(:servers) { "Trimming save file #{File.basename(delete_save_file).inspect}" }
         end
         FileUtils.rm(delete_save_files, force: true)
       end
@@ -191,7 +192,7 @@ class Servers
 
         FileUtils.rm_r(server.path)
 
-        $logger.info(:servers) { "Deleted server #{server_name}" }
+        $logger.warn(:servers) { "Deleted server #{server_name}" }
       end
     end
 
@@ -321,7 +322,7 @@ class Servers
     def shutdown!
       self.all.each do |server|
         server.stop_rcon!
-        $logger.info(:servers) { "[#{server.id}] Shutdown server #{server.host_tag}" }
+        $logger.warn(:servers) { "[#{server.id}] Shutdown server #{server.host_tag}" }
       end
     end
 

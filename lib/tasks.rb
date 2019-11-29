@@ -10,7 +10,6 @@ end
 
 def schedule_task_backup
   ThreadPool.schedule_task(:backup) do
-    $logger.info(:backup) { "Backing up servers..." }
     Servers.backup
     Servers.trim_save_files
   end
@@ -19,5 +18,13 @@ end
 def schedule_task_prometheus
   ThreadPool.schedule_task(:prometheus) do
     Metrics.push
+  end
+end
+
+
+def schedule_task_autosave
+  ThreadPool.schedule_task(:autosave) do
+    ItemType.save
+    Storage.save
   end
 end

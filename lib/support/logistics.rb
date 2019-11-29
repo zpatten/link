@@ -12,7 +12,7 @@ class Logistics
 ################################################################################
 
   def calculate_item_totals
-    @item_totals = Hash.new
+    @item_totals = Hash.new(0)
     @item_requests.each do |unit_number, item_counts|
       @item_totals.merge!(item_counts) { |k,o,n| o + n }
     end
@@ -24,11 +24,10 @@ class Logistics
 ################################################################################
 
   def calculate_item_ratios
-    @item_ratios = Hash.new
+    @item_ratios = Hash.new(0.0)
+    storage_clone = @server.method_proxy.Storage(:select, @item_totals.keys)
     @item_totals.each do |item_name, item_count|
-      # puts "#{item_name.inspect}=#{item_count.inspect}"
-      # item_ratio = Storage[item_name].to_f / item_count.to_f
-      storage_count = @server.method_proxy.Storage(:[], item_name)
+      storage_count = storage_clone[item_name]
       item_ratio = if storage_count >= item_count
         1.0
       elsif storage_count > 0
@@ -49,10 +48,6 @@ class Logistics
     @item_ratios.all? { |item_name, item_ratio| item_ratio >= 1.0 }
   end
 
-  def can_fulfill_item?(item_name)
-    @item_ratios[item_name] >= 1.0
-  end
-
   def count_to_fulfill(item_name, item_count)
     if @item_ratios[item_name] >= 1.0
       item_count
@@ -63,27 +58,26 @@ class Logistics
     end
   end
 
-  def acquire_item(item_name, item_count)
-    @server.method_proxy.Storage(:remove, item_name, item_count)
-  end
-
   def calculate_fulfillment_items
-    @items_to_fulfill = Hash.new
+    item_fulfillment_totals = Hash.new(0)
+    @items_to_fulfill = Hash.new(0)
+
     if can_fulfill_all?
       @items_to_fulfill = @item_requests
-      @server.method_proxy.Storage(:bulk_remove, @item_totals)
+      item_fulfillment_totals = @item_totals
     else
       @item_requests.each do |unit_number, items|
         items.each do |item_name, item_count|
-          if (fulfill_count = count_to_fulfill(item_name, item_count)) > 0
-            if (actual_count = acquire_item(item_name, fulfill_count)) > 0
-              @items_to_fulfill[unit_number] ||= Hash.new
-              @items_to_fulfill[unit_number][item_name] = actual_count
-            end
-          end
+          fulfill_count = count_to_fulfill(item_name, item_count)
+          item_fulfillment_totals[item_name] += fulfill_count
+
+          @items_to_fulfill[unit_number] ||= Hash.new
+          @items_to_fulfill[unit_number][item_name] = fulfill_count
         end
       end
     end
+
+    @server.method_proxy.Storage(:bulk_remove, item_fulfillment_totals)
 
     true
   end

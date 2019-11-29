@@ -176,9 +176,14 @@ class ThreadPool
 
     def shutdown!
       clear_schedules
+      while running?
+        $stderr.puts "Waiting for threads to finish..."
+        sleep 1
+      end
       Thread.list.each do |thread|
         thread.exit unless thread == Thread.main
       end
+      Thread.main.exit
     end
 
     def running?
@@ -212,6 +217,7 @@ class ThreadPool
 
       clear_schedules
       schedule_task_prometheus
+      schedule_task_autosave if master?
       schedule_task_backup if master?
       schedule_task_statistics if master?
       yield if block_given?
@@ -219,6 +225,7 @@ class ThreadPool
       loop do
         @@thread_group.list.each do |thread|
           unless thread[:expires_at].nil? || Time.now.to_f <= thread[:expires_at]
+            $logger.fatal(:thread) { "Thread Expired: #{thread.name}" }
             thread.exit
           end
         end

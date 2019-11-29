@@ -6,7 +6,7 @@ class Storage
 
 ################################################################################
 
-    @@storage = Concurrent::Hash.new(0)
+    @@storage ||= Concurrent::Hash.new(0)
     @@storage_delta_history ||= Hash.new { |h,k| h[k] = Array.new }
     @@storage_delta ||= Hash.new(0)
     @@storage_mutex ||= Mutex.new
@@ -55,14 +55,16 @@ class Storage
       deep_clone(self.storage)
     end
 
+    def select(item_names)
+      self.clone.select do |item_name, item_count|
+        item_names.include?(item_name)
+      end
+    end
+
 ################################################################################
 
     def add(item_name, item_count)
       self.storage[item_name] += item_count
-      Storage.save
-
-      update_websocket(item_name, self.storage[item_name])
-      storage_item_instrumentation(item_name, self.storage[item_name])
 
       item_count
     end
@@ -77,10 +79,6 @@ class Storage
       if self.storage[item_name] == 0
         self.storage.delete(item_name)
       end
-      Storage.save
-
-      update_websocket(item_name, self.storage[item_name])
-      storage_item_instrumentation(item_name, self.storage[item_name])
 
       removed_count
     end
@@ -89,14 +87,12 @@ class Storage
 
     def bulk_add(items)
       self.storage.merge!(items) { |k,o,n| o + n }
-      Storage.save
 
       true
     end
 
     def bulk_remove(items)
       self.storage.merge!(items) { |k,o,n| o - n }
-      Storage.save
 
       true
     end
@@ -124,7 +120,7 @@ class Storage
 
       @@previous_storage ||= self.clone
 
-      self.storage.keys.each do |item_name|
+      self.storage.clone.each do |item_name, item_count|
         count_delta = (self.storage[item_name] - (@@previous_storage[item_name] || 0))
         @@storage_delta_history[item_name] << count_delta
         delta_counts = [@@storage_delta_history[item_name].size, 60].min
@@ -139,7 +135,9 @@ class Storage
           format_delta_count(min_rate)
         ]
 
+        update_websocket(item_name, item_count)
         storage_delta_instrumentation(item_name, sec_rate)
+        storage_item_instrumentation(item_name, item_count)
       end
 
       @@previous_storage = self.clone

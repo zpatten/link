@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'support/config'
+require_relative 'support/item_type'
 require_relative 'support/logger'
 require_relative 'support/logistics'
 require_relative 'support/memory_cache'
