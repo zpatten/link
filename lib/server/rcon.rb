@@ -24,32 +24,33 @@ class Server
     attr_reader :name
     attr_reader :id
 
-    def initialize(name, host, port, password)
-      @name           = name
-      @host           = host
-      @port           = port
-      @password       = password
+    def initialize(name:, host:, port:, password:, debug: false)
+      @name             = name
+      @host             = host
+      @port             = port
+      @password         = password
+      @debug            = debug
 
-      @id = Zlib::crc32(@name.to_s)
+      @id               = Zlib::crc32(@name.to_s)
 
-      @authenticated  = false
+      @authenticated    = false
 
-      @manager_thread = nil
-      @manager_mutex = Mutex.new
-      @socket_rx_thread    = nil
-      @socket_tx_thread    = nil
+      @manager_thread   = nil
+      @manager_mutex    = Mutex.new
+      @socket_rx_thread = nil
+      @socket_tx_thread = nil
 
-      @callbacks      = Concurrent::Hash.new
-      @responses      = Concurrent::Hash.new
-      @packet_queue   = ::Queue.new
+      @callbacks        = Concurrent::Hash.new
+      @responses        = Concurrent::Hash.new
+      @packet_queue     = ::Queue.new
 
-      @socket         = nil
-      @socket_mutex   = Mutex.new
+      @socket           = nil
+      @socket_mutex     = Mutex.new
     end
 
 ################################################################################
 
-    def rcon_tag
+    def tag
       @name
     end
 
@@ -58,8 +59,7 @@ class Server
     # RCON Executor
     # Switch between using 'c' or 'silent-command' depending on the debug flag.
     def rcon_executor
-      # (debug? ? 'c' : 'silent-command')
-      'silent-command'
+      (@debug ? 'c' : 'silent-command')
     end
 
     def build_command(command)
@@ -87,7 +87,7 @@ class Server
     end
 
     def unavailable?
-      (disconnected? || unauthenticated?)
+      !available?
     end
 
 ################################################################################
@@ -95,13 +95,13 @@ class Server
     def startup!
       return if !@manager_thread.nil? && @manager_thread.alive?
       @manager_mutex.synchronize do
-        @manager_thread = ThreadPool.thread("#{rcon_tag}-connect") do
+        @manager_thread = ThreadPool.thread("#{tag}-connect") do
           while disconnected? do
             begin
               connect!
               break if connected?
             rescue Errno::ECONNABORTED, Errno::ECONNREFUSED, Errno::ECONNRESET => e
-              $logger.fatal(:rcon) { "[#{rcon_tag}] Caught Exception: #{e.message}" }
+              $logger.fatal(:rcon) { "[#{tag}] Caught Exception: #{e.message}" }
               sleep 3
             end
           end
@@ -109,7 +109,7 @@ class Server
           socket_rx_thread
           authenticate if connected? && unauthenticated?
         rescue => e
-          $logger.fatal(:rcon) { "[#{rcon_tag}] Caught Exception: #{e.full_message}" }
+          $logger.fatal(:rcon) { "[#{tag}] Caught Exception: #{e.full_message}" }
           shutdown!
         end
       end
@@ -135,24 +135,24 @@ class Server
 
     def socket_tx_thread
       return if !@socket_tx_thread.nil? && @socket_tx_thread.alive?
-      @socket_tx_thread = ThreadPool.thread("#{rcon_tag}-socket-tx") do
+      @socket_tx_thread = ThreadPool.thread("#{tag}-socket-tx") do
         send_packet(get_queued_packet.packet_fields) while connected?
       rescue Errno::EPIPE
         startup!
       rescue => e
-        $logger.fatal(:rcon) { "[#{rcon_tag}] Caught Exception: #{e.full_message}" }
+        $logger.fatal(:rcon) { "[#{tag}] Caught Exception: #{e.full_message}" }
         shutdown!
       end
     end
 
     def socket_rx_thread
       return if !@socket_rx_thread.nil? && @socket_rx_thread.alive?
-      @socket_rx_thread = ThreadPool.thread("#{rcon_tag}-socket-rx") do
+      @socket_rx_thread = ThreadPool.thread("#{tag}-socket-rx") do
         receive_packet while connected?
       rescue Errno::EPIPE
         startup!
       rescue => e
-        $logger.fatal(:rcon) { "[#{rcon_tag}] Caught Exception: #{e.full_message}" }
+        $logger.fatal(:rcon) { "[#{tag}] Caught Exception: #{e.full_message}" }
         shutdown!
       end
     end

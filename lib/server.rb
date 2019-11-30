@@ -45,7 +45,6 @@ class Server
     @id                  = Zlib::crc32(@name.to_s)
     @network_id          = [@id].pack("L").unpack("l").first
     @pinged_at           = 0
-    @started_at          = 0
 
     @details             = details
     @active              = details['active']
@@ -206,7 +205,12 @@ class Server
       Thread.current.name = self.name
       Thread.current[:started_at] = Time.now.to_f
 
-      @rcon = RCon.new(@name, @host, @client_port, @client_password)
+      @rcon = RCon.new(
+        name: @name,
+        host: @host,
+        port: @client_port,
+        password: @client_password
+      )
 
       self.method_proxy.start do |e|
         unless e.class == Timeout::Error
@@ -242,6 +246,14 @@ class Server
     @rtt = nil
 
     true
+  end
+
+  def process_alive?
+    !!Process.kill(0, @child_pid) rescue false
+  end
+
+  def process_dead?
+    !process_alive?
   end
 
 ################################################################################
@@ -291,6 +303,23 @@ class Server
     )
 
     true
+  end
+
+  def container_alive?
+    key = [self.name, 'container-alive'].join('-')
+    MemoryCache.fetch(key, expires_in: 10) do
+      output = run_command(:server, self.name,
+        %(sudo),
+        %(docker inspect),
+        %(-f '{{.State.Running}}'),
+        self.name
+      )
+      (output == 'true')
+    end
+  end
+
+  def container_dead?
+    !container_alive?
   end
 
 ################################################################################
@@ -348,45 +377,12 @@ class Server
 
 ################################################################################
 
-  def starting?
-    ((@started_at + PING_TIMEOUT) < Time.now.to_f)
-  end
-
   def unresponsive?
     ((@pinged_at + PING_TIMEOUT) < Time.now.to_f)
   end
 
   def responsive?
     !unresponsive?
-  end
-
-################################################################################
-
-  def container_alive?
-    key = [self.name, 'container-alive'].join('-')
-    MemoryCache.fetch(key, expires_in: 10) do
-      output = run_command(:server, self.name,
-        %(sudo),
-        %(docker inspect),
-        %(-f '{{.State.Running}}'),
-        self.name
-      )
-      (output == 'true')
-    end
-  end
-
-  def container_dead?
-    !container_alive?
-  end
-
-################################################################################
-
-  def process_alive?
-    !!Process.kill(0, @child_pid) rescue false
-  end
-
-  def process_dead?
-    !process_alive?
   end
 
 ################################################################################
@@ -402,13 +398,7 @@ class Server
   end
 
   def disconnected?
-    if parent? && process_alive?
-      self.method_proxy.disconnected?
-    elsif child?
-      self.rcon.disconnected?
-    else
-      true
-    end
+    !connected?
   end
 
 ################################################################################
@@ -424,13 +414,7 @@ class Server
   end
 
   def unauthenticated?
-    if parent? && process_alive?
-      self.method_proxy.unauthenticated?
-    elsif child?
-      self.rcon.unauthenticated?
-    else
-      true
-    end
+    !authenticated?
   end
 
 ################################################################################
@@ -446,13 +430,7 @@ class Server
   end
 
   def unavailable?
-    if parent? && process_alive?
-      self.method_proxy.unavailable?
-    elsif child?
-      self.rcon.unavailable?
-    else
-      true
-    end
+    !available?
   end
 
 ################################################################################

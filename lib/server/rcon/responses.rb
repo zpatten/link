@@ -10,7 +10,7 @@ class Server
       def register_response(packet_fields)
         unless @responses[packet_fields.id].nil?
           @responses[packet_fields.id].fulfill(packet_fields)
-          $logger.debug(:rcon) { "[#{rcon_tag}:#{packet_fields.id}] Fulfilled Response (#{packet_fields.id})" }
+          $logger.debug(:rcon) { "[#{tag}] Fulfilled Response (#{packet_fields.id})" }
         end
 
         true
@@ -18,7 +18,7 @@ class Server
 
       def find_response(packet_id)
         packet_fields = @responses[packet_id].value
-        $logger.debug(:rcon) { "[#{rcon_tag}] Resolved Response(#{packet_id})" }
+        $logger.debug(:rcon) { "[#{tag}] Resolved Response(#{packet_id})" }
         packet_fields
 
       ensure

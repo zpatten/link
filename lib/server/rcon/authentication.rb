@@ -19,7 +19,7 @@ class Server
 
       def authenticate_callback(host, packet_fields)
         @authenticated = true
-        $logger.info(:rcon) { "[#{rcon_tag}] Authenticated to #{host_tag}" }
+        $logger.info(:rcon) { "[#{tag}] Authenticated to #{host_tag}" }
       end
 
     end

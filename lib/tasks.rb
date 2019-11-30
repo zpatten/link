@@ -37,14 +37,6 @@ def schedule_task_watchdog
         }
         server.restart!
       end
-      # unless server.starting?
-      #   if server.unresponsive && (server.process_alive? || server.container_alive?)
-      #     $logger.warn(:servers) {
-      #       "[#{server.name}] Detected Unresponsive Server - Restarting"
-      #     }
-      #     server.restart!
-      #   end
-      # end
     end
   end
 end

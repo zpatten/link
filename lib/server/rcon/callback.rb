@@ -15,8 +15,8 @@ class Server
       def packet_callback(packet_fields)
         unless (pc = @callbacks.delete(packet_fields.id)).nil?
           @responses.delete(pc.id)
-          tag = [rcon_tag, 'callback', pc.what, pc.id].compact.join('-')
-          ThreadPool.thread(tag, priority: 3) do
+          tag = [tag, 'callback', pc.what, pc.id].compact.join('-')
+          ThreadPool.thread(tag) do
             pc.callback.call(@name, packet_fields)
           end
         end

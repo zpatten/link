@@ -18,7 +18,7 @@ class Server
           type: type,
           payload: payload
         )
-        $logger.debug(:rcon) { "[#{rcon_tag}] Built Packet ID #{packet_fields.id}" }
+        $logger.debug(:rcon) { "[#{tag}] Built Packet ID #{packet_fields.id}" }
         packet_fields
       end
 
@@ -55,9 +55,9 @@ class Server
         buffer.rewind
         packet_fields = decode_packet(buffer.read)
         if packet_fields.payload.to_s =~ /error/i then
-          $logger.error(:rcon) { %([#{rcon_tag}:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
+          $logger.error(:rcon) { %([#{tag}:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
         else
-          $logger.debug(:rcon) { %([#{rcon_tag}:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
+          $logger.debug(:rcon) { %([#{tag}:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
         end
         register_response(packet_fields)
         packet_fields
@@ -67,7 +67,7 @@ class Server
         received_packet = recv_packet
         return if received_packet.nil?
 
-        raise "[#{rcon_tag}] Authentication Failed!" if received_packet.id == -1
+        raise "[#{tag}] Authentication Failed!" if received_packet.id == -1
         packet_callback(received_packet)
       end
 
@@ -88,7 +88,7 @@ class Server
           retry
         end
 
-        $logger.debug(:rcon) { %([#{rcon_tag}:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
+        $logger.debug(:rcon) { %([#{tag}:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 
         total_sent
       rescue Errno::ECONNABORTED, Errno::ESHUTDOWN
