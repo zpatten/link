@@ -223,6 +223,7 @@ class ThreadPool
       if master?
         schedule_task_autosave
         schedule_task_backup
+        schedule_task_signals
         schedule_task_statistics
         schedule_task_watchdog
       end

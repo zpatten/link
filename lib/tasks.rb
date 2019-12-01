@@ -28,6 +28,12 @@ def schedule_task_autosave
   end
 end
 
+def schedule_task_signals
+  ThreadPool.schedule_task(:signals) do
+    Signals.update_inventory_signals
+  end
+end
+
 def schedule_task_watchdog
   ThreadPool.schedule_task(:watchdog, timeout: 300) do
     Servers.all.each do |server|

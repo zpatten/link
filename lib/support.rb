@@ -169,7 +169,8 @@ class RescueRetry
         Errno::ENOTSOCK,
         Errno::EPIPE,
         IOError,
-        Net::OpenTimeout
+        Net::OpenTimeout,
+        RuntimeError
       ]
     end
 

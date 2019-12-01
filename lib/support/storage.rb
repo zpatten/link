@@ -53,9 +53,10 @@ class Storage
     end
 
     def select(item_names)
-      self.clone.select do |item_name, item_count|
+      selected_items = self.clone.select do |item_name, item_count|
         item_names.include?(item_name)
       end
+      Hash.new(0).merge(selected_items)
     end
 
     def sanitize_item_name(item_name)
@@ -69,43 +70,51 @@ class Storage
 ################################################################################
 
     def add(item_name, item_count)
-      item_name = sanitize_item_name(item_name)
+      RescueRetry.attempt do
+        item_name = sanitize_item_name(item_name)
 
-      self.storage[item_name] += item_count
+        self.storage[item_name] += item_count
 
-      item_count
+        item_count
+      end
     end
 
     def remove(item_name, item_count)
-      removed_count = if self.storage[item_name] < item_count
-        self.storage[item_name]
-      else
-        item_count
-      end
-      self.storage[item_name] -= removed_count
-      if self.storage[item_name] == 0
-        self.storage.delete(item_name)
-      end
+      RescueRetry.attempt do
+        removed_count = if self.storage[item_name] < item_count
+          self.storage[item_name]
+        else
+          item_count
+        end
+        self.storage[item_name] -= removed_count
+        if self.storage[item_name] == 0
+          self.storage.delete(item_name)
+        end
 
-      removed_count
+        removed_count
+      end
     end
 
 ################################################################################
 
     def bulk_add(items)
-      items.transform_keys! do |item_name|
-        sanitize_item_name(item_name)
+      RescueRetry.attempt do
+        items.transform_keys! do |item_name|
+          sanitize_item_name(item_name)
+        end
+
+        self.storage.merge!(items) { |k,o,n| o + n }
+
+        true
       end
-
-      self.storage.merge!(items) { |k,o,n| o + n }
-
-      true
     end
 
     def bulk_remove(items)
-      self.storage.merge!(items) { |k,o,n| o - n }
+      RescueRetry.attempt do
+        self.storage.merge!(items) { |k,o,n| o - n }
 
-      true
+        true
+      end
     end
 
 ################################################################################

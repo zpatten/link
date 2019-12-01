@@ -38,9 +38,6 @@ class Signals
 
     def tx(network_id=0, server_id: nil, force: false)
       network_id = scrub_network_id(network_id)
-      if network_id == :inventory
-        Signals.update_inventory_signals
-      end
 
       $logger.debug(:signals_tx) { "Processing Circuit Network ID: #{network_id.ai}" }
 
