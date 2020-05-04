@@ -1,15 +1,19 @@
-require "constants"
-require "support"
-require "util"
+require 'constants'
+require 'support'
+require 'util'
 
-require "control.init"
-require "control.config"
-require "control.master"
-require "control.entity"
-require "control.console-chat"
-require "control.console-command"
-require "control.command"
-require "control.research"
-require "control.logistics"
-require "control.combinator"
-require "control.remote"
+require 'control.combinator'
+require 'control.command'
+require 'control.config'
+require 'control.console-chat'
+require 'control.console-command'
+require 'control.entity'
+require 'control.gui'
+require 'control.init'
+require 'control.logistics'
+require 'control.master'
+require 'control.research'
+require 'control.servers'
+require 'control.shortcuts'
+
+require 'control.remote'

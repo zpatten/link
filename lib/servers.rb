@@ -47,6 +47,23 @@ class Servers
       @@servers.values
     end
 
+    def list
+      server_list = Hash.new
+      self.all.collect do |server|
+        if server.available?
+          server_list[server.name] = {
+            name: server.name,
+            host: scrub_host(server.host),
+            port: server.factorio_port,
+            research: server.research,
+            responsive: server.responsive?,
+            rtt: server.rtt
+          }
+        end
+      end
+      server_list
+    end
+
 ################################################################################
 
     def start!
@@ -304,6 +321,7 @@ class Servers
       server_adminlist_path = File.join(server.config_path, 'server-adminlist.json')
       IO.write(server_adminlist_path, JSON.pretty_generate(Config.server_value(server.name, :admins)))
 
+      FileUtils.rm_r(server.mods_path)
       FileUtils.cp_r(factorio_mods, server.path)
 
       Config['servers'] ||= Hash.new

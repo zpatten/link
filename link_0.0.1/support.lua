@@ -116,7 +116,9 @@ function link_build_data(args)
 
   local t = LINK_TINTS[o.name] or LINK_TINT
 
-  link_add_tint(o, t)
+  if o.type ~= 'shortcut' then
+    link_add_tint(o, t)
+  end
 
   return o
 end
@@ -183,7 +185,7 @@ function link_tint_icon(o, tint)
       o.icons = {
         {
           icon = o.icon,
-          icon_size = o.icon_size or 32
+          icon_size = o.icon_size or 64
         }
       }
     end

@@ -75,29 +75,13 @@ end
 
 parser.parse!(ARGV.dup)
 
-def process_alive?(pid)
-  Process.kill(0, pid)
-  true
-
-rescue Errno::ESRCH
-  false
-end
-
 def start_link
   if $foreground
-    Config.load
-    Storage.load
-    $0 = 'Link Server'
-    IO.write('link.pid', Process.pid)
-    ThreadPool.execute
+    execute
   else
     Process.fork do
-      Process.daemon(true, false)
-      Config.load
-      Storage.load
-      $0 = 'Link Server'
-      IO.write('link.pid', Process.pid)
-      ThreadPool.execute
+      Process.daemon(true)
+      execute
     end
   end
 end
@@ -108,9 +92,9 @@ def start_watchdog(pid)
     $0 = 'Link Watchdog'
     sleep 1
     $logger.info(:watchdog) { "Started" }
-    IO.write('link-watchdog.pid', Process.pid)
+    create_pid_file(LINK_WATCHDOG_PID_FILE)
     loop do
-      pid = IO.read('link.pid').to_i
+      pid = read_pid_file(LINK_SERVER_PID_FILE)
       unless process_alive?(pid)
         start_link
       end
@@ -120,25 +104,8 @@ def start_watchdog(pid)
 end
 
 if $stop
-  begin
-    Process.kill('TERM', IO.read('link-watchdog.pid').to_i)
-  rescue Errno::ESRCH, Errno::ENOENT
-    puts "Failed to find Link watchdog process!"
-  end
-  begin
-    FileUtils.rm('link-watchdog.pid')
-  rescue Errno::ENOENT
-  end
-
-  begin
-    Process.kill('TERM', IO.read('link.pid').to_i)
-  rescue Errno::ESRCH, Errno::ENOENT
-    puts "Failed to find Link process!"
-  end
-  begin
-    FileUtils.rm('link.pid')
-  rescue Errno::ENOENT
-  end
+  stop_process(LINK_WATCHDOG_PID_FILE, 'Link Watchdog')
+  stop_process(LINK_SERVER_PID_FILE, 'Link Server')
 end
 
 if $start

@@ -33,6 +33,7 @@ function handle_link_command(event)
     printer.print("  - Transmitter Combinator Count: "..table_size(global.link_transmitter_combinators))
     printer.print("  - Event Count: "..table_size(global.link_events))
     printer.print("  - Command Whitelist: "..serpent.block(global.link_command_whitelist))
+    printer.print("  - Servers: "..serpent.block(global.link_server_list))
   end
 end
 

@@ -205,13 +205,13 @@ end
 function set_link_receiver_combinator(force, json)
   local link_signal_networks = game.json_to_table(json)
 
-  if not global.rx_signals then global.rx_signals = {} end
+  if not global.link_rx_signals then global.link_rx_signals = {} end
 
   for network_id, network_signals in pairs(link_signal_networks) do
-    if force or not global.rx_signals[network_id] then
-      global.rx_signals[network_id] = network_signals
+    if force or not global.link_rx_signals[network_id] then
+      global.link_rx_signals[network_id] = network_signals
     else
-      local signals_map = map_signals(global.rx_signals[network_id])
+      local signals_map = map_signals(global.link_rx_signals[network_id])
 
       for _, s in pairs(network_signals) do
         local existing_signal = signals_map[s.signal.name]
@@ -225,11 +225,11 @@ function set_link_receiver_combinator(force, json)
           end
         else
           link_log('SIGNALS-RX', string.format('Create Signal[%s]: %s (%d)', network_id, s.signal.name, s.count))
-          table.insert(global.rx_signals[network_id], s)
+          table.insert(global.link_rx_signals[network_id], s)
         end
       end
     end
-    global.rx_signals[network_id] = scrub_signals(global.rx_signals[network_id])
+    global.link_rx_signals[network_id] = scrub_signals(global.link_rx_signals[network_id])
   end
 
   -- Receiver
@@ -243,7 +243,7 @@ function set_link_receiver_combinator(force, json)
 
       link_log('SIGNALS-RX', string.format('Processing Network ID[%d]: %d', unit_number, link_network_id))
 
-      behaviour.parameters = { parameters = global.rx_signals[link_network_id] }
+      behaviour.parameters = { parameters = global.link_rx_signals[link_network_id] }
       behaviour.enabled = true
     end
   end
@@ -258,7 +258,7 @@ function set_link_receiver_combinator(force, json)
 
       link_log('SIGNALS-RX', string.format('Processing Network ID[%d]: %s', unit_number, link_network_id))
 
-      behaviour.parameters = { parameters = global.rx_signals[link_network_id] }
+      behaviour.parameters = { parameters = global.link_rx_signals[link_network_id] }
       behaviour.enabled = true
     end
   end

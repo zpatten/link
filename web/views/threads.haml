@@ -9,8 +9,7 @@
   - @threads.each do |thread|
     %tr
       %td= thread.pid
-      %td.align-left
-        %pre= thread.name
+      %td.align-left= thread.name
       %td= thread.status
       %td= thread.priority
       %td= (Time.now.to_f - thread.started_at).round(1)

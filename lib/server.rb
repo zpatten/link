@@ -2,6 +2,7 @@
 
 require_relative 'server/chat'
 require_relative 'server/id'
+require_relative 'server/list'
 require_relative 'server/logistics'
 require_relative 'server/ping'
 require_relative 'server/rcon'
@@ -14,6 +15,7 @@ class Server
 
   include Server::Chat
   include Server::ID
+  include Server::List
   include Server::Logistics
   include Server::Ping
   include Server::Research
@@ -41,7 +43,7 @@ class Server
 ################################################################################
 
   def initialize(name, details)
-    @name                = name
+    @name                = name.dup
     @id                  = Zlib::crc32(@name.to_s)
     @network_id          = [@id].pack("L").unpack("l").first
     @pinged_at           = 0
@@ -164,7 +166,7 @@ class Server
 
   def restart!(container=true)
     self.stop!(container)
-    sleep 1
+    sleep 3
     self.start!(container)
   end
 
@@ -226,6 +228,7 @@ class Server
         schedule_logistics
         schedule_research
         schedule_research_current
+        schedule_server_list
         schedule_signals
       end
     end
@@ -272,7 +275,6 @@ class Server
     )
 
     run_command(:server, self.name,
-      %(sudo),
       %(docker run),
       %(--rm),
       %(--detach),
@@ -281,14 +283,15 @@ class Server
       %(-e FACTORIO_PORT="#{self.factorio_port}"),
       %(-e FACTORIO_RCON_PASSWORD="#{self.client_password}"),
       %(-e FACTORIO_RCON_PORT="#{self.client_port}"),
-      %(-e PGID="$(id -g)"),
       %(-e PUID="$(id -u)"),
-      %(-e RUN_CHOWN="false"),
-      %(--volume=#{self.config_path}:/opt/factorio/config),
-      %(--volume=#{self.mods_path}:/opt/factorio/mods),
-      %(--volume=#{self.saves_path}:/opt/factorio/saves),
+      %(-e PGID="$(id -g)"),
+      %(--volume=#{self.path}:/factorio),
       Config.factorio_docker_image
     )
+
+      # %(--volume=#{self.config_path}:/opt/factorio/config),
+      # %(--volume=#{self.mods_path}:/opt/factorio/mods),
+      # %(--volume=#{self.saves_path}:/opt/factorio/saves),
 
     true
   end
@@ -297,7 +300,6 @@ class Server
     return true if container_dead?
 
     run_command(:server, self.name,
-      %(sudo),
       %(docker stop),
       self.name
     )
@@ -309,7 +311,6 @@ class Server
     key = [self.name, 'container-alive'].join('-')
     MemoryCache.fetch(key, expires_in: 10) do
       output = run_command(:server, self.name,
-        %(sudo),
         %(docker inspect),
         %(-f '{{.State.Running}}'),
         self.name

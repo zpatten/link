@@ -13,6 +13,7 @@ require 'json'
 require 'logger'
 require 'ostruct'
 require 'pp'
+require 'resolv'
 require 'securerandom'
 require 'socket'
 require 'timeout'
@@ -28,12 +29,17 @@ require 'concurrent'
 GIGAJOULE            = 10 ** 9
 INT_32_MAX           = (2**32).div(2) - 1
 LINK_ROOT            = Dir.pwd
-MASTER_PID           = Process.pid
 THREAD_TIMEOUT       = 10
 METHOD_PROXY_TIMEOUT = THREAD_TIMEOUT.div(2)
 FUTURE_TIMEOUT       = 60
 PING_TIMEOUT         = 30
 RESPONSE_TIMEOUT     = 60
+PID_TIMEOUT          = 30
+
+################################################################################
+
+LINK_SERVER_PID_FILE   = File.join(LINK_ROOT, 'link.pid')
+LINK_WATCHDOG_PID_FILE = File.join(LINK_ROOT, 'link-watchdog.pid')
 
 ################################################################################
 

@@ -31,7 +31,7 @@ class Signals
           "type" => (type || "virtual"),
           "name" => name
         },
-        "count" => count
+        "count" => (count > INT_32_MAX ? INT_32_MAX : count)
       }
     end
 
@@ -118,14 +118,8 @@ class Signals
       Storage.clone.each do |item_name, item_count|
         item_name = 'link-signal-electricity' if item_name == 'electricity'
         item_type = ItemType[item_name]
-        item_count = if item_name == 'link-signal-electricity'
-          item_count.div(GIGAJOULE)
-        else
-          if item_count > INT_32_MAX
-            INT_32_MAX
-          else
-            item_count
-          end
+        if item_name == 'link-signal-electricity'
+          item_count = item_count.div(GIGAJOULE)
         end
 
         signals << build_signal(item_name, item_count, item_type)

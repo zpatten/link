@@ -42,7 +42,7 @@ function on_link_init()
   global.link_fluid_requesters = {}
 
   global.link_previous_signals = {}
-  global.rx_signals = {}
+  global.link_rx_signals = {}
 
   global.link_inventory_combinators = {}
   global.link_receiver_combinators = {}
@@ -52,12 +52,14 @@ function on_link_init()
 
   global.link_command_whitelist = {}
 
+  global.link_server_list = {}
+
   add_all_link_entities()
 end
 script.on_init(on_link_init)
 
 function on_player_created(event)
-  local player = game.get_player(event.player_index)
+  local player = game.players[event.player_index]
 
   player.insert{ name = LINK_ACTIVE_PROVIDER_CHEST_NAME, count = 1 }
   player.insert{ name = LINK_BUFFER_CHEST_NAME, count = 1 }
@@ -80,3 +82,16 @@ function on_player_created(event)
   player.insert{ name = "battery-mk2-equipment", count = 1 }
 end
 script.on_event(defines.events.on_player_created, on_player_created)
+
+function on_player_joined_game(event)
+  local player = game.players[event.player_index]
+  link_gui_destroy(player)
+  link_gui_create(player)
+end
+script.on_event(defines.events.on_player_joined_game, on_player_joined_game)
+
+function on_player_left_game(event)
+  local player = game.players[event.player_index]
+  link_gui_destroy(player)
+end
+script.on_event(defines.events.on_player_left_game, on_player_left_game)

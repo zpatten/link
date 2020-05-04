@@ -7,13 +7,10 @@ require_relative 'support/logistics'
 require_relative 'support/memory_cache'
 require_relative 'support/method_proxy'
 require_relative 'support/metrics'
+require_relative 'support/process'
 require_relative 'support/signals'
 require_relative 'support/storage'
 require_relative 'support/thread_pool'
-
-def master?
-  Process.pid == MASTER_PID
-end
 
 # def shutdown!
 #   $shutdown = true
@@ -32,20 +29,28 @@ end
 #   # Process.kill('TERM', Process.pid)
 # end
 
-def running?
-  ThreadPool.running?
-end
+# def running?
+#   ThreadPool.running?
+# end
 
-def shutdown?
-  !!$shutdown
-end
+# def shutdown?
+#   !!$shutdown
+# end
 
-def platform
-  case RUBY_PLATFORM
-  when /mingw/i
-    :windows
-  when /linux/i
-    :linux
+# def platform
+#   case RUBY_PLATFORM
+#   when /mingw/i
+#     :windows
+#   when /linux/i
+#     :linux
+#   end
+# end
+
+def scrub_host(host)
+  if host == '127.0.0.1'
+    Resolv.getaddress(Socket.gethostname)
+  else
+    host
   end
 end
 
@@ -100,7 +105,7 @@ def run_command(tag, name, *args)
   args << %(2>/dev/null)
   command = args.flatten.compact.join(' ')
   output = %x(#{command}).strip
-  $logger.debug(tag) { "[#{name}] Command: #{command.inspect} -> #{output.inspect}" }
+  $logger.info(tag) { "[#{name}] Command: #{command.inspect} -> #{output.inspect}" }
   output
 end
 
@@ -115,30 +120,6 @@ end
 
 def debug?
   !!ENV['DEBUG']
-end
-
-at_exit do
-  $logger.fatal(:at_exit) { 'Shutting down!' }
-  ThreadPool.shutdown!
-  if master?
-    Servers.shutdown!
-    ItemType.save
-    Storage.save
-  end
-end
-
-def trap_signals
-  %w( INT TERM QUIT ).each do |signal|
-    Signal.trap(signal, 'EXIT')
-    # Signal.trap(signal) do
-    #   if Thread.current.name.nil?
-    #     $stderr.puts "[#{Process.pid}] Caught Signal: #{signal}"
-    #   else
-    #     $stderr.puts "[#{Thread.current.name}] Caught Signal: #{signal}"
-    #   end
-    #   exit
-    # end
-  end
 end
 
 def generate_port_number

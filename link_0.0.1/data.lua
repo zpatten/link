@@ -7,7 +7,8 @@ require 'util'
 --------------------------------------------------------------------------------
 
 require 'prototypes.group'
-require "prototypes.signals"
+require 'prototypes.signals'
+require 'prototypes.shortcuts'
 
 --------------------------------------------------------------------------------
 
