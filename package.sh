@@ -1,3 +1,7 @@
 #/usr/bin/env bash -x
 
-7za a mods/link_0.0.1.zip link_0.0.1
+VERSION="0.0.1"
+MODFILE="mods/link_${VERSION}.zip"
+
+rm $MODFILE
+7za a $MODFILE factorio-link
