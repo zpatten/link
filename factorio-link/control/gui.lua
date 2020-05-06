@@ -44,7 +44,7 @@ function link_gui_create(player)
       horizontal_scroll_policy = 'never',
       vertical_scroll_policy = 'auto-and-reserve-space'
     }
-    global.link_gui_servers_table = storage_flow.add{
+    global.link_gui_storage_table = storage_flow.add{
       type = 'table',
       name = 'storage_table',
       column_count = 3,

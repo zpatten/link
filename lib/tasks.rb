@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+class Link
+  module Tasks
+
 # Tasks
 ################################################################################
 def schedule_task_statistics
@@ -45,4 +48,7 @@ def schedule_task_watchdog
       end
     end
   end
+end
+
+end
 end

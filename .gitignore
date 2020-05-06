@@ -9,3 +9,6 @@ saves/
 servers/
 tmp/
 metrics/
+
+doc*
+.yardoc*

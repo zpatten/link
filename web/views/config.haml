@@ -1,4 +1,4 @@
 %h1 Config
 
 %pre
-  = haml :config_kv, locals: { config: Config.to_h, ident: 0 }
+  = haml :config_kv, locals: { config: Link::Config.to_h, ident: 0 }

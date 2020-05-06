@@ -1,59 +1,61 @@
 # frozen_string_literal: true
 
-class Config
+class Link
+  class Config
 
-  module ClassMethods
+    module ClassMethods
 
-    def filename
-      File.join(Dir.pwd, "config.json")
-    end
-
-    def config
-      @@config ||= JSON.parse(IO.read(filename))
-    end
-
-    def save!
-      IO.write(filename, JSON.pretty_generate(config))
-    end
-
-    def master_value(*keys)
-      key  = keys.join('-')
-      keys = keys.map(&:to_s)
-      $logger.debug { "keys=#{keys}" }
-      MemoryCache.fetch(key) do
-        (config.dig('master', *keys) rescue nil)
+      def filename
+        File.join(Dir.pwd, "config.json")
       end
-    end
 
-    def server_value(server, *keys)
-      key    = [server, *keys].flatten.compact.join("-")
-      keys   = keys.map(&:to_s)
-      server = server.to_s
-      MemoryCache.fetch(key) do
-        sv = (config.dig('servers', server, *keys) rescue nil)
-        mv = (config.dig('master', *keys) rescue nil)
-        (sv || mv)
+      def config
+        @@config ||= JSON.parse(IO.read(filename))
       end
+
+      def save!
+        IO.write(filename, JSON.pretty_generate(config))
+      end
+
+      def master_value(*keys)
+        key  = keys.join('-')
+        keys = keys.map(&:to_s)
+        $logger.debug { "keys=#{keys}" }
+        MemoryCache.fetch(key) do
+          (config.dig('master', *keys) rescue nil)
+        end
+      end
+
+      def server_value(server, *keys)
+        key    = [server, *keys].flatten.compact.join("-")
+        keys   = keys.map(&:to_s)
+        server = server.to_s
+        MemoryCache.fetch(key) do
+          sv = (config.dig('servers', server, *keys) rescue nil)
+          mv = (config.dig('master', *keys) rescue nil)
+          (sv || mv)
+        end
+      end
+
+      def [](key)
+        config[key]
+      end
+
+      def []=(key, value)
+        config[key] = value
+      end
+
+      def to_h
+        config
+      end
+
+      def method_missing(method_name, *method_args, &block)
+        config[method_name.to_s]
+      end
+
     end
 
-    def [](key)
-      config[key]
-    end
-
-    def []=(key, value)
-      config[key] = value
-    end
-
-    def to_h
-      config
-    end
-
-    def method_missing(method_name, *method_args, &block)
-      config[method_name.to_s]
-    end
+    extend ClassMethods
 
   end
-
-  extend ClassMethods
-
 end

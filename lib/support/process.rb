@@ -1,19 +1,23 @@
 # frozen_string_literal: true
 
+class Link
+  module Support
+    module Process
 ################################################################################
 
-at_exit do
-  $logger.fatal(:at_exit) { 'Shutting down!' }
-  ThreadPool.shutdown!
-  if master?
-    Servers.shutdown!
-    ItemType.save
-    Storage.save
-  end
-end
 
 def trap_signals
-  %w( INT TERM QUIT ).each do |signal|
+  puts Signal.list.keys.inspect
+  Signal.list.keys do |signal|
+    Signal.trap(signal) do
+      puts "Caught #{signal.inspect}"
+    end
+  end
+
+  %w( INT QUIT TERM ).each do |signal|
+    # Signal.trap(signal) do
+    #   stop
+    # end
     Signal.trap(signal, 'EXIT')
   end
 end
@@ -21,7 +25,7 @@ end
 ################################################################################
 
 def master?
-  Process.pid == master_pid
+  ::Process.pid == master_pid
 rescue Errno::ENOENT
   false
 end
@@ -33,7 +37,7 @@ end
 ################################################################################
 
 def create_pid_file(pid_file)
-  IO.write(pid_file, Process.pid)
+  IO.write(pid_file, ::Process.pid)
 end
 
 def read_pid_file(pid_file)
@@ -50,7 +54,7 @@ end
 ################################################################################
 
 def process_alive?(pid)
-  Process.kill(0, pid)
+  ::Process.kill(0, pid)
   true
 
 rescue Errno::ESRCH
@@ -77,11 +81,12 @@ def stop_process(pid_file, name)
   %w( QUIT TERM KILL ).each do |signal|
     begin
       $logger.fatal(:main) { "Attempting to stop #{name} (PID #{pid}) with #{signal}..." }
-      Process.kill(signal, pid)
+      puts "Attempting to stop #{name} (PID #{pid}) with #{signal}..."
+      ::Process.kill(signal, pid)
       return true if wait_for_process(pid)
 
     rescue Errno::ESRCH
-      $logger.fatal(:main) { "Process for #{name} not found!" }
+      $logger.fatal(:main) { "::Process for #{name} not found!" }
       break
     end
   end
@@ -98,6 +103,61 @@ end
 
 ################################################################################
 
+def start_link(foreground=false)
+  if foreground
+    execute
+  else
+    ::Process.fork do
+      ::Process.daemon(true)
+      execute
+    end
+  end
+end
+
+def start_watchdog
+  ::Process.fork do
+    ::Process.daemon(true, false)
+    $0 = 'Link Watchdog'
+    sleep 1
+    $logger.info(:watchdog) { "Started" }
+    create_pid_file(LINK_WATCHDOG_PID_FILE)
+    loop do
+      pid = read_pid_file(LINK_SERVER_PID_FILE)
+      unless process_alive?(pid)
+        ::Process.fork do
+          ::Process.daemon(true)
+          execute
+        end
+        # start_link
+        sleep 1
+      end
+      sleep 1
+    end
+  end
+end
+
+def start(foreground=false)
+  if foreground
+    execute
+  else
+    start_watchdog
+  end
+end
+
+def stop
+  if master?
+    ThreadPool.shutdown!
+    if master?
+      Servers.shutdown!
+      ItemType.save
+      Storage.save
+    end
+  else
+    Link.stop_process(LINK_WATCHDOG_PID_FILE, 'Link Watchdog')
+    Link.stop_process(LINK_SERVER_PID_FILE, 'Link Server')
+  end
+end
+
 def execute
   $0 = 'Link Server'
   Config.load
@@ -107,3 +167,6 @@ def execute
 end
 
 ################################################################################
+    end
+  end
+end

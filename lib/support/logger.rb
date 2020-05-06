@@ -8,29 +8,31 @@ File.truncate("link.log", 0)
 # rescue Errno::EACCES, Errno::ENOENT
 # end
 
-class MultiLogger
-  module ClassMethods
-    @@loggers ||= Array.new
-    def add(logger)
-      @@loggers << logger
+class Link
+  class MultiLogger
+    module ClassMethods
+      @@loggers ||= Array.new
+      def add(logger)
+        @@loggers << logger
+      end
+
+      def loggers
+        @@loggers
+      end
+    end
+    extend ClassMethods
+
+    def mutex(logger)
+      @logger_mutex ||= Hash.new
+      @logger_mutex[logger] ||= Mutex.new
     end
 
-    def loggers
-      @@loggers
-    end
-  end
-  extend ClassMethods
-
-  def mutex(logger)
-    @logger_mutex ||= Hash.new
-    @logger_mutex[logger] ||= Mutex.new
-  end
-
-  def method_missing(method_name, *method_args, &block)
-    self.class.loggers.each do |logger|
-      # mutex(logger.to_s).synchronize do
-        logger.send(method_name, *method_args, &block)
-      # end
+    def method_missing(method_name, *method_args, &block)
+      self.class.loggers.each do |logger|
+        # mutex(logger.to_s).synchronize do
+          logger.send(method_name, *method_args, &block)
+        # end
+      end
     end
   end
 end
@@ -39,7 +41,8 @@ end
 # MultiLogger.add(Logger.new(STDOUT))
 # MultiLogger.add(Logger.new("link.log"))
 
-$logger = Logger.new("link.log")
+# $logger = Logger.new("link.log")
+$logger = Logger.new(STDOUT)
 $logger.level = Logger::DEBUG
 
 # $logger = Logger.new(STDOUT)

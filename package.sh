@@ -1,4 +1,5 @@
-#/usr/bin/env bash -x
+#/usr/bin/env bash
+set -x
 
 VERSION="0.0.1"
 MODFILE="mods/link_${VERSION}.zip"

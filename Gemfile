@@ -9,3 +9,4 @@ gem 'sinatra', require: false
 gem 'sinatra-contrib', require: false
 gem 'sinatra-websocket', require: false
 gem 'thin', require: false
+gem 'pry', require: false

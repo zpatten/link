@@ -2,8 +2,10 @@ require_relative 'signals/receive'
 require_relative 'signals/support'
 require_relative 'signals/transmit'
 
-class Signals
-  extend Signals::Receive
-  extend Signals::Support
-  extend Signals::Transmit
+class Link
+  class Signals
+    extend Link::Signals::Receive
+    extend Link::Signals::Support
+    extend Link::Signals::Transmit
+  end
 end
