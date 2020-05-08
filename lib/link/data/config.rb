@@ -7,10 +7,10 @@ module Link
   end
 
   class Data
-    class Config
 
 ################################################################################
 
+    class Config
       module ClassMethods
         @@config = nil
         @@config_mutex ||= Mutex.new
@@ -56,9 +56,9 @@ module Link
       end
 
       extend ClassMethods
+    end
 
 ################################################################################
 
-    end
   end
 end

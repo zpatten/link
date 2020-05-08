@@ -5,10 +5,10 @@ require 'link/data/item_type'
 require 'link/data/storage'
 
 module Link
-  class Data
 
 ################################################################################
 
+  class Data
     module ClassMethods
 
       def klasses
@@ -26,8 +26,8 @@ module Link
     end
 
     extend ClassMethods
+  end
 
 ################################################################################
 
-  end
 end

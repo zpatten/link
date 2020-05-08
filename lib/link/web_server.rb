@@ -7,10 +7,16 @@ require 'sinatra/respond_with'
 require 'sinatra-websocket'
 require 'thin'
 
+require 'link/web_server/config'
+require 'link/web_server/servers'
+
 module Link
   class WebServer < Sinatra::Base
     helpers Sinatra::CustomLogger
     register Sinatra::RespondWith
+
+    register Link::WebServer::Config
+    register Link::WebServer::Servers
 
     configure do
       enable :logging, :threaded
@@ -38,10 +44,6 @@ module Link
         f.json { :index }
         f.html { haml :index }
       end
-    end
-
-    get "/config" do
-      haml :config
     end
 
   end

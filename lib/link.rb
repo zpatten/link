@@ -22,9 +22,12 @@ require 'zlib'
 
 ################################################################################
 
+require 'active_support/inflector'
 require 'awesome_print'
 require 'concurrent'
+require 'concurrent-edge'
 
+################################################################################
 
 module Link
 
@@ -50,14 +53,17 @@ module Link
 
   THREAD_POOL = Concurrent::CachedThreadPool.new(
     auto_terminate: true,
+    fallback_policy: :abort,
     name: 'link'
   )
 
   require 'link/cache'
   require 'link/data'
+  require 'link/factorio'
   require 'link/logger'
   require 'link/runner'
   require 'link/support'
+  require 'link/tasks'
   require 'link/web_server'
 
   # require 'server'

@@ -104,6 +104,7 @@ module Link
         logger.fatal { "Stopping Link" }
         if master?
           Link::WebServer.stop!
+          Link::Tasks.stop
           THREAD_POOL.shutdown
           THREAD_POOL.wait_for_termination(PROCESS_TIMEOUT)
 
@@ -159,6 +160,7 @@ module Link
         write_pid_file(LINK_SERVER_PID_FILE)
 
         Link::Data.read
+        Link::Tasks.start
 
         # THREAD_POOL.post do
         #   Link::WebServer.run!
