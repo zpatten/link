@@ -19,14 +19,14 @@ module Link
           File.join(LINK_ROOT, 'item_types.json')
         end
 
-        def read
+        def read!
           @@item_type_mutex.synchronize do
             logger.debug { 'Reading Item Types' }
             @@item_type = Concurrent::Hash[JSON.parse(IO.read(filename))]
           end
         end
 
-        def write
+        def write!
           @@item_type_mutex.synchronize do
             logger.debug { 'Writing Item Types' }
             IO.write(filename, JSON.pretty_generate(@@item_type))

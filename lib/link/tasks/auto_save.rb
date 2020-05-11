@@ -8,7 +8,7 @@ module Link
     class AutoSave < Base
 
       def self.task
-        Link::Data.write
+        Link::Data.write!
       end
 
     end

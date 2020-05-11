@@ -68,11 +68,11 @@ class Link
   end
 end
 
-Link::Metrics.guage(:storage_item_count)
-Link::Metrics.guage(:storage_delta_count)
 Link::Metrics.guage(:electrical_count)
 Link::Metrics.guage(:electrical_delta_count)
-Link::Metrics.guage(:thread_count)
-# Link::Metrics.histogram(:thread_execution)
-Link::Metrics.guage(:thread_timing)
 Link::Metrics.guage(:server_rtt)
+Link::Metrics.guage(:storage_delta_count)
+Link::Metrics.guage(:storage_item_count)
+Link::Metrics.guage(:thread_count)
+Link::Metrics.guage(:thread_timing)
+# Link::Metrics.histogram(:thread_execution)

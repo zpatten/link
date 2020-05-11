@@ -66,7 +66,7 @@ module Link
 
         return false if pid == 0
 
-        %w( QUIT TERM KILL ).each do |signal|
+        %w( TERM KILL ).each do |signal|
           begin
             logger.fatal { "Attempting to stop #{name} (PID #{pid}) with #{signal}..." }
             puts "Attempting to stop #{name} (PID #{pid}) with #{signal}..."
@@ -104,22 +104,8 @@ module Link
         logger.fatal { "Stopping Link" }
         if master?
           Link::WebServer.stop!
-          Link::Tasks.stop
-          THREAD_POOL.shutdown
-          THREAD_POOL.wait_for_termination(PROCESS_TIMEOUT)
-
-          Link::Data.write
-
-          # Link::Config.write
-          # Link::ItemType.write
-          # Link::Storage.write
-
-          # ThreadPool.shutdown!
-          # if master?
-          #   Servers.shutdown!
-          #   ItemType.save
-          #   Storage.save
-          # end
+          Link::Tasks.stop!
+          Link::Data.write!
         else
           stop_process(LINK_WATCHDOG_PID_FILE, 'Link Watchdog')
           stop_process(LINK_SERVER_PID_FILE, 'Link Server')
@@ -159,23 +145,8 @@ module Link
         $0 = 'Link Server'
         write_pid_file(LINK_SERVER_PID_FILE)
 
-        Link::Data.read
-        Link::Tasks.start
-
-        # THREAD_POOL.post do
-        #   Link::WebServer.run!
-        #   logger.fatal { "Web Server Stopped!" }
-        # end
-        # logger.info { "After WebServer Block" }
-        # Thread.pass while true
-
-        # THREAD_POOL.wait_for_termination
-        # sleep 1 while true
-        # start everything
-        # sleep 1 while THREAD_POOL.running?
-        # logger.fatal { "Thread Pool Stopped!" }
-        # Thread.current.join
-
+        Link::Data.read!
+        Link::Tasks.start!
         Link::WebServer.run!
       end
 

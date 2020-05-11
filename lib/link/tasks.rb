@@ -3,6 +3,7 @@
 require 'link/tasks/base'
 
 require 'link/tasks/auto_save'
+require 'link/tasks/prometheus'
 
 module Link
 
@@ -12,12 +13,12 @@ module Link
 
     module ClassMethods
 
-      def start
-        klasses.map(&:start)
+      def start!
+        klasses.map(&:start!)
       end
 
-      def stop
-        klasses.map(&:stop)
+      def stop!
+        klasses.map(&:stop!)
       end
 
     private
@@ -31,7 +32,6 @@ module Link
       end
 
     end
-
     extend ClassMethods
 
   end

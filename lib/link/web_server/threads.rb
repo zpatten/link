@@ -2,14 +2,16 @@
 
 module Link
   class WebServer
-    module Config
+    module Threads
 
 ################################################################################
 
       def self.registered(app)
 
-        app.get "/config" do
-          haml :config
+        app.get "/threads" do
+          @pool    = Concurrent.global_io_executor
+          @threads = Thread.list.sort_by { |t| t.name || '' }
+          haml :threads
         end
 
       end

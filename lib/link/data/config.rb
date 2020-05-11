@@ -19,14 +19,14 @@ module Link
           File.join(LINK_ROOT, 'config.json')
         end
 
-        def read
+        def read!
           @@config_mutex.synchronize do
             logger.debug { 'Reading Configuration' }
             @@config = Concurrent::Hash[JSON.parse(IO.read(filename))]
           end
         end
 
-        def write
+        def write!
           @@config_mutex.synchronize do
             logger.debug { 'Writing Configuration' }
             IO.write(filename, JSON.pretty_generate(@@config))

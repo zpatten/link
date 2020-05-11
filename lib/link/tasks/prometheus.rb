@@ -1,21 +1,19 @@
 # frozen_string_literal: true
 
 module Link
-  class WebServer
-    module Config
+  class Tasks
 
 ################################################################################
 
-      def self.registered(app)
+    class Prometheus < Base
 
-        app.get "/config" do
-          haml :config
-        end
-
+      def self.task
+        Link::Support::Metrics.push
       end
 
+    end
+
 ################################################################################
 
-    end
   end
 end

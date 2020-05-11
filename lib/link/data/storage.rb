@@ -19,14 +19,14 @@ module Link
           File.join(LINK_ROOT, 'storage.json')
         end
 
-        def read
+        def read!
           @@storage_mutex.synchronize do
             logger.debug { 'Reading Storage' }
             @@storage = Concurrent::Map[JSON.parse(IO.read(filename))]
           end
         end
 
-        def write
+        def write!
           @@storage_mutex.synchronize do
             logger.debug { 'Writing Storage' }
             IO.write(filename, JSON.pretty_generate(@@storage))

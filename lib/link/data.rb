@@ -15,12 +15,12 @@ module Link
         Link::Data.constants.map(&Link::Data.method(:const_get)).grep(Class).sort { |a,b| a.to_s <=> b.to_s }
       end
 
-      def read
-        klasses.map(&:read)
+      def read!
+        klasses.map(&:read!)
       end
 
-      def write
-        klasses.map(&:write)
+      def write!
+        klasses.map(&:write!)
       end
 
     end

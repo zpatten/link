@@ -22,6 +22,7 @@ require 'zlib'
 
 ################################################################################
 
+require 'active_support/core_ext/class/attribute'
 require 'active_support/inflector'
 require 'awesome_print'
 require 'concurrent'
@@ -51,12 +52,6 @@ module Link
 
 ################################################################################
 
-  THREAD_POOL = Concurrent::CachedThreadPool.new(
-    auto_terminate: true,
-    fallback_policy: :abort,
-    name: 'link'
-  )
-
   require 'link/cache'
   require 'link/data'
   require 'link/factorio'
@@ -66,53 +61,6 @@ module Link
   require 'link/tasks'
   require 'link/web_server'
 
-  # require 'server'
-  # require 'servers'
-  # require 'support'
-  # require 'storage'
-  # require 'thread_pool'
-  # require 'tasks'
-
-  # require 'web_server'
-
-  # extend Link::Support
-  # extend Link::Support::Process
-  # extend Link::Tasks
-
-  # Storage.load
-
-################################################################################
-
-  # require 'options'
-
-################################################################################
-
-  # require 'link/config'
-  # require 'link/item_type'
-  # require 'link/logger'
-  # require 'link/runner'
-  # require 'link/storage'
-  # require 'link/support'
-
 ################################################################################
 
 end
-
-
-# Link::Config.read
-# Link::ItemType.read
-
-#   at_exit do
-#     $logger.fatal(:at_exit) { 'Shutting down!' }
-#     Link.stop
-#     # ThreadPool.shutdown!
-#     # if master?
-#     #   Servers.shutdown!
-#     #   ItemType.save
-#     #   Storage.save
-#     # end
-#   end
-
-# Link.trap_signals
-
-# Link::Options.parse(ARGV)

@@ -1,0 +1,38 @@
+%font.header
+  Storage
+
+%table.wide
+  %tr
+    %th Item
+    %th Count
+    %th 1s
+    %th 1m
+    %th{ style: "width: #{@meter_width}px;" } Distribution
+  - @storage.sort.each do |item_name, item_count|
+    %tr
+      %td.align-right.one= item_name
+      %td.align-right.one{ id: "#{item_name}-count" }= countsize(item_count)
+      %td.one{ id: "#{item_name}-delta-s"}= @delta[item_name][0]
+      %td.one{ id: "#{item_name}-delta-m"}= @delta[item_name][1]
+      %td
+        %div.fleft{ style: "width: #{((item_count.to_f / @total_count.to_f) * 100.0).to_i}%; background-color: red;" } &nbsp;
+        %div.fright{ style: "width: #{100 - ((item_count.to_f / @total_count.to_f) * 100.0).to_i}%; background-color: green;" } &nbsp;
+
+:javascript
+  window.onload = function(){
+    (function(){
+      var show = function(msg){
+        console.log(msg);
+        var item = JSON.parse(msg);
+        var el = document.getElementById(item.name + "-count");
+        el.innerHTML = item.count;
+        var el = document.getElementById(item.name + "-delta-s");
+        el.innerHTML = item.delta_s;
+        var el = document.getElementById(item.name + "-delta-m");
+        el.innerHTML = item.delta_m;
+      };
+
+      var ws       = new WebSocket("ws://" + window.location.host + window.location.pathname);
+      ws.onmessage = function(m) { show(m.data); };
+    })();
+  }

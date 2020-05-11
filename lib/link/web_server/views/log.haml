@@ -1,0 +1,17 @@
+%h1 Log
+%pre
+  %div{ id: "msgs" }
+
+:javascript
+  window.onload = function(){
+    (function(){
+      var show = function(msg){
+        var el = document.getElementById("msgs");
+        var logs = msg + el.innerHTML.split('\n').slice(0, 49).join('\n');
+        el.innerHTML = logs;
+      };
+
+      var ws       = new WebSocket('ws://' + window.location.host + window.location.pathname);
+      ws.onmessage = function(m) { show(m.data); };
+    })();
+  }

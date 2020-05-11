@@ -10,6 +10,8 @@ module Link
 
     def initialize(level)
       @logger = Link::Logger::Engine.new(level)
+      # Concurrent.use_simple_logger(level)
+      Concurrent.configuration.logger = @logger.method(:add)
     end
 
     def method_missing(method_name, *method_args, &method_block)

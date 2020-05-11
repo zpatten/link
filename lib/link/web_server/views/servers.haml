@@ -1,0 +1,80 @@
+%h1 Servers
+[
+%a{ href: '/servers/create', title: 'Create Server' } CREATE SERVER
+|
+%a{ href: '/servers/start-all', title: 'Start All Servers' } START ALL SERVERS
+|
+%a{ href: '/servers/stop-all', title: 'Stop All Servers', onclick: "return confirm('WARNING: Are you sure you want to stop all servers?')" } STOP ALL SERVERS
+|
+%a{ href: '/servers/restart-all', title: 'Restart All Servers', onclick: "return confirm('WARNING: Are you sure you want to restart all servers?')" } RESTART ALL SERVERS
+]
+
+%table
+  %tr
+    %th ID
+    %th Name
+    %th Host
+    %th Client Port
+    %th Factorio Port
+    %th Research?
+    %th Connected?
+    %th Authenticated?
+    %th Available?
+    %th Running?
+    %th Responsive?
+    %th RTT
+    %th Actions
+  - @servers.each do |server|
+    %tr
+      %td= server.id
+      %td= server.name
+      %td= server.host
+      %td= server.client_port
+      %td= server.factorio_port
+      %td= server.research
+      %td{ id: "#{server.name}-connected" }= server.connected?
+      %td{ id: "#{server.name}-authenticated" }= server.authenticated?
+      %td{ id: "#{server.name}-available" }= server.available?
+      %td{ id: "#{server.name}-container" }= server.container_alive?
+      %td{ id: "#{server.name}-responsive" }= server.responsive?
+      %td{ id: "#{server.name}-rtt" }
+        - if server.rtt.nil?
+          \-
+        - else
+          #{server.rtt} ms
+      %td
+        - if server.unavailable? && server.container_dead?
+          %a{ href: "/servers/start/#{server.name}", title: "Start Server '#{server.name}'" } START
+          |
+        - if server.available? || server.container_alive?
+          %a{ href: "/servers/stop/#{server.name}", title: "Stop Server '#{server.name}'", onclick: "return confirm('WARNING: Are you sure you want to stop the server \\'#{server.name}\\'?')" } STOP
+          |
+        - if server.available? || server.container_alive?
+          %a{ href: "/servers/restart/#{server.name}", title: "Restart Server '#{server.name}'", onclick: "return confirm('WARNING: Are you sure you want to restart the server \\'#{server.name}\\'?')" } RESTART
+          |
+        %a{ href: "/servers/delete/#{server.name}", title: "Delete Server '#{server.name}'", onclick: "return confirm('WARNING: Are you sure you want to delete the server \\'#{server.name}\\'?')" } DELETE
+
+:javascript
+  window.onload = function(){
+    (function(){
+      var show = function(msg){
+        console.log(msg);
+        var server = JSON.parse(msg);
+        var el = document.getElementById(server.name + "-connected");
+        el.innerHTML = server.connected;
+        var el = document.getElementById(server.name + "-authenticated");
+        el.innerHTML = server.authenticated;
+        var el = document.getElementById(server.name + "-available");
+        el.innerHTML = server.available;
+        var el = document.getElementById(server.name + "-container");
+        el.innerHTML = server.container;
+        var el = document.getElementById(server.name + "-responsive");
+        el.innerHTML = server.responsive;
+        var el = document.getElementById(server.name + "-rtt");
+        el.innerHTML = server.rtt;
+      };
+
+      var ws       = new WebSocket("ws://" + window.location.host + window.location.pathname);
+      ws.onmessage = function(m) { show(m.data); };
+    })();
+  }

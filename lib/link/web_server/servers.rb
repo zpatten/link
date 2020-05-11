@@ -1,26 +1,36 @@
 # frozen_string_literal: true
 
 module Link
-  class WebServer < Sinatra::Base
+  class WebServer
     module Servers
 
 ################################################################################
 
       def self.registered(app)
+        app.set :server_sockets, []
 
         app.get "/servers" do
           if !request.websocket?
             @servers = Link::Factorio::Servers.all.sort_by { |server| server.name }
             haml :servers
           else
+            logger.info { 'websocket request' }
             request.websocket do |ws|
-              ws.onopen do
+
+              ws.on :error do |event|
+                logger.fatal { "websocket error" }
+              end
+
+              ws.on :open do |event|
+                logger.info { "websocket open: #{ws.object_id}" }
                 settings.server_sockets << ws
               end
 
-              ws.onclose do
+              ws.on :close do |event|
+                logger.info { "websocket close: #{ws.object_id}, #{event.code}, #{event.reason}" }
                 settings.server_sockets.delete(ws)
               end
+
             end
           end
         end
