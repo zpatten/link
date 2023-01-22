@@ -9,19 +9,14 @@ class Server
       chat_events.each do |chat_event|
         message = %(#{chat_event["player_name"]}@#{self.name}: #{chat_event["message"]})
         command = %(game.print('#{message}', {r = 1, g = 0, b = 1, a = 0.5}))
-        self.method_proxy.Servers(
-          :rcon_command_nonblock,
-          what: :chat,
-          except: [self.name],
-          command: command
-        )
+        Servers.rcon_command_nonblock(:chat, command, except: [self.name])
       end
     end
 
     def schedule_chat
       ThreadPool.schedule_server(:chat, server: self) do
         command = %(remote.call('link', 'get_chats'))
-        payload = self.rcon_command(command: command)
+        payload = self.rcon_command(command)
         unless payload.nil? || payload.empty?
           chat_events = JSON.parse(payload)
           unless chat_events.nil? || chat_events.empty?

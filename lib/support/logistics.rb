@@ -33,7 +33,7 @@ class Logistics
 
   def calculate_item_ratios
     @item_ratios = Hash.new(0.0)
-    storage_clone = @server.method_proxy.Storage(:select, @item_totals.keys)
+    storage_clone = Storage.select(@item_totals.keys)
     @item_totals.each do |item_name, item_count|
       storage_count = storage_clone[item_name]
       item_ratio = if storage_count >= item_count
@@ -91,7 +91,7 @@ class Logistics
     end
 
     unless item_fulfillment_totals.empty?
-      @server.method_proxy.Storage(:bulk_remove, item_fulfillment_totals)
+      Storage.bulk_remove(item_fulfillment_totals)
     end
 
     true

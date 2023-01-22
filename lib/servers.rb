@@ -80,20 +80,20 @@ class Servers
 
 ################################################################################
 
-    def rcon_command(what:, command:, except: [])
+    def rcon_command(what, command, except=[])
       self.find(what, except: except).each do |server|
         unless server.unavailable?
-          server.rcon_command(command: command)
+          server.rcon_command(command)
         end
       end
 
       true
     end
 
-    def rcon_command_nonblock(what:, command:, except: [])
+    def rcon_command_nonblock(what, command, except=[])
       self.find(what, except: except).each do |server|
         unless server.unavailable?
-          server.rcon_command_nonblock(command: command)
+          server.rcon_command_nonblock(command)
         end
       end
 

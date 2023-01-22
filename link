@@ -22,7 +22,37 @@ require 'zlib'
 ################################################################################
 
 require 'awesome_print'
-require 'concurrent'
+require 'concurrent-edge'
+
+
+$pool = Concurrent::CachedThreadPool.new
+$cancellation, $origin = Concurrent::Cancellation.new
+
+
+# repeating_scheduled_task = -> interval, cancellation, task do
+#   Concurrent::Promises.
+#       # Schedule the task.
+#       schedule(interval, cancellation, &task).
+#       # If successful schedule again.
+#       # Alternatively use chain to schedule always.
+#       then { repeating_scheduled_task.call(interval, cancellation, task) }
+# end
+
+# cancellation, origin = Concurrent::Cancellation.new
+
+# task = -> cancellation do
+#   5.times do
+#     cancellation.check!
+#     do_stuff
+#   end
+# end
+
+# result = Concurrent::Promises.future(1, cancellation, task, &repeating_scheduled_task).run
+# sleep 0.03 #
+# origin.resolve
+# result.result
+
+# exit!
 
 ################################################################################
 
@@ -43,14 +73,17 @@ LINK_WATCHDOG_PID_FILE = File.join(LINK_ROOT, 'link-watchdog.pid')
 
 ################################################################################
 
+require_relative 'lib/support/logger'
+require_relative 'lib/support'
+require_relative 'lib/options'
+
 require_relative 'lib/server'
 require_relative 'lib/servers'
-require_relative 'lib/support'
 require_relative 'lib/tasks'
 require_relative 'lib/web_server'
 
 ################################################################################
 
-require_relative 'lib/options'
+require_relative 'lib/runner'
 
 ################################################################################

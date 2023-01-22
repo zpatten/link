@@ -43,10 +43,11 @@ class MethodProxy
       case data[:type]
       when :request
         args = data[:args]
+        options = data[:options]
         t = [tag, 'call', args.first.downcase].join('-')
         ThreadPool.thread(t) do
           # exception_wrapper do
-            result = call_method(*args)
+            result = call_method(*args, **options)
             send_response(id, result)
           # end
         end
@@ -72,13 +73,14 @@ class MethodProxy
     socket.send(data, 0)
   end
 
-  def send_request(*args)
+  def send_request(*args, **options)
     id = @id.increment
     @responses[id] = Concurrent::Promises.resolvable_future
     data = {
       type: :request,
       id: id,
-      args: args
+      args: args,
+      options: options
     }
     data = Marshal.dump(data)
     socket.send(data, 0)
@@ -142,19 +144,21 @@ class MethodProxy
     end
   end
 
-  def call_method(*args)
+  def call_method(*args, **options)
+    # puts args.ai
+    # puts options.ai
     if Object.constants.include?(args.first)
-      Object.const_get(args.first).send(*args[1..-1])
+      Object.const_get(args.first).send(*args[1..-1], **options)
     else
-      @object.send(*args)
+      @object.send(*args, **options)
     end
   end
 
-  def method_missing(*args)
+  def method_missing(*args, **options)
     # if parent?
       exception_wrapper do
-        id = send_request(*args)
-        $logger.debug(:mproxy) { "[#{tag}] method_missing(#{id}): #{args.ai}" }
+        id = send_request(*args, **options)
+        $logger.debug(:mproxy) { "[#{tag}] method_missing(#{id}): #{args.ai} #{options.ai}" }
         recv_response(id)
       end
     # else

@@ -4,6 +4,7 @@
 
 at_exit do
   $logger.fatal(:at_exit) { 'Shutting down!' }
+  $origin.resolve
   ThreadPool.shutdown!
   if master?
     Servers.shutdown!

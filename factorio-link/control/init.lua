@@ -21,6 +21,12 @@ end
 function on_link_init()
   game.print("on_link_init")
 
+  -- removed crashsite and cutscene start, so on_player_created inventory safe
+  remote.call("freeplay", "set_disable_crashsite", true)
+
+  -- Skips popup message to press tab to start playing
+  remote.call("freeplay", "set_skip_intro", true)
+
   global.link_debug = false
   global.link_enabled = true
 

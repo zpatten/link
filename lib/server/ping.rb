@@ -8,12 +8,12 @@ class Server
         # Calculate round-trip time to RCON
         command = %(remote.call('link', 'ping'))
         started_at = Time.now.to_f
-        self.rcon_command(command: command)
+        self.rcon_command(command)
         response_time = (Time.now.to_f - started_at)
 
         # Update Factorio Server with our current RTT
         command = %(remote.call('link', 'rtt', '#{response_time}'))
-        self.rcon_command(command: command)
+        self.rcon_command(command)
 
         # Update Link Server with our current RTT
         rtt_ms = (response_time * 1000.0).round(0)

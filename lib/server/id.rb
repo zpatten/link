@@ -8,7 +8,7 @@ class Server
     def schedule_id
       ThreadPool.schedule_server(:id, server: self) do |server|
         command = %(remote.call('link', 'set_id', '#{self.id}'))
-        self.rcon_command(command: command)
+        self.rcon_command(command)
       end
     end
 

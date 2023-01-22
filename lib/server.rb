@@ -86,14 +86,14 @@ class Server
   end
 
   def rtt=(value)
-    if parent?
+    # if parent?
       @pinged_at = Time.now.to_f unless value.nil?
       @rtt       = value
       update_websocket
       @rtt
-    elsif child?
-      self.method_proxy.rtt = value
-    end
+    # elsif child?
+    #   self.method_proxy.rtt = value
+    # end
   end
 
 ################################################################################
@@ -144,7 +144,7 @@ class Server
 ################################################################################
 
   def backup(timestamp=false)
-    if File.exists?(self.save_file)
+    if File.exist?(self.save_file)
       begin
         FileUtils.mkdir_p(Servers.factorio_saves)
       rescue Errno::ENOENT
@@ -195,48 +195,68 @@ class Server
   def start_process!
     return true if process_alive?
 
-    @method_proxy = MethodProxy.new(self, Process.pid)
+    # @method_proxy = MethodProxy.new(self, Process.pid)
     @pinged_at = Time.now.to_f
 
-    @child_pid = Process.fork do
-      Thread.list.each do |thread|
-        thread.exit unless thread == Thread.main
-      end
+    # @child_pid = Process.fork do
+    #   Thread.list.each do |thread|
+    #     thread.exit unless thread == Thread.main
+    #   end
 
-      $0 = "Link Server: #{self.name}"
-      Thread.current.name = self.name
-      Thread.current[:started_at] = Time.now.to_f
+    #   $0 = "Link Server: #{self.name}"
+    #   Thread.current.name = self.name
+    #   Thread.current[:started_at] = Time.now.to_f
 
-      @rcon = RCon.new(
-        name: @name,
-        host: @host,
-        port: @client_port,
-        password: @client_password
-      )
+    #   @rcon = RCon.new(
+    #     name: @name,
+    #     host: @host,
+    #     port: @client_port,
+    #     password: @client_password
+    #   )
 
-      self.method_proxy.start do |e|
-        unless e.class == Timeout::Error
-          Process.exit!
-        end
-      end
+    #   self.method_proxy.start do |e|
+    #     unless e.class == Timeout::Error
+    #       Process.exit!
+    #     end
+    #   end
 
-      ThreadPool.execute do
-        schedule_ping
+    #   ThreadPool.execute do
+    #     schedule_ping
 
-        schedule_chat
-        schedule_id
-        schedule_logistics
-        schedule_research
-        schedule_research_current
-        schedule_server_list
-        schedule_signals
-      end
-    end
-    Process.detach(@child_pid)
+    #     schedule_chat
+    #     schedule_id
+    #     schedule_logistics
+    #     schedule_research
+    #     schedule_research_current
+    #     schedule_server_list
+    #     schedule_signals
+    #   end
+    # end
+    # Process.detach(@child_pid)
 
-    self.method_proxy.start do |e|
-      self.stop!(false)
-    end
+    # self.method_proxy.start do |e|
+    #   self.stop!(false)
+    # end
+
+    Thread.current.name = self.name
+    Thread.current[:started_at] = Time.now.to_f
+
+    @rcon = RCon.new(
+      name: @name,
+      host: @host,
+      port: @client_port,
+      password: @client_password
+    )
+
+    schedule_ping
+
+    schedule_chat
+    schedule_id
+    schedule_logistics
+    schedule_research
+    schedule_research_current
+    schedule_server_list
+    schedule_signals
 
     true
   end
@@ -285,6 +305,7 @@ class Server
       %(-e FACTORIO_RCON_PORT="#{self.client_port}"),
       %(-e PUID="$(id -u)"),
       %(-e PGID="$(id -g)"),
+      %(-e DEBUG=true),
       %(--volume=#{self.path}:/factorio),
       Config.factorio_docker_image
     )
@@ -370,10 +391,12 @@ class Server
 
   def parent?
     (Process.pid == @parent_pid) || master?
+    false
   end
 
   def child?
     !parent?
+    true
   end
 
 ################################################################################
@@ -389,13 +412,13 @@ class Server
 ################################################################################
 
   def connected?
-    if parent? && process_alive?
-      self.method_proxy.connected?
-    elsif child?
+    # if parent? && process_alive?
+    #   self.method_proxy.connected?
+    # elsif child?
       self.rcon.connected?
-    else
-      false
-    end
+    # else
+    #   false
+    # end
   end
 
   def disconnected?
@@ -405,13 +428,13 @@ class Server
 ################################################################################
 
   def authenticated?
-    if parent? && process_alive?
-      self.method_proxy.authenticated?
-    elsif child?
+    # if parent? && process_alive?
+    #   self.method_proxy.authenticated?
+    # elsif child?
       self.rcon.authenticated?
-    else
-      false
-    end
+    # else
+    #   false
+    # end
   end
 
   def unauthenticated?
@@ -421,13 +444,13 @@ class Server
 ################################################################################
 
   def available?
-    if parent? && process_alive?
-      self.method_proxy.available?
-    elsif child?
+    # if parent? && process_alive?
+    #   self.method_proxy.available?
+    # elsif child?
       self.rcon.available?
-    else
-      false
-    end
+    # else
+    #   false
+    # end
   end
 
   def unavailable?
@@ -436,24 +459,24 @@ class Server
 
 ################################################################################
 
-  def rcon_command_nonblock(command:)
-    if parent? && process_alive?
-      self.method_proxy.rcon_command_nonblock(command: command)
-    elsif child?
+  def rcon_command_nonblock(command)
+    # if parent? && process_alive?
+    #   self.method_proxy.rcon_command_nonblock(command)
+    # elsif child?
       return if unavailable?
-      self.rcon.command_nonblock(command: command)
+      self.rcon.command_nonblock(command)
 
       true
-    end
+    # end
   end
 
-  def rcon_command(command:)
-    if parent? && process_alive?
-      self.method_proxy.rcon_command(command: command)
-    elsif child?
+  def rcon_command(command)
+    # if parent? && process_alive?
+    #   self.method_proxy.rcon_command(command)
+    # elsif child?
       return if unavailable?
-      self.rcon.command(command: command)
-    end
+      self.rcon.command(command)
+    # end
   end
 
 ################################################################################

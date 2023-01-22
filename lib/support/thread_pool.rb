@@ -50,22 +50,6 @@ class ThreadPool
       thread
     end
 
-    def register(what, task: false, server: nil, **options, &block)
-      schedule = OpenStruct.new(
-        block: block,
-        frequency: Config.master_value(:scheduler, what),
-        next_run_at: Time.now.to_f,
-        options: options,
-        task: task,
-        server: server,
-        what: what
-      )
-      @@thread_schedules << schedule
-      schedule_log(:scheduler, :added, schedule)
-
-      true
-    end
-
     def thread_instrumentation(thread_name, &block)
       elapsed_time = Benchmark.realtime(&block)
       Metrics[:thread_timing].set(elapsed_time, labels: { name: thread_name })
@@ -93,6 +77,7 @@ class ThreadPool
 
       return false if @@thread_group_scheduled.list.map(&:name).compact.include?(thread_name)
 
+      # $pool.post do
       thread = Thread.new do
         # trap_signals
 
@@ -142,6 +127,50 @@ class ThreadPool
     def schedule_server(what, **options, &block)
       $logger.info(:scheduler) { "Scheduling server #{what.to_s.inspect}" }
       register(what, **options, &block)
+    end
+
+    def register(what, task: false, server: nil, **options, &block)
+      repeating_scheduled_task = -> interval, cancellation, task do
+        Concurrent::Promises.
+          schedule(interval, cancellation, &task).
+          then { repeating_scheduled_task.call(interval, cancellation, task) }
+      end
+
+      task = -> cancellation do
+        $logger.debug(:scheduler) { "[#{what}] Started" }
+        cancellation.check!
+        begin
+          block.call
+        rescue Exception => e
+          $logger.fatal(:scheduler) { e.ai + "\n" + e.backtrace.ai }
+          puts e.ai
+          puts e.backtrace.ai
+          # raise e
+        end
+        $logger.debug(:scheduler) { "[#{what}] Finished" }
+        true
+      end
+
+      result = Concurrent::Promises.future(
+        Config.master_value(:scheduler, what) || 120,
+        $cancellation,
+        task,
+        &repeating_scheduled_task
+      ).run
+
+      # schedule = OpenStruct.new(
+      #   block: block,
+      #   frequency: Config.master_value(:scheduler, what) || 120,
+      #   next_run_at: Time.now.to_f,
+      #   options: options,
+      #   task: task,
+      #   server: server,
+      #   what: what
+      # )
+      # @@thread_schedules << schedule
+      schedule_log(:scheduler, :added, what.to_s)
+
+      true
     end
 
     def server_names(*args)
@@ -206,11 +235,11 @@ class ThreadPool
       if master?
         $logger.info(:thread) { "Master Startup" }
 
-        thread = ThreadPool.thread("sinatra") do
-          ::WebServer.run! do |server|
-            # NOOP
-          end
-        end
+        # thread = ThreadPool.thread("sinatra") do
+        #   ::WebServer.run! do |server|
+        #     # NOOP
+        #   end
+        # end
 
         ::Servers.all.each do |server|
           if server.container_alive?
@@ -219,37 +248,42 @@ class ThreadPool
         end
       end
 
-      schedule_task_prometheus
+      # loop { sleep(1) }
+
+      # schedule_task_prometheus
       if master?
         schedule_task_autosave
         schedule_task_backup
         schedule_task_signals
+
         schedule_task_statistics
-        schedule_task_watchdog
+        # schedule_task_watchdog
       end
       yield if block_given?
 
       loop do
-        @@thread_group_scheduled.list.each do |thread|
-          unless thread[:expires_at].nil? || Time.now.to_f <= thread[:expires_at]
-            $logger.fatal(:thread) { "Thread Expired: #{thread.name}" }
-            thread.exit
-          end
-        end
+        # @@thread_group_scheduled.list.each do |thread|
+        #   unless thread[:expires_at].nil? || Time.now.to_f <= thread[:expires_at]
+        #     $logger.fatal(:thread) { "Thread Expired: #{thread.name}" }
+        #     thread.exit
+        #   end
+        # end
 
-        next_run_at = []
-        @@thread_schedules.each do |schedule|
-          if schedule.next_run_at <= Time.now.to_f
-            run(schedule)
-            schedule_next_run(schedule)
-          end
-          next_run_at << schedule.next_run_at
-        end
+        # next_run_at = []
+        # @@thread_schedules.each do |schedule|
+        #   if schedule.next_run_at <= Time.now.to_f
+        #     run(schedule)
+        #     schedule_next_run(schedule)
+        #   end
+        #   next_run_at << schedule.next_run_at
+        # end
 
-        update_thread_count_metric
+        # update_thread_count_metric
 
-        sleep_for = (next_run_at.min - Time.now.to_f)
-        sleep sleep_for if sleep_for > 0.0
+        # sleep_for = (next_run_at.min - Time.now.to_f)
+        # sleep sleep_for if sleep_for > 0.0
+
+        sleep 1
       end
 
     end

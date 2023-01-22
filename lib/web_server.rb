@@ -5,6 +5,7 @@ require 'sinatra-websocket'
 require 'sinatra/json'
 require 'sinatra/respond_with'
 require 'thin'
+require 'haml'
 
 class WebServer < Sinatra::Application
   # enable :logging
@@ -21,8 +22,8 @@ class WebServer < Sinatra::Application
 
   set :server_settings, :timeout => (10 * 60)
 
-  set :views, File.join(Dir.pwd, "web", "views")
-  set :public_folder, File.join(Dir.pwd, "web", "static")
+  set :views, File.join(LINK_ROOT, "web", "views")
+  set :public_folder, File.join(LINK_ROOT, "web", "static")
 
   set :haml, :format => :html5
 
@@ -179,4 +180,9 @@ class WebServer < Sinatra::Application
   #   end
   # end
 
+end
+
+$pool.post do
+  WebServer.run! do |server|
+  end
 end

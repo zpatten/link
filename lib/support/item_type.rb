@@ -17,7 +17,7 @@ class ItemType
         if type.nil?
           command = %(remote.call('link', 'lookup_item_type', '#{item_name}'))
           while type.nil? do
-            type = Servers.random.rcon_command(command: command)
+            type = Servers.random.rcon_command(command)
           end
           type.strip!
           self.item_type[item_name] = type

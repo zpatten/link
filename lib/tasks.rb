@@ -2,6 +2,26 @@
 
 # Tasks
 ################################################################################
+# repeating_scheduled_task = -> interval, cancellation, task do
+#   Concurrent::Promises.
+#     schedule(interval, cancellation, &task).
+#     then { repeating_scheduled_task.call(interval, cancellation, task) }
+# end
+
+# task_statistics = -> cancellation do
+#   cancellation.check!
+#   puts "Running task: statistics"
+#   Storage.calculate_delta
+# end
+
+# result = Concurrent::Promises.future(
+#   Config.master_value(:scheduler, :statistics) || 120,
+#   $cancellation,
+#   task_statistics,
+#   &repeating_scheduled_task
+# ).run
+
+
 def schedule_task_statistics
   ThreadPool.schedule_task(:statistics) do
     Storage.calculate_delta

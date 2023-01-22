@@ -9,7 +9,12 @@ class Config
     end
 
     def config
-      @@config ||= JSON.parse(IO.read(filename))
+      @@config ||= begin
+        hash = (JSON.parse(IO.read(filename)) rescue {})
+        puts hash.ai
+        Concurrent::Hash[hash]
+      end
+      @@config
     end
 
     def save!

@@ -35,7 +35,8 @@ class Metrics
       @@metrics[key]
     end
 
-    def build_options(**options)
+    def build_options(*args, **options)
+      ap args
       {
         docstring: '...',
         store_settings: {

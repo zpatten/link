@@ -70,11 +70,11 @@ class Server
       end
     end
 
-    def command_nonblock(command:)
+    def command_nonblock(command)
       enqueue_packet(build_command(command))
     end
 
-    def command(command:)
+    def command(command)
       packet_fields = enqueue_packet(build_command(command))
       response = find_response(packet_fields.id)
       response.payload.strip
