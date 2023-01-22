@@ -38,6 +38,8 @@ class Server
   attr_reader :method_proxy
   attr_reader :rcon
 
+  attr_reader :cancellation, :origin
+
   RECV_MAX_LEN = 64 * 1024
 
 ################################################################################
@@ -61,6 +63,14 @@ class Server
 
     @rx_signals_initalized = false
     @tx_signals_initalized = false
+
+    # @pinged_at = Time.now.to_f
+    @rcon = RCon.new(
+      name: @name,
+      host: @host,
+      port: @client_port,
+      password: @client_password
+    )
 
     @parent_pid          = Process.pid
   end
@@ -86,14 +96,10 @@ class Server
   end
 
   def rtt=(value)
-    # if parent?
-      @pinged_at = Time.now.to_f unless value.nil?
-      @rtt       = value
-      update_websocket
-      @rtt
-    # elsif child?
-    #   self.method_proxy.rtt = value
-    # end
+    @pinged_at = Time.now.to_f unless value.nil?
+    @rtt       = value
+    update_websocket
+    @rtt
   end
 
 ################################################################################
@@ -173,8 +179,8 @@ class Server
   def start!(container=true)
     Timeout.timeout(60) do
       self.start_container! if container
-      self.start_process!
       self.start_rcon!
+      self.start_threads!
 
       sleep 1 while self.unavailable?
     end
@@ -182,8 +188,8 @@ class Server
 
   def stop!(container=true)
     Timeout.timeout(60) do
+      self.stop_threads!
       self.stop_rcon!
-      self.stop_process!
       self.stop_container! if container
 
       sleep 1 while self.available?
@@ -192,91 +198,23 @@ class Server
 
 ################################################################################
 
-  def start_process!
-    return true if process_alive?
+  def start_threads!
+    @cancellation, @origin = Concurrent::Cancellation.new
 
-    # @method_proxy = MethodProxy.new(self, Process.pid)
-    @pinged_at = Time.now.to_f
-
-    # @child_pid = Process.fork do
-    #   Thread.list.each do |thread|
-    #     thread.exit unless thread == Thread.main
-    #   end
-
-    #   $0 = "Link Server: #{self.name}"
-    #   Thread.current.name = self.name
-    #   Thread.current[:started_at] = Time.now.to_f
-
-    #   @rcon = RCon.new(
-    #     name: @name,
-    #     host: @host,
-    #     port: @client_port,
-    #     password: @client_password
-    #   )
-
-    #   self.method_proxy.start do |e|
-    #     unless e.class == Timeout::Error
-    #       Process.exit!
-    #     end
-    #   end
-
-    #   ThreadPool.execute do
-    #     schedule_ping
-
-    #     schedule_chat
-    #     schedule_id
-    #     schedule_logistics
-    #     schedule_research
-    #     schedule_research_current
-    #     schedule_server_list
-    #     schedule_signals
-    #   end
-    # end
-    # Process.detach(@child_pid)
-
-    # self.method_proxy.start do |e|
-    #   self.stop!(false)
-    # end
-
-    Thread.current.name = self.name
-    Thread.current[:started_at] = Time.now.to_f
-
-    @rcon = RCon.new(
-      name: @name,
-      host: @host,
-      port: @client_port,
-      password: @client_password
-    )
-
-    schedule_ping
-
-    schedule_chat
-    schedule_id
-    schedule_logistics
-    schedule_research
-    schedule_research_current
-    schedule_server_list
-    schedule_signals
+    start_thread_ping
+    start_thread_id
+    start_thread_research
+    start_thread_chat
+    start_thread_logistics
+    start_thread_server_list
+    start_thread_signals
 
     true
   end
 
-  def stop_process!
-    return true if process_dead?
-
-    Process.kill('INT', @child_pid)
-    self.method_proxy.stop
-    @rtt = nil
-
+  def stop_threads!
+    self.origin and self.origin.resolve
     true
-  end
-
-  def process_alive?
-    !!Process.kill(0, @child_pid) rescue false
-  end
-
-  def process_dead?
-    !process_alive?
   end
 
 ################################################################################
@@ -347,22 +285,14 @@ class Server
 ################################################################################
 
   def start_rcon!
-    if parent? && process_alive?
-      self.method_proxy.start_rcon!
-    elsif child?
-      self.rcon.startup!
-    end
+    self.rcon.startup!
 
     true
   end
 
   def stop_rcon!
-    if parent? && process_alive?
-      self.method_proxy.stop_rcon!
-      self.rtt = nil
-    elsif child?
-      self.rcon.shutdown!
-    end
+    self.rtt = nil
+    self.rcon.shutdown!
 
     true
   end
@@ -370,33 +300,15 @@ class Server
 ################################################################################
 
   def threads
-    if parent? && process_alive?
-      self.method_proxy.threads
-    elsif child?
-      Thread.list.collect do |t|
-        OpenStruct.new(
-          pid: Process.pid,
-          name: t.name,
-          status: t.status,
-          priority: t.priority,
-          started_at: t[:started_at] || Time.now.to_i
-        )
-      end
-    else
-      []
+    Thread.list.collect do |t|
+      OpenStruct.new(
+        pid: Process.pid,
+        name: t.name,
+        status: t.status,
+        priority: t.priority,
+        started_at: t[:started_at] || Time.now.to_i
+      )
     end
-  end
-
-################################################################################
-
-  def parent?
-    (Process.pid == @parent_pid) || master?
-    false
-  end
-
-  def child?
-    !parent?
-    true
   end
 
 ################################################################################
@@ -412,13 +324,7 @@ class Server
 ################################################################################
 
   def connected?
-    # if parent? && process_alive?
-    #   self.method_proxy.connected?
-    # elsif child?
-      self.rcon.connected?
-    # else
-    #   false
-    # end
+    self.rcon.connected?
   end
 
   def disconnected?
@@ -428,13 +334,7 @@ class Server
 ################################################################################
 
   def authenticated?
-    # if parent? && process_alive?
-    #   self.method_proxy.authenticated?
-    # elsif child?
-      self.rcon.authenticated?
-    # else
-    #   false
-    # end
+    self.rcon.authenticated?
   end
 
   def unauthenticated?
@@ -444,13 +344,7 @@ class Server
 ################################################################################
 
   def available?
-    # if parent? && process_alive?
-    #   self.method_proxy.available?
-    # elsif child?
-      self.rcon.available?
-    # else
-    #   false
-    # end
+    self.rcon.available?
   end
 
   def unavailable?
@@ -460,23 +354,15 @@ class Server
 ################################################################################
 
   def rcon_command_nonblock(command)
-    # if parent? && process_alive?
-    #   self.method_proxy.rcon_command_nonblock(command)
-    # elsif child?
-      return if unavailable?
-      self.rcon.command_nonblock(command)
+    return if unavailable?
+    self.rcon.command_nonblock(command)
 
-      true
-    # end
+    true
   end
 
   def rcon_command(command)
-    # if parent? && process_alive?
-    #   self.method_proxy.rcon_command(command)
-    # elsif child?
-      return if unavailable?
-      self.rcon.command(command)
-    # end
+    return if unavailable?
+    self.rcon.command(command)
   end
 
 ################################################################################

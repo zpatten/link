@@ -3,8 +3,9 @@
 class Server
   module Logistics
 
-    def schedule_logistics
-      ThreadPool.schedule_server(:logistics, server: self) do
+    def start_thread_logistics
+      # ThreadPool.schedule_server(:logistics, server: self) do
+      Tasks.schedule(:logistics, server: self) do
 
         command = %(remote.call('link', 'get_requests'))
         payload = self.rcon_command(command)
@@ -29,7 +30,7 @@ class Server
             $logger.debug(:logistics) {
               "[#{self.name}] providables: #{providables.ai}"
             }
-            Storage.bulk_add(providables)
+            ::Storage.bulk_add(providables)
           end
         end
 

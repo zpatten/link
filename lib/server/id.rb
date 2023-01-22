@@ -5,8 +5,9 @@
 class Server
   module ID
 
-    def schedule_id
-      ThreadPool.schedule_server(:id, server: self) do |server|
+    def start_thread_id
+      # ThreadPool.schedule_server(:id, server: self) do |server|
+      Tasks.schedule(:id, server: self) do
         command = %(remote.call('link', 'set_id', '#{self.id}'))
         self.rcon_command(command)
       end

@@ -243,7 +243,7 @@ function set_link_receiver_combinator(force, json)
 
       link_log('SIGNALS-RX', string.format('Processing Network ID[%d]: %d', unit_number, link_network_id))
 
-      behaviour.parameters = { parameters = global.link_rx_signals[link_network_id] }
+      behaviour.parameters = global.link_rx_signals[link_network_id]
       behaviour.enabled = true
     end
   end
@@ -258,7 +258,7 @@ function set_link_receiver_combinator(force, json)
 
       link_log('SIGNALS-RX', string.format('Processing Network ID[%d]: %s', unit_number, link_network_id))
 
-      behaviour.parameters = { parameters = global.link_rx_signals[link_network_id] }
+      behaviour.parameters = global.link_rx_signals[link_network_id]
       behaviour.enabled = true
     end
   end

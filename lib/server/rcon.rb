@@ -101,7 +101,7 @@ class Server
               connect!
               break if connected?
             rescue Errno::ECONNABORTED, Errno::ECONNREFUSED, Errno::ECONNRESET => e
-              $logger.fatal(:rcon) { "[#{tag}] Caught Exception: #{e.message}" }
+              $logger.fatal(tag) { "[RCON] Caught Exception: #{e.message}" }
               sleep 3
             end
           end
@@ -109,7 +109,7 @@ class Server
           socket_rx_thread
           authenticate if connected? && unauthenticated?
         rescue => e
-          $logger.fatal(:rcon) { "[#{tag}] Caught Exception: #{e.full_message}" }
+          $logger.fatal(tag) { "[RCON] Caught Exception: #{e.full_message}" }
           shutdown!
         end
       end
@@ -122,9 +122,9 @@ class Server
       @socket_rx_thread && @socket_rx_thread.kill
       @socket_tx_thread && @socket_tx_thread.kill
 
-      @manager_thread = nil
-      @socket_rx_thread    = nil
-      @socket_tx_thread    = nil
+      @manager_thread   = nil
+      @socket_rx_thread = nil
+      @socket_tx_thread = nil
 
       @authenticated = false
 
@@ -140,7 +140,7 @@ class Server
       rescue Errno::EPIPE
         startup!
       rescue => e
-        $logger.fatal(:rcon) { "[#{tag}] Caught Exception: #{e.full_message}" }
+        $logger.fatal(tag) { "[RCON] Caught Exception: #{e.full_message}" }
         shutdown!
       end
     end
@@ -152,7 +152,7 @@ class Server
       rescue Errno::EPIPE
         startup!
       rescue => e
-        $logger.fatal(:rcon) { "[#{tag}] Caught Exception: #{e.full_message}" }
+        $logger.fatal(tag) { "[RCON] Caught Exception: #{e.full_message}" }
         shutdown!
       end
     end

@@ -4,13 +4,11 @@
 
 at_exit do
   $logger.fatal(:at_exit) { 'Shutting down!' }
-  $origin.resolve
-  ThreadPool.shutdown!
-  if master?
-    Servers.shutdown!
-    ItemType.save
-    Storage.save
-  end
+  Servers.shutdown!
+  stop_threads!
+
+  ItemType.save
+  Storage.save
 end
 
 def trap_signals
@@ -21,15 +19,47 @@ end
 
 ################################################################################
 
-def master?
-  Process.pid == master_pid
-rescue Errno::ENOENT
-  false
+def execute
+  $0 = 'Link Server'
+  Config.load
+  ItemType.load
+  Storage.load
+  create_pid_file(LINK_SERVER_PID_FILE)
+  trap_signals
+
+  start_threads!
+
+  loop { sleep(1) }
 end
 
-def master_pid
-  read_pid_file(LINK_SERVER_PID_FILE)
+################################################################################
+
+def start_threads!
+  start_thread_signals
+
+  ::Servers.all.each do |server|
+    if server.container_alive?
+      server.start!(false)
+    end
+  end
 end
+
+def stop_threads!
+  $origin.resolve
+  $pool.shutdown
+end
+
+################################################################################
+
+# def master?
+#   Process.pid == master_pid
+# rescue Errno::ENOENT
+#   false
+# end
+
+# def master_pid
+#   read_pid_file(LINK_SERVER_PID_FILE)
+# end
 
 ################################################################################
 
@@ -95,16 +125,6 @@ rescue Errno::ENOENT
 
 ensure
   destroy_pid_file(pid_file)
-end
-
-################################################################################
-
-def execute
-  $0 = 'Link Server'
-  Config.load
-  Storage.load
-  create_pid_file(LINK_SERVER_PID_FILE)
-  ThreadPool.execute
 end
 
 ################################################################################

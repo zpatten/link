@@ -115,7 +115,7 @@ class Signals
 
     def update_inventory_signals
       signals = Array.new
-      Storage.clone.each do |item_name, item_count|
+      ::Storage.clone.each do |item_name, item_count|
         item_name = 'link-signal-electricity' if item_name == 'electricity'
         item_type = ItemType[item_name]
         if item_name == 'link-signal-electricity'

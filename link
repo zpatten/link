@@ -25,7 +25,10 @@ require 'awesome_print'
 require 'concurrent-edge'
 
 
-$pool = Concurrent::CachedThreadPool.new
+$pool = Concurrent::CachedThreadPool.new(
+  auto_terminate: false,
+  fallback_policy: :abort
+)
 $cancellation, $origin = Concurrent::Cancellation.new
 
 

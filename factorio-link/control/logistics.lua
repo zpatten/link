@@ -91,7 +91,7 @@ function get_link_requests()
     local entity = data.entity
     local filter_count = data.filter_count
     local inventory = data.inventory
-    if entity and entity.valid and not entity.to_be_deconstructed(entity.force) then
+    if entity and entity.valid and not entity.to_be_deconstructed(entity.force) and filter_count > 0 then
       for i = 1, filter_count do
         local requested_item = entity.get_request_slot(i)
         if requested_item then

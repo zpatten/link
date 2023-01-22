@@ -1,5 +1,62 @@
 # frozen_string_literal: true
 
+class Tasks
+  module Scheduling
+    def schedule(what, server: nil, &block)
+      return false unless !!Config.master_value(:scheduler, what)
+      repeating_scheduled_task = -> interval, cancellation, task do
+        Concurrent::Promises.
+          schedule(interval, cancellation, &task).
+          then { repeating_scheduled_task.call(interval, cancellation, task) }
+      end
+
+      task = -> cancellation do
+        if cancellation.canceled?
+          $logger.debug(tag) { "[#{what}] Task Canceled" }
+          cancellation.check!
+        end
+        tag = (server and server.name) || Thread.current.name
+        $logger.debug(tag) { "[#{what}] Task Started" }
+        begin
+          block.call(server)
+        rescue Exception => e
+          $logger.fatal(tag) { "[#{what}] #{e.ai}\n#{e.backtrace.ai}" }
+          puts e.ai
+          puts e.backtrace.ai
+          # raise e
+        end
+        $logger.debug(tag) { "[#{what}] Task Finished" }
+        true
+      end
+
+      cancellation = (server ? $cancellation.join(server.cancellation) : $cancellation)
+
+      result = Concurrent::Promises.future(
+        Config.master_value(:scheduler, what) || 120,
+        cancellation,
+        task,
+        &repeating_scheduled_task
+      ).run
+
+      # schedule = OpenStruct.new(
+      #   block: block,
+      #   frequency: Config.master_value(:scheduler, what) || 120,
+      #   next_run_at: Time.now.to_f,
+      #   options: options,
+      #   task: task,
+      #   server: server,
+      #   what: what
+      # )
+      # @@thread_schedules << schedule
+      tag = (server and server.name) || Thread.current.name
+      $logger.debug(tag) { "[#{what}] Added to task scheduler" }
+
+      true
+    end
+  end
+
+  extend Scheduling
+end
 # Tasks
 ################################################################################
 # repeating_scheduled_task = -> interval, cancellation, task do
@@ -48,8 +105,8 @@ def schedule_task_autosave
   end
 end
 
-def schedule_task_signals
-  ThreadPool.schedule_task(:signals) do
+def start_thread_signals
+  Tasks.schedule(:signals) do
     Signals.update_inventory_signals
   end
 end

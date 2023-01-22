@@ -5,9 +5,10 @@
 class Server
   module Research
 
-    def schedule_research_current
+    def start_thread_research
       if self.research
-        ThreadPool.schedule_server(:research_current, server: self) do
+        # ThreadPool.schedule_server(:research_current, server: self) do
+        Tasks.schedule(:research_current, server: self) do
           command = %(remote.call('link', 'get_current_research'))
           payload = self.rcon_command(command)
           unless payload.nil? || payload.empty?
@@ -20,12 +21,9 @@ class Server
             end
           end
         end
-      end
-    end
 
-    def schedule_research
-      if self.research
-        ThreadPool.schedule_server(:research, server: self) do
+        # ThreadPool.schedule_server(:research, server: self) do
+        Tasks.schedule(:research, server: self) do
           command = %(remote.call('link', 'get_research'))
           payload = self.rcon_command(command)
           unless payload.nil? || payload.empty?

@@ -130,6 +130,7 @@ class ThreadPool
     end
 
     def register(what, task: false, server: nil, **options, &block)
+      return false unless !!Config.master_value(:scheduler, what)
       repeating_scheduled_task = -> interval, cancellation, task do
         Concurrent::Promises.
           schedule(interval, cancellation, &task).
@@ -252,11 +253,11 @@ class ThreadPool
 
       # schedule_task_prometheus
       if master?
-        schedule_task_autosave
-        schedule_task_backup
-        schedule_task_signals
+        # schedule_task_autosave
+        # schedule_task_backup
+        # schedule_task_signals
+        # schedule_task_statistics
 
-        schedule_task_statistics
         # schedule_task_watchdog
       end
       yield if block_given?
