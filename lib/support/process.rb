@@ -2,8 +2,14 @@
 
 ################################################################################
 
+puts "register at exit"
 at_exit do
+  puts "AT_EXIT"
   $logger.fatal(:at_exit) { 'Shutting down!' }
+  shutdown!
+end
+
+def shutdown!
   Servers.shutdown!
   stop_threads!
 
@@ -29,19 +35,28 @@ def execute
 
   start_threads!
 
-  loop { sleep(1) }
+  puts "RUNNING"
+
+  WebServer.run!
+
+  puts "POOL STOPPED"
 end
 
 ################################################################################
 
 def start_threads!
+  start_thread_statistics
   start_thread_signals
+  start_thread_autosave
+  start_thread_backup
 
-  ::Servers.all.each do |server|
-    if server.container_alive?
-      server.start!(false)
-    end
-  end
+  Servers.start!
+  # ::Servers.all.each do |server|
+  #   if server.container_alive?
+  #     server.start!(false)
+  #   end
+  # end
+  puts "THREADS STARTED!"
 end
 
 def stop_threads!

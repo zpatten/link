@@ -23,7 +23,7 @@ class Server
         # Update Prometheus with our current RTT
         Metrics[:server_rtt].set(rtt_ms, labels: { name: self.name })
 
-        $logger.debug(:ping) { "[#{self.name}] rtt: #{rtt_ms}ms" }
+        $logger.debug(self.name) { "[PING] rtt: #{rtt_ms}ms" }
       end
     end
 

@@ -36,9 +36,12 @@ if $stop
 end
 
 if $start
+  puts "START"
   if $foreground
+    puts "FORE"
     execute
   else
+    puts "BG"
     Process.fork do
       Process.daemon(true)
       execute
@@ -47,3 +50,5 @@ if $start
   # pid = start_link
   # start_watchdog(pid)
 end
+
+puts "RUNNER START"

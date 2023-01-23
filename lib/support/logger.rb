@@ -40,7 +40,7 @@ end
 # MultiLogger.add(Logger.new("link.log"))
 
 $logger = Logger.new("link.log")
-$logger.level = Logger::DEBUG
+$logger.level = Logger::INFO
 
 # $logger = Logger.new(STDOUT)
 $logger.datetime_format = '%Y-%m-%d %H:%M:%S.%6N'

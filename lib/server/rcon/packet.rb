@@ -18,7 +18,7 @@ class Server
           type: type,
           payload: payload
         )
-        $logger.debug(:rcon) { "[#{tag}] Built Packet ID #{packet_fields.id}" }
+        $logger.debug(tag) { "[RCON] Built Packet ID #{packet_fields.id}" }
         packet_fields
       end
 
@@ -31,6 +31,7 @@ class Server
             len = (length - buffer.length)
             buffer += socket.recvmsg_nonblock(len).first
           rescue IO::WaitReadable
+            Thread.pass
             IO.select([socket])
             retry
           end
@@ -55,9 +56,9 @@ class Server
         buffer.rewind
         packet_fields = decode_packet(buffer.read)
         if packet_fields.payload.to_s =~ /error/i then
-          $logger.error(:rcon) { %([#{tag}:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
+          $logger.error(tag) { %([RCON:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
         else
-          $logger.debug(:rcon) { %([#{tag}:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
+          $logger.debug(tag) { %([RCON:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
         end
         register_response(packet_fields)
         packet_fields
@@ -84,11 +85,12 @@ class Server
           buffer.seek(total_sent)
           total_sent += socket.sendmsg_nonblock(buffer.read)
         rescue IO::WaitWritable
+          Thread.pass
           IO.select(nil, [socket])
           retry
         end
 
-        $logger.debug(:rcon) { %([#{tag}:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
+        $logger.debug(tag) { %([RCON:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 
         total_sent
       rescue Errno::ECONNABORTED, Errno::ESHUTDOWN

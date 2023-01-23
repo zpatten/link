@@ -1,6 +1,39 @@
 # frozen_string_literal: true
 
 class Tasks
+  module Process
+    def process(what, cancellation: nil, &block)
+      cancellation = cancellation || $cancellation
+      # task = -> cancellation do
+      #   begin
+      #     block.call until cancellation.canceled?
+      #   rescue Exception => e
+      #     $logger.fatal(tag) { "[#{what}] #{e.ai}\n#{e.backtrace.ai}" }
+      #     puts e.ai
+      #     puts e.backtrace.ai
+      #     # raise e
+      #   end
+      # end
+      # result = Concurrent::Promises.future(
+      #   cancellation,
+      #   task
+      # ).run
+
+      #Concurrent::Promises.future(cancellation) do |cancellation|
+      $pool.post do
+        begin
+          $logger.debug(tag) { "[#{what}] Process Started" }
+          block.call until cancellation.canceled?
+        rescue Exception => e
+          $logger.fatal(tag) { "[#{what}] #{e.ai}\n#{e.backtrace.ai}" }
+          puts e.ai
+          puts e.backtrace.ai
+          # raise e
+        end
+      end
+    end
+  end
+
   module Scheduling
     def schedule(what, server: nil, &block)
       return false unless !!Config.master_value(:scheduler, what)
@@ -56,6 +89,7 @@ class Tasks
   end
 
   extend Scheduling
+  extend Process
 end
 # Tasks
 ################################################################################
@@ -79,14 +113,16 @@ end
 # ).run
 
 
-def schedule_task_statistics
-  ThreadPool.schedule_task(:statistics) do
+def start_thread_statistics
+  # ThreadPool.schedule_task(:statistics) do
+  Tasks.schedule(:statistics) do
     Storage.calculate_delta
   end
 end
 
-def schedule_task_backup
-  ThreadPool.schedule_task(:backup) do
+def start_thread_backup
+  # ThreadPool.schedule_task(:backup) do
+  Tasks.schedule(:backup) do
     Servers.backup
     Servers.trim_save_files
   end
@@ -98,8 +134,9 @@ def schedule_task_prometheus
   end
 end
 
-def schedule_task_autosave
-  ThreadPool.schedule_task(:autosave) do
+def start_thread_autosave
+  # ThreadPool.schedule_task(:autosave) do
+  Tasks.schedule(:autosave) do
     ItemType.save
     Storage.save
   end

@@ -38,7 +38,7 @@ class Server
   attr_reader :method_proxy
   attr_reader :rcon
 
-  attr_reader :cancellation, :origin
+  attr_reader :cancellation
 
   RECV_MAX_LEN = 64 * 1024
 
@@ -65,12 +65,12 @@ class Server
     @tx_signals_initalized = false
 
     # @pinged_at = Time.now.to_f
-    @rcon = RCon.new(
-      name: @name,
-      host: @host,
-      port: @client_port,
-      password: @client_password
-    )
+    @rcon = RCon.new(server: self)
+    #   name: @name,
+    #   host: @host,
+    #   port: @client_port,
+    #   password: @client_password
+    # )
 
     @parent_pid          = Process.pid
   end
@@ -213,7 +213,9 @@ class Server
   end
 
   def stop_threads!
-    self.origin and self.origin.resolve
+    puts "STOPPING THREADS #{self.name}"
+    @origin and @origin.resolve
+
     true
   end
 
@@ -366,5 +368,15 @@ class Server
   end
 
 ################################################################################
+
+  def rcon_handler(command, &block)
+    payload = self.rcon_command(command)
+    unless payload.nil? || payload.empty?
+      data = JSON.parse(payload)
+      unless data.nil? || data.empty?
+        block.call(data)
+      end
+    end
+  end
 
 end

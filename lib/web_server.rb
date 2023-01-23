@@ -69,22 +69,22 @@ class WebServer < Sinatra::Application
   end
 
   get "/threads" do
-    @threads = Thread.list.dup.delete_if { |t| t.nil? || t.name.nil? }
+    # @threads = Thread.list.dup.delete_if { |t| t.nil? || t.name.nil? }
     @threads = Thread.list.collect! do |t|
       OpenStruct.new(
         pid: Process.pid,
         name: t.name,
         status: t.status,
-        priority: t.priority,
-        started_at: t[:started_at] || Time.now.to_i
+        priority: t.priority
+        # started_at: t[:started_at] || Time.now.to_i
       )
     end
-    Servers.all.each do |s|
-      @threads += s.threads
-    end
+    # Servers.all.each do |s|
+    #   @threads += s.threads
+    # end
     @threads.compact!
-    @threads.delete_if { |t| t.name.nil? }
-    @threads = @threads.sort_by { |t| t.name }
+    # @threads.delete_if { |t| t.name.nil? }
+    @threads = @threads.sort_by { |t| t.name || '-' }
     haml :threads
   end
 
@@ -182,7 +182,7 @@ class WebServer < Sinatra::Application
 
 end
 
-$pool.post do
-  WebServer.run! do |server|
-  end
-end
+# $pool.post do
+#   WebServer.run! do |server|
+#   end
+# end

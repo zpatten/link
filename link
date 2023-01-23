@@ -26,9 +26,14 @@ require 'concurrent-edge'
 
 
 $pool = Concurrent::CachedThreadPool.new(
-  auto_terminate: false,
-  fallback_policy: :abort
+  min_threads: (Etc.nprocessors * 0.25).floor,
+  max_threads: Etc.nprocessors,
+  max_queue: 0
 )
+# (
+#   auto_terminate: true,
+#   fallback_policy: :abort
+# )
 $cancellation, $origin = Concurrent::Cancellation.new
 
 

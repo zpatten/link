@@ -21,7 +21,7 @@ class Servers
     def find(what, except: [])
       what = what.to_sym
       servers = case what
-      when :commands, :chat, :ping, :command_whitelist, :logistics, :signals, :id
+      when :commands, :chat, :ping, :command_whitelist, :logistics, :fulfillments, :providables, :signals, :id
         all.select { |s| !!Config.server_value(s.name, what) }
       when :research, :research_current
         all.select { |s| s.research }
@@ -53,7 +53,7 @@ class Servers
         if server.available?
           server_list[server.name] = {
             name: server.name,
-            host: scrub_host(server.host),
+            host: external_host,
             port: server.factorio_port,
             research: server.research,
             responsive: server.responsive?,
@@ -67,15 +67,15 @@ class Servers
 ################################################################################
 
     def start!
-      self.all.each(&:start!)
+      self.all.each { |server| $pool.post { server.start! } }
     end
 
     def stop!
-      self.all.each(&:stop!)
+      self.all.each { |server| $pool.post { server.stop! } }
     end
 
     def restart!
-      self.all.each(&:restart!)
+      self.all.each { |server| $pool.post { server.restart! } }
     end
 
 ################################################################################

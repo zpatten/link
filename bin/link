@@ -1,0 +1,10 @@
+#!/usr/bin/env jruby
+# frozen_string_literal: true
+
+$:.unshift File.expand_path('lib')
+
+# puts $:.inspect
+
+require 'link'
+
+Link::Runner.execute(ARGV)

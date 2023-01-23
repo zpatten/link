@@ -4,13 +4,11 @@ class MemoryCache
   module ClassMethods
 
     $_memory_cache_store = Concurrent::Hash.new
-    $_memory_cache_fetch_mutex ||= Mutex.new
     $_memory_cache_read_mutex ||= Mutex.new
     $_memory_cache_write_mutex ||= Mutex.new
-    $_memory_cache_delete_mutex ||= Mutex.new
 
     def fetch(key, options={}, &block)
-      $_memory_cache_fetch_mutex.synchronize do
+      # $_memory_cache_fetch_mutex.synchronize do
         value = nil
         if (value = read(key, options)).nil?
           # $logger.debug(:cache) { "Fetch: #{key} (#{options})" }
@@ -22,7 +20,7 @@ class MemoryCache
         end
 
         value
-      end
+      # end
     end
 
     def read(key, options={})
@@ -67,7 +65,7 @@ class MemoryCache
     end
 
     def delete(key, options={})
-      $_memory_cache_delete_mutex.synchronize do
+      $_memory_cache_write_mutex.synchronize do
         $_memory_cache_store.delete(key)
       end
 

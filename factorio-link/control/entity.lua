@@ -146,7 +146,7 @@ function add_link_entity(entity)
       comparator = "≠",
       output_signal = { type = "virtual", name = "signal-each" }
     }
-    behavior.parameters = { parameters = parameters }
+    behavior.parameters = parameters
     global.link_transmitter_combinators[entity.unit_number] = {
       entity = entity,
       behaviour = entity.get_or_create_control_behavior(),
