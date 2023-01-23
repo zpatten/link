@@ -24,10 +24,10 @@ class Metrics
     def push
       RescueRetry.attempt do
         Prometheus::Client::Push.new(
-          'link',
-          'master',
-          'http://127.0.0.1:9091'
-        ).add(@@prometheus)
+          job: 'link',
+          gateway: 'https://pushgateway.tatooine.jovelabs.io',
+          grouping_key: { hostname: Socket.gethostname }
+       ).replace(@@prometheus)
       end
     end
 
@@ -48,7 +48,10 @@ class Metrics
 
     def guage(key, **options)
       @@metrics[key] ||= begin
+        $logger.info(:metrics) { "Creating Gauge #{key.ai}" }
         metric = Prometheus::Client::Gauge.new(key, **build_options(options))
+        puts metric.ai
+        puts @@prometheus.ai
         @@prometheus.register(metric)
         metric
       end
@@ -56,7 +59,10 @@ class Metrics
 
     def histogram(key, **options)
       @@metrics[key] ||= begin
+        $logger.info(:metrics) { "Creating Histogram #{key.ai}" }
         metric = Prometheus::Client::Histogram.new(key, **build_options(options))
+        puts metric.ai
+        puts @@prometheus.ai
         @@prometheus.register(metric)
         metric
       end
@@ -72,6 +78,6 @@ Metrics.guage(:storage_delta_count)
 Metrics.guage(:electrical_count)
 Metrics.guage(:electrical_delta_count)
 Metrics.guage(:thread_count)
-# Metrics.histogram(:thread_execution)
+Metrics.histogram(:thread_execution)
 Metrics.guage(:thread_timing)
 Metrics.guage(:server_rtt)

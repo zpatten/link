@@ -24,7 +24,7 @@
     %th Responsive?
     %th RTT
     %th Actions
-  - Servers.all.sort_by { |server| server.name }.each do |server|
+  - Servers.all.each do |server|
     %tr
       %td= server.id
       %td= server.name

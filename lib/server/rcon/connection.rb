@@ -14,7 +14,7 @@ class Server
       def connected?
         return false if @socket.nil?
 
-        @socket.remote_address
+        @socket_mutex.synchronize { @socket.remote_address }
         true
       rescue Errno::ENOTCONN
         false

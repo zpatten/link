@@ -38,8 +38,6 @@ class Server
 
       @manager_thread   = nil
       @manager_mutex    = Mutex.new
-      @socket_rx_thread = nil
-      @socket_tx_thread = nil
 
       @callbacks        = Concurrent::Hash.new
       @responses        = Concurrent::Hash.new
@@ -99,122 +97,70 @@ class Server
 ################################################################################
 
     def startup!
-      # Tasks.process("#{name}-manager", cancellation: $cancellation.join(@cancellation)) do
+      $logger.info(tag) { "[RCON] Startup" }
       @cancellation, @origin = Concurrent::Cancellation.new
       $pool.post do
-        while disconnected? && !self.cancellation.canceled? do
-          begin
-            connect!
-            break if connected?
-          rescue Errno::ECONNABORTED, Errno::ECONNREFUSED, Errno::ECONNRESET => e
-            $logger.fatal(tag) { "[RCON] Caught Exception: #{e.message}" }
-            sleep 3
+        begin
+          until connected? || self.cancellation.canceled? do
+            begin
+              connect!
+              break if connected?
+            rescue Errno::ECONNABORTED, Errno::ECONNREFUSED, Errno::ECONNRESET => e
+              $logger.fatal(tag) { "[RCON] Caught Exception: #{e.message}" }
+              sleep 3
+            end
           end
+
+          if connected? && !self.cancellation.canceled?
+            start_tx_thread
+            start_rx_thread
+
+            authenticate if unauthenticated?
+          end
+
+          sleep 1 until self.cancellation.canceled?
+          disconnect!
+
+        rescue => e
+          $logger.fatal(tag) { "[RCON] Caught Exception: #{e.full_message}" }
+          shutdown!
         end
-
-        # while disconnected? do
-        #   begin
-        #     connect!
-        #     break if connected?
-        #   rescue Errno::ECONNABORTED, Errno::ECONNREFUSED, Errno::ECONNRESET => e
-        #     $logger.fatal(tag) { "[RCON] Caught Exception: #{e.message}" }
-        #     sleep 3
-        #   end
-        # end
-        socket_tx_thread
-        socket_rx_thread
-
-        authenticate if connected? && unauthenticated?
-        # sleep 1 until disconnected?
       end
-
-      # return if !@manager_thread.nil? && @manager_thread.alive?
-      # @manager_mutex.synchronize do
-      #   @manager_thread = ThreadPool.thread("#{tag}-connect") do
-      #     while disconnected? do
-      #       begin
-      #         connect!
-      #         break if connected?
-      #       rescue Errno::ECONNABORTED, Errno::ECONNREFUSED, Errno::ECONNRESET => e
-      #         $logger.fatal(tag) { "[RCON] Caught Exception: #{e.message}" }
-      #         sleep 3
-      #       end
-      #     end
-      #     socket_tx_thread
-      #     socket_rx_thread
-      #     authenticate if connected? && unauthenticated?
-      #   rescue => e
-      #     $logger.fatal(tag) { "[RCON] Caught Exception: #{e.full_message}" }
-      #     shutdown!
-      #   end
-      # end
     end
 
     def shutdown!
-      disconnect!
+      $logger.warn(tag) { "[RCON] Shutdown" }
       @origin and @origin.resolve
 
-      # @manager_thread && @manager_thread.kill
-      # @socket_rx_thread && @socket_rx_thread.kill
-      # @socket_tx_thread && @socket_tx_thread.kill
-
-      # @manager_thread   = nil
-      # @socket_rx_thread = nil
-      # @socket_tx_thread = nil
-
-      @authenticated = false
+      disconnect!
 
       true
     end
 
 ################################################################################
 
-    def socket_tx_thread
-      # Tasks.process("#{name}-tx", cancellation: @cancellation) do
+    def start_tx_thread
       $pool.post do
         begin
-          send_packet(get_queued_packet.packet_fields) while connected? && !self.cancellation.canceled?
-        rescue Errno::EPIPE
-          startup!
+          send_packet(get_queued_packet.packet_fields) until disconnected? || self.cancellation.canceled?
         rescue => e
           $logger.fatal(tag) { "[RCON] Caught Exception: #{e.full_message}" }
           shutdown!
         end
+        $logger.warn(tag) { "[RCON] TX Shutdown" }
       end
-
-      # return if !@socket_tx_thread.nil? && @socket_tx_thread.alive?
-      # @socket_tx_thread = ThreadPool.thread("#{tag}-socket-tx") do
-      #   send_packet(get_queued_packet.packet_fields) while connected?
-      # rescue Errno::EPIPE
-      #   startup!
-      # rescue => e
-      #   $logger.fatal(tag) { "[RCON] Caught Exception: #{e.full_message}" }
-      #   shutdown!
-      # end
     end
 
-    def socket_rx_thread
-      # Tasks.process("#{name}-rx", cancellation: @cancellation) do
+    def start_rx_thread
       $pool.post do
         begin
-          receive_packet while connected? && !self.cancellation.canceled?
-        rescue Errno::EPIPE
-          startup!
+          receive_packet until disconnected? || self.cancellation.canceled?
         rescue => e
           $logger.fatal(tag) { "[RCON] Caught Exception: #{e.full_message}" }
           shutdown!
         end
+        $logger.warn(tag) { "[RCON] RX Shutdown" }
       end
-
-      # return if !@socket_rx_thread.nil? && @socket_rx_thread.alive?
-      # @socket_rx_thread = ThreadPool.thread("#{tag}-socket-rx") do
-      #   receive_packet while connected?
-      # rescue Errno::EPIPE
-      #   startup!
-      # rescue => e
-      #   $logger.fatal(tag) { "[RCON] Caught Exception: #{e.full_message}" }
-      #   shutdown!
-      # end
     end
 
 ################################################################################

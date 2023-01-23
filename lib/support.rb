@@ -5,12 +5,10 @@ require_relative 'support/item_type'
 require_relative 'support/logger'
 require_relative 'support/logistics'
 require_relative 'support/memory_cache'
-# require_relative 'support/method_proxy'
 require_relative 'support/metrics'
 require_relative 'support/process'
 require_relative 'support/signals'
 require_relative 'support/storage'
-# require_relative 'support/thread_pool'
 
 # def shutdown!
 #   $shutdown = true

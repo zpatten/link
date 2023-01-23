@@ -44,7 +44,7 @@ class Servers
           $logger.info(:servers) { "[#{server.id}] Loaded server #{server.host_tag}" }
         end
       end
-      @@servers.values
+      @@servers.values.sort_by { |server| server.name }
     end
 
     def list
@@ -339,11 +339,7 @@ class Servers
 
     def shutdown!
       self.all.each do |server|
-        $logger.warn(:servers) {
-          "[#{server.name}] Shutdown server #{server.host_tag}"
-        }
-        # server.stop_rcon!
-        # sleep 1 while server.available?
+        $logger.warn(server.name) { "[SERVER] Shutdown server #{server.host_tag}" }
         server.stop!(false)
       end
     end

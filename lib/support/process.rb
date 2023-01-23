@@ -46,6 +46,7 @@ end
 
 def start_threads!
   start_thread_statistics
+  start_thread_prometheus
   start_thread_signals
   start_thread_autosave
   start_thread_backup
@@ -62,6 +63,7 @@ end
 def stop_threads!
   $origin.resolve
   $pool.shutdown
+  $pool.wait_for_termination(3)
 end
 
 ################################################################################

@@ -37,8 +37,8 @@ local entity = link_build_data({
   what = 'chest',
   which = 'buffer',
   attributes = {
-    inventory = 60,
-    logistic_slots_count = 18,
+    inventory_size = 60,
+    max_logistic_slots = 30,
     render_not_in_network_icon = false,
     localised_description = localised_description
   }

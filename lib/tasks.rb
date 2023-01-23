@@ -19,8 +19,7 @@ class Tasks
       #   task
       # ).run
 
-      #Concurrent::Promises.future(cancellation) do |cancellation|
-      $pool.post do
+      task = -> cancellation do
         begin
           $logger.debug(tag) { "[#{what}] Process Started" }
           block.call until cancellation.canceled?
@@ -31,6 +30,25 @@ class Tasks
           # raise e
         end
       end
+
+      #Concurrent::Promises.future(cancellation) do |cancellation|
+      result = Concurrent::Promises.future_on($pool,
+        Config.master_value(:scheduler, what) || 120,
+        cancellation,
+        &task
+      ).run
+
+      # $pool.post do
+      #   begin
+      #     $logger.debug(tag) { "[#{what}] Process Started" }
+      #     block.call until cancellation.canceled?
+      #   rescue Exception => e
+      #     $logger.fatal(tag) { "[#{what}] #{e.ai}\n#{e.backtrace.ai}" }
+      #     puts e.ai
+      #     puts e.backtrace.ai
+      #     # raise e
+      #   end
+      # end
     end
   end
 
@@ -39,7 +57,7 @@ class Tasks
       return false unless !!Config.master_value(:scheduler, what)
       repeating_scheduled_task = -> interval, cancellation, task do
         Concurrent::Promises.
-          schedule(interval, cancellation, &task).
+          schedule_on($pool, interval, cancellation, &task).
           then { repeating_scheduled_task.call(interval, cancellation, task) }
       end
 
@@ -64,23 +82,13 @@ class Tasks
 
       cancellation = (server ? $cancellation.join(server.cancellation) : $cancellation)
 
-      result = Concurrent::Promises.future(
+      result = Concurrent::Promises.future_on($pool,
         Config.master_value(:scheduler, what) || 120,
         cancellation,
         task,
         &repeating_scheduled_task
       ).run
 
-      # schedule = OpenStruct.new(
-      #   block: block,
-      #   frequency: Config.master_value(:scheduler, what) || 120,
-      #   next_run_at: Time.now.to_f,
-      #   options: options,
-      #   task: task,
-      #   server: server,
-      #   what: what
-      # )
-      # @@thread_schedules << schedule
       tag = (server and server.name) || Thread.current.name
       $logger.debug(tag) { "[#{what}] Added to task scheduler" }
 
@@ -91,51 +99,25 @@ class Tasks
   extend Scheduling
   extend Process
 end
+
+
 # Tasks
 ################################################################################
-# repeating_scheduled_task = -> interval, cancellation, task do
-#   Concurrent::Promises.
-#     schedule(interval, cancellation, &task).
-#     then { repeating_scheduled_task.call(interval, cancellation, task) }
-# end
-
-# task_statistics = -> cancellation do
-#   cancellation.check!
-#   puts "Running task: statistics"
-#   Storage.calculate_delta
-# end
-
-# result = Concurrent::Promises.future(
-#   Config.master_value(:scheduler, :statistics) || 120,
-#   $cancellation,
-#   task_statistics,
-#   &repeating_scheduled_task
-# ).run
-
 
 def start_thread_statistics
-  # ThreadPool.schedule_task(:statistics) do
   Tasks.schedule(:statistics) do
     Storage.calculate_delta
   end
 end
 
 def start_thread_backup
-  # ThreadPool.schedule_task(:backup) do
   Tasks.schedule(:backup) do
     Servers.backup
     Servers.trim_save_files
   end
 end
 
-def schedule_task_prometheus
-  ThreadPool.schedule_task(:prometheus) do
-    Metrics.push
-  end
-end
-
 def start_thread_autosave
-  # ThreadPool.schedule_task(:autosave) do
   Tasks.schedule(:autosave) do
     ItemType.save
     Storage.save
@@ -145,6 +127,12 @@ end
 def start_thread_signals
   Tasks.schedule(:signals) do
     Signals.update_inventory_signals
+  end
+end
+
+def start_thread_prometheus
+  Tasks.schedule(:prometheus) do
+    Metrics.push
   end
 end
 

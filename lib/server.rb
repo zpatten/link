@@ -199,6 +199,7 @@ class Server
 ################################################################################
 
   def start_threads!
+    # $logger.info(self.name) { "[THREADS] Start" }
     @cancellation, @origin = Concurrent::Cancellation.new
 
     start_thread_ping
@@ -213,7 +214,7 @@ class Server
   end
 
   def stop_threads!
-    puts "STOPPING THREADS #{self.name}"
+    # $logger.warn(self.name) { "[THREADS] Stop" }
     @origin and @origin.resolve
 
     true
