@@ -22,6 +22,8 @@ class Logistics
       @item_totals.merge!(item_counts) { |k,o,n| o + n }
     end
 
+    @removed_item_totals = Storage.bulk_remove(@item_totals)
+
     $logger.debug(@server.name) {
       "[LOGISTICS] Request Totals: #{@item_totals.ai}"
     }
@@ -33,13 +35,12 @@ class Logistics
 
   def calculate_item_ratios
     @item_ratios = Hash.new(0.0)
-    #storage_clone = Storage.select(@item_totals.keys)
     @item_totals.each do |item_name, item_count|
-      storage_count = Storage[item_name]
-      item_ratio = if storage_count >= item_count
+      removed_item_count = @removed_item_totals[item_name]
+      item_ratio = if removed_item_count >= item_count
         1.0
-      elsif storage_count > 0
-        storage_count.to_f / item_count.to_f
+      elsif removed_item_count > 0
+        removed_item_count.to_f / item_count.to_f
       else
         0.0
       end
@@ -59,41 +60,50 @@ class Logistics
     @item_ratios.all? { |item_name, item_ratio| item_ratio >= 1.0 }
   end
 
-  def count_to_fulfill(item_name, item_count)
-    if @item_ratios[item_name] >= 1.0
-      item_count
-    elsif @item_ratios[item_name] > 0.0
-      (item_count * @item_ratios[item_name]).floor
+  def count_to_fulfill(requested_item_name, requested_item_count)
+    count = if @item_ratios[requested_item_name] >= 1.0
+      requested_item_count
+    elsif @item_ratios[requested_item_name] > 0.0
+      (requested_item_count * @item_ratios[requested_item_name]).floor
     else
       0
     end
+
+    if count > 0
+      if count > @removed_item_totals[requested_item_name]
+        count = @removed_item_totals[requested_item_name]
+      end
+      @removed_item_totals[requested_item_name] -= count
+
+      @removed_item_totals.delete(requested_item_name) if @removed_item_totals[requested_item_name] == 0
+    end
+
+    count
   end
 
   def calculate_fulfillment_items
-    # item_fulfillment_totals = Hash.new(0)
     @items_to_fulfill = Hash.new
 
-    # if can_fulfill_all?
-    #   @items_to_fulfill = @item_requests
-    #   item_fulfillment_totals = @item_totals
-    # else
+    if can_fulfill_all?
+      @items_to_fulfill = @item_requests
+      item_fulfillment_totals = @item_totals
+    else
       @item_requests.each do |unit_number, requested_items|
         requested_items.each do |requested_item_name, requested_item_count|
-          next if Storage[requested_item_name] <= 0
-          # fulfill_count = count_to_fulfill(requested_item_name, requested_item_count)
-          # next if fulfill_count == 0
-
-          # item_fulfillment_totals[item_name] += fulfill_count
+          fulfill_count = count_to_fulfill(requested_item_name, requested_item_count)
+          next if fulfill_count == 0
 
           @items_to_fulfill[unit_number] ||= Hash.new(0)
-          @items_to_fulfill[unit_number][requested_item_name] = Storage.remove(requested_item_name, requested_item_count)
+          @items_to_fulfill[unit_number][requested_item_name] = fulfill_count
         end
       end
-    # end
 
-    # unless item_fulfillment_totals.empty?
-    #   Storage.bulk_remove(item_fulfillment_totals)
-    # end
+      $logger.debug(@server.name) {
+        "[LOGISTICS] Overflow items: #{@removed_item_totals.ai}"
+      }
+
+      Storage.bulk_add(@removed_item_totals) if @removed_item_totals.values.any? { |v| v > 0 }
+    end
 
     true
   end
@@ -101,8 +111,8 @@ class Logistics
 ################################################################################
 
   def fulfill
-    # calculate_item_totals
-    # calculate_item_ratios
+    calculate_item_totals
+    calculate_item_ratios
     calculate_fulfillment_items
 
     $logger.debug(@server.name) {

@@ -132,7 +132,11 @@ end
 
 def start_thread_prometheus
   Tasks.schedule(:prometheus) do
-    Metrics.push
+    Metrics::Prometheus[:threads_total].set(Thread.list.count, labels: { name: 'total' })
+    Metrics::Prometheus[:threads_running].set(Thread.list.select { |t| t.status == 'run' }.count, labels: { name: 'running' })
+    Metrics::Prometheus[:threads_queue_length].set($pool.queue_length, labels: { name: 'queue_length' })
+
+    Metrics::Prometheus.push
   end
 end
 

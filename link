@@ -27,10 +27,10 @@ require 'concurrent-edge'
 
 $pool = Concurrent::CachedThreadPool.new(
   auto_terminate: false,
-  fallback_policy: :caller_runs,
-  min_threads: (Etc.nprocessors * 0.25).floor,
-  max_threads: Etc.nprocessors,
-  max_queue: 0
+  min_threads: [2, (Concurrent.processor_count * 0.25).floor].max,
+  max_threads: [2, Concurrent.processor_count].max,
+  max_queue: [2, Concurrent.processor_count * 5].max,
+  fallback_policy: :caller_runs
 )
 $cancellation, $origin = Concurrent::Cancellation.new
 
@@ -53,9 +53,9 @@ LINK_WATCHDOG_PID_FILE = File.join(LINK_ROOT, 'link-watchdog.pid')
 
 ################################################################################
 
-require_relative 'lib/support/logger'
 require_relative 'lib/support'
 require_relative 'lib/options'
+require_relative 'lib/metrics'
 
 require_relative 'lib/server'
 require_relative 'lib/servers'

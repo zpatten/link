@@ -19,6 +19,7 @@ GEM
       temple (>= 0.8.2)
       thor
       tilt
+    influxdb (0.8.1)
     method_source (1.0.0)
     multi_json (1.15.0)
     mustermann (3.0.0)
@@ -65,6 +66,7 @@ DEPENDENCIES
   concurrent-ruby-ext
   eventmachine
   haml
+  influxdb
   prometheus-client
   pry
   sinatra

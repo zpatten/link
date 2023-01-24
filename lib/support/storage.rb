@@ -73,7 +73,7 @@ class Storage
       RescueRetry.attempt do
         item_name = sanitize_item_name(item_name)
 
-        self.storage[item_name] += item_count
+        @@storage[item_name] += item_count
 
         item_count
       end
@@ -81,15 +81,10 @@ class Storage
 
     def remove(item_name, item_count)
       RescueRetry.attempt do
-        removed_count = if self.storage[item_name] < item_count
-          self.storage[item_name]
-        else
-          item_count
-        end
-        self.storage[item_name] -= removed_count
-        if self.storage[item_name] == 0
-          self.storage.delete(item_name)
-        end
+        removed_count = [@@storage[item_name], item_count].min
+        @@storage[item_name] -= removed_count
+
+        @@storage.delete(item_name) if @@storage[item_name] == 0
 
         removed_count
       end
@@ -98,23 +93,21 @@ class Storage
 ################################################################################
 
     def bulk_add(items)
-      RescueRetry.attempt do
-        items.transform_keys! do |item_name|
-          sanitize_item_name(item_name)
-        end
-
-        self.storage.merge!(items) { |k,o,n| o + n }
-
-        true
+      items.transform_keys! do |item_name|
+        sanitize_item_name(item_name)
       end
+
+      @@storage.merge!(items) { |k,o,n| o + n }
+
+      true
     end
 
     def bulk_remove(items)
-      RescueRetry.attempt do
-        self.storage.merge!(items) { |k,o,n| o - n }
-
-        true
+      hash = Concurrent::Hash.new(0)
+      items.each do |item_name, item_count|
+        hash[item_name] = remove(item_name, item_count)
       end
+      hash
     end
 
 ################################################################################
@@ -167,17 +160,22 @@ class Storage
 
     def storage_item_instrumentation(item_name, item_count)
       if item_name == 'electricity'
-        Metrics[:electrical_count].set(item_count, labels: { name: item_name })
+        Metrics::Prometheus[:electrical_count].set(item_count, labels: { name: item_name }) #, type: ItemType[item_name] })
       else
-        Metrics[:storage_item_count].set(item_count, labels: { name: item_name })
+        Metrics::Prometheus[:storage_item_count].set(item_count, labels: { name: item_name, type: ItemType[item_name] })
+
+        Metrics::InfluxDB.write('storage_item_count',
+          values: { count: item_count },
+          tags: { name: item_name, type: ItemType[item_name] }
+        )
       end
     end
 
     def storage_delta_instrumentation(item_name, item_count)
       if item_name == 'electricity'
-        Metrics[:electrical_delta_count].set(item_count, labels: { name: item_name })
+        Metrics::Prometheus[:electrical_delta_count].set(item_count, labels: { name: item_name }) #, type: ItemType[item_name] })
       else
-        Metrics[:storage_delta_count].set(item_count, labels: { name: item_name })
+        Metrics::Prometheus[:storage_delta_count].set(item_count, labels: { name: item_name, type: ItemType[item_name] })
       end
     end
 
