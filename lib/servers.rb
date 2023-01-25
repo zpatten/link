@@ -339,8 +339,10 @@ class Servers
 
     def shutdown!(container: false)
       self.all.each do |server|
-        $logger.warn(server.name) { "[SERVER] Shutdown server #{server.host_tag}" }
-        server.stop!(container)
+        $pool.post {
+          $logger.warn(server.name) { "[SERVER] Shutdown server #{server.host_tag}" }
+          server.stop!(container)
+        }
       end
     end
 

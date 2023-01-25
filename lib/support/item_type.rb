@@ -12,6 +12,7 @@ class ItemType
 ################################################################################
 
     def [](item_name)
+      return 'electricity' if item_name == 'electricity'
       @@item_type_mutex.synchronize do
         type = self.item_type[item_name]
         if type.nil?

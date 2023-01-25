@@ -51,15 +51,12 @@ def start_threads!
   start_thread_signals
   start_thread_autosave
   start_thread_backup
-
   Servers.start!(container: false)
 end
 
 def stop_threads!
   $origin.resolve
-
   Servers.shutdown!(container: false)
-
   $pool.shutdown
   $pool.wait_for_termination(3)
 end
