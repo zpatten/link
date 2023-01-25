@@ -7,7 +7,7 @@ class Tasks
 
       task = -> cancellation do
         begin
-          $logger.debug(tag) { "[#{what.upcase}] Process Started" }
+          $logger.info(tag) { "[#{what.upcase}] Process Started" }
           until cancellation.canceled? do
             elapsed_time = Benchmark.realtime do
               block.call
@@ -46,11 +46,11 @@ class Tasks
 
       task = -> cancellation do
         if cancellation.canceled?
-          $logger.debug(tag) { "[#{what.upcase}] Task Canceled" }
+          $logger.debug(tag) { "[#{what.upcase}] Scheduled Task Canceled" }
           cancellation.check!
         end
         tag = (server and server.name) || Thread.current.name
-        $logger.debug(tag) { "[#{what.upcase}] Task Started" }
+        $logger.debug(tag) { "[#{what.upcase}] Scheduled Task Started" }
         begin
           elapsed_time = Benchmark.realtime do
             block.call(server)
@@ -67,7 +67,7 @@ class Tasks
           puts e.backtrace.ai
           # raise e
         end
-        $logger.debug(tag) { "[#{what.upcase}] Task Finished" }
+        $logger.debug(tag) { "[#{what.upcase}] Scheduled Task Finished" }
         true
       end
 
@@ -81,7 +81,7 @@ class Tasks
       ).run
 
       tag = (server and server.name) || Thread.current.name
-      $logger.debug(tag) { "[#{what.upcase}] Added to task scheduler" }
+      $logger.info(tag) { "[#{what.upcase}] Added Scheduled Task" }
 
       true
     end

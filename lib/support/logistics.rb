@@ -102,17 +102,25 @@ class Logistics
   end
 
   def metrics_handler
-    @item_requests.each do |unit_number, requested_items|
-      requested_items.each do |requested_item_name, requested_item_count|
-        Metrics::Prometheus[:requested_items_total].observe(requested_item_count,
-          labels: { server: @server.name, item_name: requested_item_name, item_type: ItemType[requested_item_name] })
+    @item_totals.each do |requested_item_name, requested_item_count|
+      Metrics::Prometheus[:requested_items_total].observe(requested_item_count,
+        labels: { server: @server.name, item_name: requested_item_name, item_type: ItemType[requested_item_name] })
+    end
+
+    unfulfilled_item_counts = Hash.new
+    @items_to_fulfill.each do |unit_number, fulfilled_items|
+      fulfilled_items.each do |fulfilled_item_name, fulfilled_item_count|
+        unfulfilled_item_counts[fulfilled_item_name] ||= @item_totals[fulfilled_item_name]
+        Metrics::Prometheus[:fulfillment_items_total].observe(fulfilled_item_count,
+          labels: { server: @server.name, item_name: fulfilled_item_name, item_type: ItemType[fulfilled_item_name] })
+        unfulfilled_item_counts[fulfilled_item_name] -= fulfilled_item_count
       end
     end
 
-    @items_to_fulfill.each do |unit_number, fulfilled_items|
-      fulfilled_items.each do |fulfilled_item_name, fulfilled_item_count|
-        Metrics::Prometheus[:fulfillment_items_total].observe(fulfilled_item_count,
-          labels: { server: @server.name, item_name: fulfilled_item_name, item_type: ItemType[fulfilled_item_name] })
+    unless can_fulfill_all?
+      unfulfilled_item_counts.each do |unfulfilled_item_name, unfulfilled_item_count|
+        Metrics::Prometheus[:unfulfilled_items_total].observe(unfulfilled_item_count,
+          labels: { server: @server.name, item_name: unfulfilled_item_name, item_type: ItemType[unfulfilled_item_name] })
       end
     end
 

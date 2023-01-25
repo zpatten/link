@@ -36,19 +36,23 @@ class Storage
         end
         @@storage.merge!(h)
       end
+
+      true
     end
 
     def save
-      unless @@storage.nil?
-        @@storage_mutex.synchronize do
-          h = Hash.new
-          self.clone.each do |k,v|
-            h[k] = v.value if v.value > 0
-          end
-          h.delete_if { |k,v| v == 0 }
-          IO.write(filename, JSON.pretty_generate(h.sort.to_h))
+      return false if @@storage.nil?
+
+      @@storage_mutex.synchronize do
+        h = Hash.new
+        self.clone.each do |k,v|
+          h[k] = v.value if v.value > 0
         end
+        h.delete_if { |k,v| v == 0 }
+        IO.write(filename, JSON.pretty_generate(h.sort.to_h))
       end
+
+      true
     end
 
 ################################################################################
