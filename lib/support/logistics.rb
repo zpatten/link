@@ -90,8 +90,14 @@ class Logistics
     else
       @item_requests.each do |unit_number, requested_items|
         requested_items.each do |requested_item_name, requested_item_count|
+          Metrics::Prometheus[:requested_items_total].observe(requested_item_count,
+            labels: { server: @server.name, item_name: requested_item_name, item_type: ItemType[requested_item_name] })
+
           fulfill_count = count_to_fulfill(requested_item_name, requested_item_count)
           next if fulfill_count == 0
+
+          Metrics::Prometheus[:fulfillment_items_total].observe(fulfill_count,
+            labels: { server: @server.name, item_name: requested_item_name, item_type: ItemType[requested_item_name] })
 
           @items_to_fulfill[unit_number] ||= Hash.new(0)
           @items_to_fulfill[unit_number][requested_item_name] = fulfill_count
@@ -102,7 +108,13 @@ class Logistics
         "[LOGISTICS] Overflow items: #{@removed_item_totals.ai}"
       }
 
-      Storage.bulk_add(@removed_item_totals) if @removed_item_totals.values.any? { |v| v > 0 }
+      if @removed_item_totals.values.any? { |v| v > 0 }
+        Storage.bulk_add(@removed_item_totals)
+        @removed_item_totals.each do |item_name, item_count|
+          Metrics::Prometheus[:overflow_items_total].observe(item_count,
+            labels: { server: @server.name, item_name: item_name, item_type: ItemType[item_name] })
+        end
+      end
     end
 
     true

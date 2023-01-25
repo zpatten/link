@@ -4,51 +4,34 @@ class Tasks
   module Process
     def process(what, cancellation: nil, &block)
       cancellation = cancellation || $cancellation
-      # task = -> cancellation do
-      #   begin
-      #     block.call until cancellation.canceled?
-      #   rescue Exception => e
-      #     $logger.fatal(tag) { "[#{what}] #{e.ai}\n#{e.backtrace.ai}" }
-      #     puts e.ai
-      #     puts e.backtrace.ai
-      #     # raise e
-      #   end
-      # end
-      # result = Concurrent::Promises.future(
-      #   cancellation,
-      #   task
-      # ).run
 
       task = -> cancellation do
         begin
-          $logger.debug(tag) { "[#{what}] Process Started" }
-          block.call until cancellation.canceled?
+          $logger.debug(tag) { "[#{what.upcase}] Process Started" }
+          until cancellation.canceled? do
+            elapsed_time = Benchmark.realtime do
+              block.call
+            end
+            Metrics::Prometheus[:thread_duration_seconds].observe(elapsed_time,
+              labels: { server: 'link', task: what }
+            )
+            Metrics::Prometheus[:threads].set(Thread.list.count)
+            Metrics::Prometheus[:threads_running].set(Thread.list.count { |t| t.status == 'run' })
+            Metrics::Prometheus[:threads_queue_length].set($pool.queue_length)
+          end
         rescue Exception => e
-          $logger.fatal(tag) { "[#{what}] #{e.ai}\n#{e.backtrace.ai}" }
+          $logger.fatal(tag) { "[#{what.upcase}] #{e.ai}\n#{e.backtrace.ai}" }
           puts e.ai
           puts e.backtrace.ai
-          # raise e
         end
       end
 
-      #Concurrent::Promises.future(cancellation) do |cancellation|
       result = Concurrent::Promises.future_on($pool,
         Config.master_value(:scheduler, what) || 120,
         cancellation,
         &task
       ).run
 
-      # $pool.post do
-      #   begin
-      #     $logger.debug(tag) { "[#{what}] Process Started" }
-      #     block.call until cancellation.canceled?
-      #   rescue Exception => e
-      #     $logger.fatal(tag) { "[#{what}] #{e.ai}\n#{e.backtrace.ai}" }
-      #     puts e.ai
-      #     puts e.backtrace.ai
-      #     # raise e
-      #   end
-      # end
     end
   end
 
@@ -63,20 +46,28 @@ class Tasks
 
       task = -> cancellation do
         if cancellation.canceled?
-          $logger.debug(tag) { "[#{what}] Task Canceled" }
+          $logger.debug(tag) { "[#{what.upcase}] Task Canceled" }
           cancellation.check!
         end
         tag = (server and server.name) || Thread.current.name
-        $logger.debug(tag) { "[#{what}] Task Started" }
+        $logger.debug(tag) { "[#{what.upcase}] Task Started" }
         begin
-          block.call(server)
+          elapsed_time = Benchmark.realtime do
+            block.call(server)
+          end
+          Metrics::Prometheus[:thread_duration_seconds].observe(elapsed_time,
+            labels: { server: (server and server.name), task: what }
+          )
+          Metrics::Prometheus[:threads].set(Thread.list.count)
+          Metrics::Prometheus[:threads_running].set(Thread.list.count { |t| t.status == 'run' })
+          Metrics::Prometheus[:threads_queue_length].set($pool.queue_length)
         rescue Exception => e
-          $logger.fatal(tag) { "[#{what}] #{e.ai}\n#{e.backtrace.ai}" }
+          $logger.fatal(tag) { "[#{what.upcase}] #{e.ai}\n#{e.backtrace.ai}" }
           puts e.ai
           puts e.backtrace.ai
           # raise e
         end
-        $logger.debug(tag) { "[#{what}] Task Finished" }
+        $logger.debug(tag) { "[#{what.upcase}] Task Finished" }
         true
       end
 
@@ -90,7 +81,7 @@ class Tasks
       ).run
 
       tag = (server and server.name) || Thread.current.name
-      $logger.debug(tag) { "[#{what}] Added to task scheduler" }
+      $logger.debug(tag) { "[#{what.upcase}] Added to task scheduler" }
 
       true
     end
@@ -105,9 +96,9 @@ end
 ################################################################################
 
 def start_thread_statistics
-  Tasks.schedule(:statistics) do
-    Storage.calculate_delta
-  end
+  # Tasks.schedule(:statistics) do
+  #   Storage.item_metrics
+  # end
 end
 
 def start_thread_backup
@@ -132,10 +123,7 @@ end
 
 def start_thread_prometheus
   Tasks.schedule(:prometheus) do
-    Metrics::Prometheus[:threads_total].set(Thread.list.count, labels: { name: 'total' })
-    Metrics::Prometheus[:threads_running].set(Thread.list.select { |t| t.status == 'run' }.count, labels: { name: 'running' })
-    Metrics::Prometheus[:threads_queue_length].set($pool.queue_length, labels: { name: 'queue_length' })
-
+    Storage.item_metrics
     Metrics::Prometheus.push
   end
 end

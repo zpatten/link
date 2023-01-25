@@ -66,16 +66,16 @@ class Servers
 
 ################################################################################
 
-    def start!
-      self.all.each { |server| $pool.post { server.start! } }
+    def start!(container: true)
+      self.all.each { |server| $pool.post { server.start!(container) } }
     end
 
-    def stop!
-      self.all.each { |server| $pool.post { server.stop! } }
+    def stop!(container: true)
+      self.all.each { |server| $pool.post { server.stop!(container) } }
     end
 
-    def restart!
-      self.all.each { |server| $pool.post { server.restart! } }
+    def restart!(container: true)
+      self.all.each { |server| $pool.post { server.restart!(container) } }
     end
 
 ################################################################################
@@ -337,10 +337,10 @@ class Servers
 
 ################################################################################
 
-    def shutdown!
+    def shutdown!(container: false)
       self.all.each do |server|
         $logger.warn(server.name) { "[SERVER] Shutdown server #{server.host_tag}" }
-        server.stop!(false)
+        server.stop!(container)
       end
     end
 

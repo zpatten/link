@@ -14,19 +14,6 @@ class Server
             self.rcon_command(command)
           end
         end
-
-        # payload = self.rcon_command(command)
-        # unless payload.nil? || payload.empty?
-        #   requests = JSON.parse(payload)
-        #   unless requests.nil? || requests.empty?
-        #     logistics = ::Logistics.new(self, requests)
-        #     fulfillments = logistics.fulfill
-        #     unless fulfillments.nil? || fulfillments.empty?
-        #       command = %(remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
-        #       self.rcon_command(command)
-        #     end
-        #   end
-        # end
       end
 
       Tasks.schedule(:providables, server: self) do
@@ -34,16 +21,11 @@ class Server
         rcon_handler(command) do |providables|
           $logger.debug(self.name) { "[LOGISTICS] providables: #{providables.ai}" }
           ::Storage.bulk_add(providables)
+          providables.each do |item_name, item_count|
+            Metrics::Prometheus[:providable_items_total].observe(item_count,
+              labels: { server: self.name, item_name: item_name, item_type: ItemType[item_name] })
+          end
         end
-
-        # payload = self.rcon_command(command)
-        # unless payload.nil? || payload.empty?
-        #   providables = JSON.parse(payload)
-        #   unless providables.nil? || providables.empty?
-        #     $logger.debug(self.name) { "[LOGISTICS] providables: #{providables.ai}" }
-        #     ::Storage.bulk_add(providables)
-        #   end
-        # end
       end
 
     end
