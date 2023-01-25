@@ -123,7 +123,8 @@ end
 
 def start_thread_prometheus
   Tasks.schedule(:prometheus) do
-    Storage.item_metrics
+    Storage.metrics_handler
+
     Metrics::Prometheus.push
   end
 end

@@ -8,9 +8,7 @@ class Logistics
     @item_requests = item_requests
     @server        = server
 
-    $logger.debug(@server.name) {
-      "[LOGISTICS] Requests: #{@item_requests.ai}"
-    }
+    $logger.debug(@server.name) { "[LOGISTICS] Requests: #{@item_requests.ai}" }
 
   end
 
@@ -24,9 +22,11 @@ class Logistics
 
     @removed_item_totals = Storage.bulk_remove(@item_totals)
 
-    $logger.debug(@server.name) {
-      "[LOGISTICS] Request Totals: #{@item_totals.ai}"
-    }
+    @obtained_all_requested_items ||= @item_totals.all? do |k,v|
+      @removed_item_totals[k] == v
+    end
+
+    $logger.debug(@server.name) { "[LOGISTICS] Request Totals: #{@item_totals.ai}" }
 
     true
   end
@@ -47,9 +47,7 @@ class Logistics
       @item_ratios[item_name] = item_ratio
     end
 
-    $logger.debug(@server.name) {
-      "[LOGISTICS] Request Ratios: #{@item_ratios.ai}"
-    }
+    $logger.debug(@server.name) { "[LOGISTICS] Request Ratios: #{@item_ratios.ai}" }
 
     true
   end
@@ -57,7 +55,7 @@ class Logistics
 ################################################################################
 
   def can_fulfill_all?
-    @item_ratios.all? { |item_name, item_ratio| item_ratio >= 1.0 }
+    @can_fulfill_all ||= (@item_ratios.all? { |item_name, item_ratio| item_ratio >= 1.0 } && @obtained_all_requested_items)
   end
 
   def count_to_fulfill(requested_item_name, requested_item_count)
@@ -90,30 +88,42 @@ class Logistics
     else
       @item_requests.each do |unit_number, requested_items|
         requested_items.each do |requested_item_name, requested_item_count|
-          Metrics::Prometheus[:requested_items_total].observe(requested_item_count,
-            labels: { server: @server.name, item_name: requested_item_name, item_type: ItemType[requested_item_name] })
-
           fulfill_count = count_to_fulfill(requested_item_name, requested_item_count)
           next if fulfill_count == 0
-
-          Metrics::Prometheus[:fulfillment_items_total].observe(fulfill_count,
-            labels: { server: @server.name, item_name: requested_item_name, item_type: ItemType[requested_item_name] })
 
           @items_to_fulfill[unit_number] ||= Hash.new(0)
           @items_to_fulfill[unit_number][requested_item_name] = fulfill_count
         end
       end
 
-      $logger.debug(@server.name) {
-        "[LOGISTICS] Overflow items: #{@removed_item_totals.ai}"
-      }
+    end
 
-      if @removed_item_totals.values.any? { |v| v > 0 }
-        Storage.bulk_add(@removed_item_totals)
-        @removed_item_totals.each do |item_name, item_count|
-          Metrics::Prometheus[:overflow_items_total].observe(item_count,
-            labels: { server: @server.name, item_name: item_name, item_type: ItemType[item_name] })
-        end
+    true
+  end
+
+  def metrics_handler
+    @item_requests.each do |unit_number, requested_items|
+      requested_items.each do |requested_item_name, requested_item_count|
+        Metrics::Prometheus[:requested_items_total].observe(requested_item_count,
+          labels: { server: @server.name, item_name: requested_item_name, item_type: ItemType[requested_item_name] })
+      end
+    end
+
+    @items_to_fulfill.each do |unit_number, fulfilled_items|
+      fulfilled_items.each do |fulfilled_item_name, fulfilled_item_count|
+        Metrics::Prometheus[:fulfillment_items_total].observe(fulfilled_item_count,
+          labels: { server: @server.name, item_name: fulfilled_item_name, item_type: ItemType[fulfilled_item_name] })
+      end
+    end
+
+    if !can_fulfill_all? && @removed_item_totals.values.any? { |v| v > 0 }
+      Storage.bulk_add(@removed_item_totals)
+
+      $logger.debug(@server.name) { "[LOGISTICS] Overflow Items: #{@removed_item_totals.ai}" }
+
+      @removed_item_totals.each do |item_name, item_count|
+        Metrics::Prometheus[:overflow_items_total].observe(item_count,
+          labels: { server: @server.name, item_name: item_name, item_type: ItemType[item_name] })
       end
     end
 
@@ -126,10 +136,9 @@ class Logistics
     calculate_item_totals
     calculate_item_ratios
     calculate_fulfillment_items
+    metrics_handler
 
-    $logger.debug(@server.name) {
-      "[LOGISTICS] Fulfillments: #{@items_to_fulfill.ai}"
-    }
+    $logger.debug(@server.name) { "[LOGISTICS] Fulfillments: #{@items_to_fulfill.ai}" }
 
     if block_given?
       yield @items_to_fulfill

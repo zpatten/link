@@ -7,10 +7,7 @@ class Storage
 ################################################################################
 
     @@storage ||= Concurrent::Hash.new
-    @@storage_delta_history ||= Hash.new { |h,k| h[k] = Array.new }
-    @@storage_delta ||= Hash.new(0)
     @@storage_mutex ||= Mutex.new
-    @@storage_statistics ||= Hash.new
 
 ################################################################################
 
@@ -35,7 +32,6 @@ class Storage
         h = (JSON.parse(IO.read(filename)) rescue Hash.new)
         puts h.ai
         h.transform_values! do |v|
-          puts v.ai
           Concurrent::AtomicFixnum.new(v)
         end
         @@storage.merge!(h)
@@ -114,15 +110,11 @@ class Storage
 
 ################################################################################
 
-    def item_metrics
+    def metrics_handler
       self.clone.each do |item_name, item_count|
         item_count = item_count.value
         Metrics::Prometheus[:storage_items_total].set(item_count,
           labels: { item_name: item_name, item_type: ItemType[item_name] })
-
-        if item_name == 'electricity'
-          Metrics::Prometheus[:electricity_total].set(item_count) #, type: ItemType[item_name] })
-        end
       end
 
       true
@@ -130,43 +122,7 @@ class Storage
 
 ################################################################################
 
-    # def storage_item_instrumentation(item_name, item_count)
-    #   if item_name == 'electricity'
-    #     Metrics::Prometheus[:electrical_count].set(item_count, labels: { name: item_name }) #, type: ItemType[item_name] })
-    #   else
-    #     Metrics::Prometheus[:storage_item_count].set(item_count, labels: { name: item_name, type: ItemType[item_name] })
-
-    #     # Metrics::InfluxDB.write('storage_item_count',
-    #     #   values: { count: item_count },
-    #     #   tags: { name: item_name, type: ItemType[item_name] }
-    #     # )
-    #   end
-    # end
-
-    # def storage_delta_instrumentation(item_name, item_count)
-    #   if item_name == 'electricity'
-    #     Metrics::Prometheus[:electrical_delta_count].set(item_count, labels: { name: item_name }) #, type: ItemType[item_name] })
-    #   else
-    #     Metrics::Prometheus[:storage_delta_count].set(item_count, labels: { name: item_name, type: ItemType[item_name] })
-    #   end
-    # end
-
-    # def update_websocket(item_name, item_count)
-    #   ::WebServer.settings.storage_sockets.each do |s|
-    #     s.send({
-    #       name: item_name,
-    #       count: countsize(item_count),
-    #       delta_s: delta[item_name][0],
-    #       delta_m: delta[item_name][1]
-    #     }.to_json)
-    #   end
-    # end
-
-################################################################################
-
   end
 
   extend(ClassMethods)
 end
-
-#Storage.load

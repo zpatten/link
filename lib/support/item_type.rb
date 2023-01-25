@@ -12,10 +12,9 @@ class ItemType
 ################################################################################
 
     def [](item_name)
-      return 'electricity' if item_name == 'electricity'
-      @@item_type_mutex.synchronize do
-        type = self.item_type[item_name]
-        if type.nil?
+      type = (item_name == 'electricity' ? 'electricity' : self.item_type[item_name])
+      if type.nil?
+        @@item_type_mutex.synchronize do
           command = %(remote.call('link', 'lookup_item_type', '#{item_name}'))
           while type.nil? do
             type = Servers.random.rcon_command(command)
@@ -25,9 +24,8 @@ class ItemType
 
           $logger.debug(:item_type) { "#{item_name} == #{self.item_type[item_name]}" }
         end
-
-        type
       end
+      type
     end
 
     def []=(item_name, item_type)
