@@ -98,11 +98,12 @@ def deep_clone(object)
   Marshal.load(Marshal.dump(object))
 end
 
-def run_command(tag, name, *args)
+def run_command(tag, *args)
+  tag = "#{tag}.COMMAND"
   args << %(2>/dev/null)
   command = args.flatten.compact.join(' ')
   output = %x(#{command}).strip
-  $logger.info(tag) { "[#{name}] Command: #{command.inspect} -> #{output.inspect}" } unless command =~ /docker inspect/
+  $logger.info(tag) { "#{command.ai} -> #{output.ai}" } unless command =~ /docker inspect/
   output
 end
 

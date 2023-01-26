@@ -11,15 +11,15 @@ end
 ################################################################################
 
 def start!(console: false)
+  create_pid_file(LINK_SERVER_PID_FILE)
+
   $0 = 'Link Server'
   $logger.info { "Loading Data" }
   Config.load
   ItemType.load
   Storage.load
-  create_pid_file(LINK_SERVER_PID_FILE)
   trap_signals
 
-  $logger.info(:main) { "Starting Up" }
   start_threads!
 
   $logger.info(:main) { "Starting Sinatra" }
@@ -28,7 +28,6 @@ def start!(console: false)
 end
 
 def stop!
-  $logger.info(:main) { "Stopping Threads" }
   stop_threads!
 
   $logger.info(:main) { "Saving Data" }
@@ -45,6 +44,8 @@ end
 ################################################################################
 
 def start_threads!
+  $logger.info(:main) { "Starting Threads" }
+  start_thread_mark
   start_thread_prometheus
   start_thread_signals
   start_thread_autosave
@@ -53,6 +54,7 @@ def start_threads!
 end
 
 def stop_threads!
+  $logger.info(:main) { "Stopping Threads" }
   $origin.resolve
   Servers.stop!(container: false)
   $pool.shutdown
@@ -122,8 +124,10 @@ def stop_process(pid_file, name)
       $logger.fatal(:main) { "Process for #{name} not found!" }
       break
     end
+    sleep 3
   end
 
+  raise "Failed to stop #{name}! (PID #{pid})"
   false
 
 rescue Errno::ENOENT

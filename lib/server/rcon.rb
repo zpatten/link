@@ -94,12 +94,12 @@ class Server
 ################################################################################
 
     def start!
-      Tasks.process(
-        what: 'RCON',
-        pool: @pool,
-        cancellation: @cancellation,
-        server: @server
-      ) do
+      # Tasks.repeat(
+      #   what: 'RCON',
+      #   pool: @pool,
+      #   cancellation: @cancellation,
+      #   server: @server
+      # ) do
         until connected? || @cancellation.canceled? do
           begin
             connect!
@@ -117,10 +117,10 @@ class Server
           authenticate if unauthenticated?
         end
 
-        sleep 1 until @cancellation.canceled? || disconnected?
+        # sleep 1 until @cancellation.canceled? || disconnected?
 
-        stop!
-      end
+        # stop!
+      # end
     end
 
     def stop!
@@ -130,7 +130,7 @@ class Server
 ################################################################################
 
     def start_tx_thread
-      Tasks.process(
+      Tasks.repeat(
         what: 'RCON.TX',
         pool: @pool,
         cancellation: @cancellation,
@@ -139,7 +139,7 @@ class Server
     end
 
     def start_rx_thread
-      Tasks.process(
+      Tasks.repeat(
         what: 'RCON.RX',
         pool: @pool,
         cancellation: @cancellation,

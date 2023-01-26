@@ -50,6 +50,7 @@ class Server
     @id                  = Zlib::crc32(@name.to_s)
     @network_id          = [@id].pack("L").unpack("l").first
     @pinged_at           = 0
+    @rtt                 = 0
 
     @details             = details
     @active              = details['active']
@@ -99,6 +100,10 @@ class Server
 
   def host_tag
     "#{@name}@#{@host}:#{@client_port}"
+  end
+
+  def log_tag(what)
+    [@name, what].flatten.compact.join('.').upcase
   end
 
 ################################################################################
@@ -157,7 +162,7 @@ class Server
       backup_save_file = File.join(Servers.factorio_saves, filename)
       latest_save_file = self.latest_save_file
       FileUtils.cp_r(latest_save_file, backup_save_file)
-      $logger.info(@name) { "[BACKUP] Backed up #{latest_save_file.inspect} to #{backup_save_file.inspect}" }
+      $logger.info(log_tag(:backup)) { "Backed up #{latest_save_file.inspect} to #{backup_save_file.inspect}" }
     end
 
     rcon_command %(/server-save)
@@ -257,7 +262,7 @@ class Server
 
     FileUtils.cp_r(Servers.factorio_mods, self.path)
 
-    run_command(:server, @name,
+    run_command(@name,
       %(/usr/bin/env),
       %(chcon),
       %(-Rt),
@@ -265,7 +270,7 @@ class Server
       self.path
     )
 
-    run_command(:server, @name,
+    run_command(@name,
       %(docker run),
       %(--rm),
       %(--detach),
@@ -287,7 +292,7 @@ class Server
   def stop_container!
     return true if container_dead?
 
-    run_command(:server, @name,
+    run_command(@name,
       %(docker stop),
       @name
     )
@@ -298,7 +303,7 @@ class Server
   def container_alive?
     key = [@name, 'container-alive'].join('-')
     MemoryCache.fetch(key, expires_in: 10) do
-      output = run_command(:server, @name,
+      output = run_command(@name,
         %(docker inspect),
         %(-f '{{.State.Running}}'),
         @name
@@ -323,7 +328,7 @@ class Server
   end
 
   def stop_rcon!
-    self.rtt = nil
+    self.rtt = 0
     @rcon and @rcon.stop!
 
     true
