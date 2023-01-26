@@ -149,7 +149,7 @@ class Server
 
 ################################################################################
 
-  def backup(timestamp=false)
+  def backup(timestamp: false)
     if File.exist?(self.save_file)
       begin
         FileUtils.mkdir_p(Servers.factorio_saves)
@@ -164,43 +164,48 @@ class Server
       backup_save_file = File.join(Servers.factorio_saves, filename)
       latest_save_file = self.latest_save_file
       FileUtils.cp_r(latest_save_file, backup_save_file)
-      $logger.debug(:server) { "[#{self.name}] Backed up #{latest_save_file.inspect} to #{backup_save_file.inspect}" }
+      $logger.info(self.name) { "[BACKUP] Backed up #{latest_save_file.inspect} to #{backup_save_file.inspect}" }
     end
+
+    command = %(/server-save)
+    output = self.rcon_command(command)
+    $logger.info(self.name) { "[BACKUP:RCON]< #{output.ai} " }
+
+    true
   end
 
 ################################################################################
 
-  def restart!(container=true)
-    self.stop!(container)
+  def restart!(container: true)
+    self.stop!(container: container)
     sleep 3
-    self.start!(container)
+    self.start!(container: container)
   end
 
-  def start!(container=true)
-    Timeout.timeout(60) do
-      self.start_container! if container
-      self.start_rcon!
-      self.start_threads!
+  def start!(container: true)
+    self.start_container! if container
+    self.start_rcon!
+    self.start_threads!
 
-      sleep 1 while self.unavailable?
-    end
+    sleep 1 while self.unavailable?
   end
 
-  def stop!(container=true)
-    Timeout.timeout(60) do
-      self.stop_threads!
-      self.stop_rcon!
-      self.stop_container! if container
+  def stop!(container: true)
+    self.stop_threads!
+    self.stop_rcon!
+    self.stop_container! if container
 
-      sleep 1 while self.available?
-    end
+    sleep 1 while self.available?
   end
 
 ################################################################################
 
   def start_threads!
     # $logger.info(self.name) { "[THREADS] Start" }
+
     @cancellation, @origin = Concurrent::Cancellation.new
+
+    sleep 1 until self.rcon.available?
 
     start_thread_ping
     start_thread_id
@@ -215,6 +220,7 @@ class Server
 
   def stop_threads!
     # $logger.warn(self.name) { "[THREADS] Stop" }
+
     @origin and @origin.resolve
 
     true
@@ -298,20 +304,6 @@ class Server
     self.rcon.shutdown!
 
     true
-  end
-
-################################################################################
-
-  def threads
-    Thread.list.collect do |t|
-      OpenStruct.new(
-        pid: Process.pid,
-        name: t.name,
-        status: t.status,
-        priority: t.priority,
-        started_at: t[:started_at] || Time.now.to_i
-      )
-    end
   end
 
 ################################################################################

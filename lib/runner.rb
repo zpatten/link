@@ -11,7 +11,7 @@ end
 
 ################################################################################
 
-def start!
+def start!(console: false)
   $0 = 'Link Server'
   $logger.info { "Loading Data" }
   Config.load
@@ -99,6 +99,15 @@ def wait_for_process(pid)
 end
 
 ################################################################################
+
+def exception_handler
+  begin
+    yield
+  rescue Exception => e
+    puts e.message.ai
+    puts e.backtrace.ai
+  end
+end
 
 def stop_process(pid_file, name)
   pid = read_pid_file(pid_file)

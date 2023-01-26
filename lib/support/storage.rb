@@ -30,10 +30,8 @@ class Storage
     def load
       @@storage_mutex.synchronize do
         h = (JSON.parse(IO.read(filename)) rescue Hash.new)
-        puts h.ai
-        h.transform_values! do |v|
-          Concurrent::AtomicFixnum.new(v)
-        end
+        h.transform_values! { |v| Concurrent::AtomicFixnum.new(v) }
+        $logger.debug { h.ai }
         @@storage.merge!(h)
       end
 
@@ -43,14 +41,15 @@ class Storage
     def save
       return false if @@storage.nil?
 
-      @@storage_mutex.synchronize do
-        h = Hash.new
-        self.clone.each do |k,v|
-          h[k] = v.value if v.value > 0
-        end
-        h.delete_if { |k,v| v == 0 }
-        IO.write(filename, JSON.pretty_generate(h.sort.to_h))
-      end
+      # @@storage_mutex.synchronize do
+      #   h = Hash.new
+      #   self.clone.each do |k,v|
+      #     h[k] = v.value if v.value > 0
+      #   end
+      #   h.delete_if { |k,v| v == 0 }
+      #   IO.write(filename, JSON.pretty_generate(h.sort.to_h))
+      # end
+        IO.write(filename, JSON.pretty_generate(self.clone.sort.to_h))
 
       true
     end
@@ -59,7 +58,12 @@ class Storage
 
     def clone
       #deep_clone(@@storage)
-      @@storage.clone
+      # s = @@storage.clone
+
+      Hash[@@storage.clone].transform_values { |v| v.value.to_i }.delete_if{ |k,v| v == 0 }
+    rescue Exception => e
+      puts e.ai
+      puts e.backtrace.ai
     end
 
     def sanitize_item_name(item_name)
@@ -116,7 +120,6 @@ class Storage
 
     def metrics_handler
       self.clone.each do |item_name, item_count|
-        item_count = item_count.value
         Metrics::Prometheus[:storage_items_total].set(item_count,
           labels: { item_name: item_name, item_type: ItemType[item_name] })
       end

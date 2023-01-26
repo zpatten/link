@@ -48,7 +48,6 @@ class WebServer < Sinatra::Application
   get "/storage" do
     if !request.websocket?
       @storage = Storage.clone
-      @delta = Storage.delta
       @total_count = @storage.values.sum
       haml :storage
     else
@@ -105,32 +104,32 @@ class WebServer < Sinatra::Application
   end
 
   get '/servers/start/:name' do
-    Servers.find_by_name(params[:name]).start!
+    Servers.find_by_name(params[:name]).start!(container: true)
     redirect '/servers'
   end
 
   get '/servers/stop/:name' do
-    Servers.find_by_name(params[:name]).stop!
+    Servers.find_by_name(params[:name]).stop!(container: true)
     redirect '/servers'
   end
 
   get '/servers/restart/:name' do
-    Servers.find_by_name(params[:name]).restart!
+    Servers.find_by_name(params[:name]).restart!(container: true)
     redirect '/servers'
   end
 
   get '/servers/restart-all' do
-    Servers.restart!
+    Servers.restart!(container: true)
     redirect '/servers'
   end
 
   get '/servers/start-all' do
-    Servers.start!
+    Servers.start!(container: true)
     redirect '/servers'
   end
 
   get '/servers/stop-all' do
-    Servers.stop!
+    Servers.stop!(container: true)
     redirect '/servers'
   end
 

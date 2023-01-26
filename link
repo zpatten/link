@@ -26,6 +26,7 @@ require 'concurrent-edge'
 
 
 $pool = Concurrent::CachedThreadPool.new(
+  name: 'global',
   auto_terminate: false,
   min_threads: [2, (Concurrent.processor_count * 0.25).floor].max,
   max_threads: [2, Concurrent.processor_count].max,

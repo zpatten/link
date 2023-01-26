@@ -31,7 +31,6 @@ class Server
             len = (length - buffer.length)
             buffer += socket.recvmsg_nonblock(len).first
           rescue IO::WaitReadable
-            Thread.pass
             IO.select([socket])
             retry
           end
@@ -85,7 +84,6 @@ class Server
           buffer.seek(total_sent)
           total_sent += socket.sendmsg_nonblock(buffer.read)
         rescue IO::WaitWritable
-          Thread.pass
           IO.select(nil, [socket])
           retry
         end

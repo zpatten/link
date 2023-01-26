@@ -67,15 +67,15 @@ class Servers
 ################################################################################
 
     def start!(container: true)
-      self.all.each { |server| $pool.post { server.start!(container) } }
+      self.all.each { |server| $pool.post { server.start!(container: container) } }
     end
 
     def stop!(container: true)
-      self.all.each { |server| $pool.post { server.stop!(container) } }
+      self.all.each { |server| $pool.post { server.stop!(container: container) } }
     end
 
     def restart!(container: true)
-      self.all.each { |server| $pool.post { server.restart!(container) } }
+      self.all.each { |server| $pool.post { server.restart!(container: container) } }
     end
 
 ################################################################################
@@ -105,7 +105,10 @@ class Servers
     def backup
       $logger.debug(:servers) { "Backing up servers..." }
       self.all.each do |server|
-        server.backup(true) if server.available?
+        if server.available?
+          server.backup(timestamp: true)
+          sleep 3
+        end
       end
     end
 
@@ -300,8 +303,8 @@ class Servers
         'require_user_verification' => true,
         'max_upload_slots' => 0,
         'allow_commands' => 'admins-only',
-        'autosave_interval' => 5,
-        'autosave_slots' => 5,
+        'autosave_interval' => 0,
+        'autosave_slots' => 0,
         'afk_autokick_interval' => 0,
         'auto_pause' => false,
         'non_blocking_saving' => true,
@@ -341,7 +344,7 @@ class Servers
       self.all.each do |server|
         $pool.post {
           $logger.warn(server.name) { "[SERVER] Shutdown server #{server.host_tag}" }
-          server.stop!(container)
+          server.stop!(container: container)
         }
       end
     end

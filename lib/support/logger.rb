@@ -46,15 +46,15 @@ $logger.level = Logger::INFO
 $logger.datetime_format = '%Y-%m-%d %H:%M:%S.%6N'
 
 # $logger = Logger.new("link.log")
-Format = "%s [%s] %d %s %s %s - %s\n".freeze
+Format = "%s [%s] %d %s %s - %s\n".freeze
 
 $logger.formatter = proc do |severity, datetime, progname, msg|
   progname = "[#{progname.to_s.upcase.gsub("_", "-")}]"
   thread_name = Thread.current.name || "main"
   loc = caller_locations(4,1).first
-  caller_name = "(#{File.basename(loc.path)}:#{loc.lineno}:#{loc.label})"
+  caller_name = "(#{thread_name}:#{File.basename(loc.path)}:#{loc.lineno}:#{loc.label})"
   datetime = Time.now.strftime('%Y-%m-%d %H:%M:%S.%6N')
-  message = Format % [severity[0..0], datetime, Process.pid, thread_name, progname, msg, caller_name]
+  message = Format % [severity[0..0], datetime, Process.pid, progname, msg, caller_name]
   if defined?(WebServer)
     # EM.next_tick do
       WebServer.settings.sockets.each do |s|

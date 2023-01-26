@@ -11,7 +11,7 @@ class Config
     def config
       @@config ||= begin
         hash = (JSON.parse(IO.read(filename)) rescue {})
-        puts hash.ai
+        $logger.debug { hash.ai }
         Concurrent::Hash[hash]
       end
       @@config
