@@ -18,7 +18,7 @@ class Server
           type: type,
           payload: payload
         )
-        $logger.debug(tag) { "[RCON] Built Packet ID #{packet_fields.id}" }
+        $logger.debug(tag) { "Built Packet ID #{packet_fields.id}" }
         packet_fields
       end
 
@@ -31,7 +31,8 @@ class Server
             len = (length - buffer.length)
             buffer += socket.recvmsg_nonblock(len).first
           rescue IO::WaitReadable
-            IO.select([socket])
+            IO.select([socket], nil, nil, IO_SELECT_TIMEOUT_SECONDS)
+            return if @cancellation.canceled?
             retry
           end
         end
@@ -84,7 +85,8 @@ class Server
           buffer.seek(total_sent)
           total_sent += socket.sendmsg_nonblock(buffer.read)
         rescue IO::WaitWritable
-          IO.select(nil, [socket])
+          return if @cancellation.canceled?
+          IO.select(nil, [socket], nil, IO_SELECT_TIMEOUT_SECONDS)
           retry
         end
 

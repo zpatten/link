@@ -3,11 +3,6 @@
 FileUtils.touch('link.log')
 File.truncate("link.log", 0)
 
-# begin
-#   File.truncate("link.log", 0)
-# rescue Errno::EACCES, Errno::ENOENT
-# end
-
 class MultiLogger
   module ClassMethods
     @@loggers ||= Array.new
@@ -39,14 +34,15 @@ end
 # MultiLogger.add(Logger.new(STDOUT))
 # MultiLogger.add(Logger.new("link.log"))
 
+# $logger = Logger.new(STDOUT)
 $logger = Logger.new("link.log")
+
 $logger.level = Logger::INFO
 
-# $logger = Logger.new(STDOUT)
 $logger.datetime_format = '%Y-%m-%d %H:%M:%S.%6N'
 
-# $logger = Logger.new("link.log")
-Format = "%s [%s] %d %s %s - %s\n".freeze
+DebugFormat = "%s [%s] %d %s %s - %s\n".freeze
+InfoFormat = "%s [%s] %d %s %s\n".freeze
 
 $logger.formatter = proc do |severity, datetime, progname, msg|
   progname = "[#{progname.to_s.upcase.gsub("_", "-")}]"
@@ -54,14 +50,18 @@ $logger.formatter = proc do |severity, datetime, progname, msg|
   loc = caller_locations(4,1).first
   caller_name = "(#{thread_name}:#{File.basename(loc.path)}:#{loc.lineno}:#{loc.label})"
   datetime = Time.now.strftime('%Y-%m-%d %H:%M:%S.%6N')
-  message = Format % [severity[0..0], datetime, Process.pid, progname, msg, caller_name]
-  if defined?(WebServer)
-    # EM.next_tick do
-      WebServer.settings.sockets.each do |s|
-        s.send(message)
-      end
-    # end
+
+  message = if $logger.level == Logger::DEBUG
+    DebugFormat % [severity[0..0], datetime, Process.pid, progname, msg, caller_name]
+  else
+    InfoFormat % [severity[0..0], datetime, Process.pid, progname, msg]
   end
+
+  if defined?(WebServer)
+    WebServer.settings.sockets.each do |s|
+      s.send(message)
+    end
+  end
+
   message
-  # "#{datetime}: #{msg}\n"
 end

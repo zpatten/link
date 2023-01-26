@@ -40,7 +40,7 @@ class Server
 
     def start_thread_signals
       # ThreadPool.schedule_server(:signals, server: self) do
-      Tasks.schedule(:signals, server: self) do
+      Tasks.schedule(:signals, pool: @pool, cancellation: @cancellation, server: self) do
         force = !@tx_signals_initalized
         command = %(remote.call('link', 'get_transmitter_combinator', #{force}))
         payload = self.rcon_command(command)

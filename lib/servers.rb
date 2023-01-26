@@ -66,15 +66,18 @@ class Servers
 
 ################################################################################
 
-    def start!(container: true)
+    def start!(container: false)
+      $logger.info(:servers) { "Start Servers (container: #{container.ai})" }
       self.all.each { |server| $pool.post { server.start!(container: container) } }
     end
 
-    def stop!(container: true)
+    def stop!(container: false)
+      $logger.warn(:servers) { "Stopping Servers (container: #{container.ai})" }
       self.all.each { |server| $pool.post { server.stop!(container: container) } }
     end
 
-    def restart!(container: true)
+    def restart!(container: false)
+      $logger.warn(:servers) { "Restart Servers (container: #{container.ai})" }
       self.all.each { |server| $pool.post { server.restart!(container: container) } }
     end
 
@@ -103,7 +106,7 @@ class Servers
 ################################################################################
 
     def backup
-      $logger.debug(:servers) { "Backing up servers..." }
+      $logger.debug(:servers) { "Backing Up Servers" }
       self.all.each do |server|
         if server.available?
           server.backup(timestamp: true)
@@ -340,14 +343,14 @@ class Servers
 
 ################################################################################
 
-    def shutdown!(container: false)
-      self.all.each do |server|
-        $pool.post {
-          $logger.warn(server.name) { "[SERVER] Shutdown server #{server.host_tag}" }
-          server.stop!(container: container)
-        }
-      end
-    end
+    # def shutdown!(container: false)
+    #   self.all.each do |server|
+    #     $pool.post {
+    #       $logger.warn(server.name) { "[SERVER] Shutdown server #{server.host_tag}" }
+    #       server.stop!(container: container)
+    #     }
+    #   end
+    # end
 
 ################################################################################
 

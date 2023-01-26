@@ -26,6 +26,8 @@ class Server
 
     def initialize(server:, debug: false)
       @server           = server
+      @cancellation     = @server.cancellation
+      @pool             = @server.pool
       @name             = @server.name
       @host             = @server.host
       @port             = @server.client_port
@@ -36,8 +38,8 @@ class Server
 
       @authenticated    = false
 
-      @manager_thread   = nil
-      @manager_mutex    = Mutex.new
+      # @manager_thread   = nil
+      # @manager_mutex    = Mutex.new
 
       @callbacks        = Concurrent::Hash.new
       @responses        = Concurrent::Hash.new
@@ -45,17 +47,12 @@ class Server
 
       @socket           = nil
       @socket_mutex     = Mutex.new
-
     end
 
 ################################################################################
 
     def tag
-      @name
-    end
-
-    def cancellation
-      $cancellation.join(@server.cancellation).join(@cancellation)
+      "#{@name}.RCON"
     end
 
 ################################################################################
@@ -96,71 +93,58 @@ class Server
 
 ################################################################################
 
-    def startup!
-      $logger.info(tag) { "[RCON] Startup" }
-      @cancellation, @origin = Concurrent::Cancellation.new
-      $pool.post do
-        begin
-          until connected? || self.cancellation.canceled? do
-            begin
-              connect!
-              break if connected?
-            rescue Errno::ECONNABORTED, Errno::ECONNREFUSED, Errno::ECONNRESET => e
-              $logger.fatal(tag) { "[RCON] Caught Exception: #{e.message}" }
-              sleep 3
-            end
+    def start!
+      Tasks.process(
+        what: 'RCON',
+        pool: @pool,
+        cancellation: @cancellation,
+        server: @server
+      ) do
+        until connected? || @cancellation.canceled? do
+          begin
+            connect!
+            break if connected? || @cancellation.canceled?
+          rescue Errno::ECONNABORTED, Errno::ECONNREFUSED, Errno::ECONNRESET => e
+            $logger.fatal(tag) { "Caught Exception: #{e.message}" }
+            sleep 3
           end
-
-          if connected? && !self.cancellation.canceled?
-            start_tx_thread
-            start_rx_thread
-
-            authenticate if unauthenticated?
-          end
-
-          sleep 1 until self.cancellation.canceled?
-          disconnect!
-
-        rescue => e
-          $logger.fatal(tag) { "[RCON] Caught Exception: #{e.full_message}" }
-          shutdown!
         end
+
+        if connected? && !@cancellation.canceled?
+          start_rx_thread
+          start_tx_thread
+
+          authenticate if unauthenticated?
+        end
+
+        sleep 1 until @cancellation.canceled? || disconnected?
+
+        stop!
       end
     end
 
-    def shutdown!
-      $logger.warn(tag) { "[RCON] Shutdown" }
-      @origin and @origin.resolve
-
+    def stop!
       disconnect!
-
-      true
     end
 
 ################################################################################
 
     def start_tx_thread
-      $pool.post do
-        begin
-          send_packet(get_queued_packet.packet_fields) until disconnected? || self.cancellation.canceled?
-        rescue => e
-          $logger.fatal(tag) { "[RCON] Caught Exception: #{e.full_message}" }
-          shutdown!
-        end
-        $logger.warn(tag) { "[RCON] TX Shutdown" }
-      end
+      Tasks.process(
+        what: 'RCON.TX',
+        pool: @pool,
+        cancellation: @cancellation,
+        server: @server
+      ) { send_packet(get_queued_packet.packet_fields) }
     end
 
     def start_rx_thread
-      $pool.post do
-        begin
-          receive_packet until disconnected? || self.cancellation.canceled?
-        rescue => e
-          $logger.fatal(tag) { "[RCON] Caught Exception: #{e.full_message}" }
-          shutdown!
-        end
-        $logger.warn(tag) { "[RCON] RX Shutdown" }
-      end
+      Tasks.process(
+        what: 'RCON.RX',
+        pool: @pool,
+        cancellation: @cancellation,
+        server: @server
+      ) { receive_packet }
     end
 
 ################################################################################

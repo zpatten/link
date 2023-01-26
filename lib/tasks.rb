@@ -2,88 +2,104 @@
 
 class Tasks
   module Process
-    def process(what, cancellation: nil, &block)
-      cancellation = cancellation || $cancellation
+    def process(what: nil, **options, &block)
+      pool         = options.delete(:pool) || $pool
+      cancellation = options.delete(:cancellation) || $cancellation
+      server       = options.delete(:server)
+
+      server_tag = (server && server.name) || 'link'
+      tag        = [(server && server.name), what].compact.join('.') || Thread.current.name
 
       task = -> cancellation do
         begin
-          $logger.info(tag) { "[#{what.upcase}] Process Started" }
+          $logger.info(tag) { "Process Started" }
           until cancellation.canceled? do
             elapsed_time = Benchmark.realtime do
               block.call
             end
             Metrics::Prometheus[:thread_duration_seconds].observe(elapsed_time,
-              labels: { server: 'link', task: what }
+              labels: { server: server_tag.downcase, task: what.downcase }
             )
             Metrics::Prometheus[:threads].set(Thread.list.count)
             Metrics::Prometheus[:threads_running].set(Thread.list.count { |t| t.status == 'run' })
-            Metrics::Prometheus[:threads_queue_length].set($pool.queue_length)
+            Metrics::Prometheus[:threads_queue_length].set(pool.queue_length)
           end
+          $logger.info(tag) { "Process Canceled" }
         rescue Exception => e
-          $logger.fatal(tag) { "[#{what.upcase}] #{e.ai}\n#{e.backtrace.ai}" }
-          puts e.ai
-          puts e.backtrace.ai
+          $logger.fatal(tag) { e.message.ai }
+          $logger.fatal(tag) { e.backtrace.ai }
         end
       end
 
-      result = Concurrent::Promises.future_on($pool,
-        Config.master_value(:scheduler, what) || 120,
+      result = Concurrent::Promises.future_on(pool,
         cancellation,
         &task
       ).run
 
+    rescue Exception => e
+      $logger.fatal(tag) { "EXCEPTION: #{e.message.ai}\n#{e.backtrace.ai}" }
+      # raise e
     end
   end
 
   module Scheduling
-    def schedule(what, server: nil, &block)
+    def schedule(what, **options, &block)
       return false unless !!Config.master_value(:scheduler, what)
+
+      pool         = options.delete(:pool) || $pool
+      cancellation = options.delete(:cancellation) || $cancellation
+      server       = options.delete(:server)
+
+      server_tag = (server && server.name) || 'link'
+      tag        = [(server && server.name), what].compact.join('.') || Thread.current.name
+
       repeating_scheduled_task = -> interval, cancellation, task do
         Concurrent::Promises.
-          schedule_on($pool, interval, cancellation, &task).
+          schedule_on(pool, interval, cancellation, &task).
           then { repeating_scheduled_task.call(interval, cancellation, task) }
       end
 
       task = -> cancellation do
         if cancellation.canceled?
-          $logger.debug(tag) { "[#{what.upcase}] Scheduled Task Canceled" }
+          $logger.debug(tag) { "Scheduled Task Canceled" }
           cancellation.check!
         end
-        tag = (server and server.name) || Thread.current.name
-        $logger.debug(tag) { "[#{what.upcase}] Scheduled Task Started" }
+        $logger.debug(tag) { "Scheduled Task Started" }
         begin
           elapsed_time = Benchmark.realtime do
             block.call(server)
           end
           Metrics::Prometheus[:thread_duration_seconds].observe(elapsed_time,
-            labels: { server: (server and server.name), task: what }
+            labels: { server: server_tag.downcase, task: what.downcase }
           )
           Metrics::Prometheus[:threads].set(Thread.list.count)
           Metrics::Prometheus[:threads_running].set(Thread.list.count { |t| t.status == 'run' })
-          Metrics::Prometheus[:threads_queue_length].set($pool.queue_length)
+          Metrics::Prometheus[:threads_queue_length].set(pool.queue_length)
         rescue Exception => e
-          $logger.fatal(tag) { "[#{what.upcase}] #{e.ai}\n#{e.backtrace.ai}" }
-          puts e.ai
-          puts e.backtrace.ai
+          $logger.fatal(tag) { "EXCEPTION: #{e.message.ai}\n#{e.backtrace.ai}" }
           # raise e
         end
-        $logger.debug(tag) { "[#{what.upcase}] Scheduled Task Finished" }
+        $logger.debug(tag) { "Scheduled Task Finished" }
         true
       end
 
-      cancellation = (server ? $cancellation.join(server.cancellation) : $cancellation)
+      # cancellation = (server ? $cancellation.join(server.cancellation) : $cancellation)
 
-      result = Concurrent::Promises.future_on($pool,
+      result = Concurrent::Promises.future_on(pool,
         Config.master_value(:scheduler, what) || 120,
         cancellation,
         task,
         &repeating_scheduled_task
       ).run
 
-      tag = (server and server.name) || Thread.current.name
-      $logger.info(tag) { "[#{what.upcase}] Added Scheduled Task" }
+      $logger.info(tag) { "Added Scheduled Task" }
 
       true
+      rescue Exception => e
+        $logger.fatal(tag) { e.message.ai }
+        $logger.fatal(tag) { e.backtrace.ai }
+
+        raise e
     end
   end
 
@@ -95,33 +111,27 @@ end
 # Tasks
 ################################################################################
 
-def start_thread_statistics
-  # Tasks.schedule(:statistics) do
-  #   Storage.item_metrics
-  # end
-end
-
-def start_thread_backup
+def start_thread_backup(**options)
   Tasks.schedule(:backup) do
     Servers.backup
     Servers.trim_save_files
   end
 end
 
-def start_thread_autosave
+def start_thread_autosave(**options)
   Tasks.schedule(:autosave) do
     ItemType.save
     Storage.save
   end
 end
 
-def start_thread_signals
+def start_thread_signals(**options)
   Tasks.schedule(:signals) do
     Signals.update_inventory_signals
   end
 end
 
-def start_thread_prometheus
+def start_thread_prometheus(**options)
   Tasks.schedule(:prometheus) do
     Storage.metrics_handler
 

@@ -26,7 +26,7 @@ require 'concurrent-edge'
 
 
 $pool = Concurrent::CachedThreadPool.new(
-  name: 'global',
+  name: 'link',
   auto_terminate: false,
   min_threads: [2, (Concurrent.processor_count * 0.25).floor].max,
   max_threads: [2, Concurrent.processor_count].max,
@@ -46,6 +46,7 @@ FUTURE_TIMEOUT       = 60
 PING_TIMEOUT         = 30
 RESPONSE_TIMEOUT     = 60
 PID_TIMEOUT          = 30
+IO_SELECT_TIMEOUT_SECONDS = 1
 
 ################################################################################
 

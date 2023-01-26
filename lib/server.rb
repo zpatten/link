@@ -37,6 +37,7 @@ class Server
 
   attr_reader :method_proxy
   attr_reader :rcon
+  attr_reader :pool
 
   attr_reader :cancellation
 
@@ -64,15 +65,7 @@ class Server
     @rx_signals_initalized = false
     @tx_signals_initalized = false
 
-    # @pinged_at = Time.now.to_f
-    @rcon = RCon.new(server: self)
-    #   name: @name,
-    #   host: @host,
-    #   port: @client_port,
-    #   password: @client_password
-    # )
-
-    @parent_pid          = Process.pid
+    @pinged_at = Time.now.to_f
   end
 
 ################################################################################
@@ -117,11 +110,11 @@ class Server
 ################################################################################
 
   def to_h
-    { self.name => self.details }
+    { @name => @details }
   end
 
   def path
-    File.expand_path(File.join(LINK_ROOT, 'servers', self.name))
+    File.expand_path(File.join(LINK_ROOT, 'servers', @name))
   end
 
   def config_path
@@ -157,19 +150,17 @@ class Server
       end
 
       filename = if timestamp
-        "#{self.name}-#{Time.now.to_i}.zip"
+        "#{@name}-#{Time.now.to_i}.zip"
       else
-        "#{self.name}.zip"
+        "#{@name}.zip"
       end
       backup_save_file = File.join(Servers.factorio_saves, filename)
       latest_save_file = self.latest_save_file
       FileUtils.cp_r(latest_save_file, backup_save_file)
-      $logger.info(self.name) { "[BACKUP] Backed up #{latest_save_file.inspect} to #{backup_save_file.inspect}" }
+      $logger.info(@name) { "[BACKUP] Backed up #{latest_save_file.inspect} to #{backup_save_file.inspect}" }
     end
 
-    command = %(/server-save)
-    output = self.rcon_command(command)
-    $logger.info(self.name) { "[BACKUP:RCON]< #{output.ai} " }
+    self.rcon_command %(/server-save)
 
     true
   end
@@ -180,31 +171,65 @@ class Server
     self.stop!(container: container)
     sleep 3
     self.start!(container: container)
+
+    true
   end
 
   def start!(container: true)
+    #return false unless container && container_alive?
+    # return false if !container && container_dead?
+
+    self.start_pool! unless @pool and @pool.running?
     self.start_container! if container
     self.start_rcon!
     self.start_threads!
 
     sleep 1 while self.unavailable?
+
+    true
   end
 
   def stop!(container: true)
+    @pinged_at = Time.now.to_f - PING_TIMEOUT
+
     self.stop_threads!
     self.stop_rcon!
     self.stop_container! if container
+    self.stop_pool!
 
     sleep 1 while self.available?
+
+    true
   end
 
+
+  def start_pool!
+    raise "Existing thread pool is still running!" if @pool && @pool.running?
+    @pool = Concurrent::CachedThreadPool.new(
+      name: @name.downcase,
+      auto_terminate: true,
+      min_threads: [2, (Concurrent.processor_count * 0.25).floor].max,
+      max_threads: [2, Concurrent.processor_count].max,
+      max_queue: [2, Concurrent.processor_count * 5].max,
+      fallback_policy: :caller_runs
+    )
+    @cancellation, @origin = Concurrent::Cancellation.new
+
+    true
+  end
+
+  def stop_pool!
+    $logger.info(@name) { "Pool Shutdown" }
+    @pool.kill
+    $logger.info(@name) { "Pool Wait for Termination" }
+    @pool.wait_for_termination
+    $logger.info(@name) { "Pool Shutdown Complete" }
+
+    true
+  end
 ################################################################################
 
   def start_threads!
-    # $logger.info(self.name) { "[THREADS] Start" }
-
-    @cancellation, @origin = Concurrent::Cancellation.new
-
     sleep 1 until self.rcon.available?
 
     start_thread_ping
@@ -219,8 +244,6 @@ class Server
   end
 
   def stop_threads!
-    # $logger.warn(self.name) { "[THREADS] Stop" }
-
     @origin and @origin.resolve
 
     true
@@ -233,7 +256,7 @@ class Server
 
     FileUtils.cp_r(Servers.factorio_mods, self.path)
 
-    run_command(:server, self.name,
+    run_command(:server, @name,
       %(/usr/bin/env),
       %(chcon),
       %(-Rt),
@@ -241,11 +264,11 @@ class Server
       self.path
     )
 
-    run_command(:server, self.name,
+    run_command(:server, @name,
       %(docker run),
       %(--rm),
       %(--detach),
-      %(--name="#{self.name}"),
+      %(--name="#{@name}"),
       %(--network=host),
       %(-e FACTORIO_PORT="#{self.factorio_port}"),
       %(-e FACTORIO_RCON_PASSWORD="#{self.client_password}"),
@@ -267,21 +290,21 @@ class Server
   def stop_container!
     return true if container_dead?
 
-    run_command(:server, self.name,
+    run_command(:server, @name,
       %(docker stop),
-      self.name
+      @name
     )
 
     true
   end
 
   def container_alive?
-    key = [self.name, 'container-alive'].join('-')
+    key = [@name, 'container-alive'].join('-')
     MemoryCache.fetch(key, expires_in: 10) do
-      output = run_command(:server, self.name,
+      output = run_command(:server, @name,
         %(docker inspect),
         %(-f '{{.State.Running}}'),
-        self.name
+        @name
       )
       (output == 'true')
     end
@@ -294,14 +317,15 @@ class Server
 ################################################################################
 
   def start_rcon!
-    self.rcon.startup!
+    @rcon = RCon.new(server: self)
+    self.rcon.start!
 
     true
   end
 
   def stop_rcon!
     self.rtt = nil
-    self.rcon.shutdown!
+    self.rcon.stop!
 
     true
   end
@@ -349,14 +373,16 @@ class Server
 ################################################################################
 
   def rcon_command_nonblock(command)
-    return if unavailable?
+    return false if unavailable?
+
     self.rcon.command_nonblock(command)
 
     true
   end
 
   def rcon_command(command)
-    return if unavailable?
+    return nil if unavailable?
+
     self.rcon.command(command)
   end
 

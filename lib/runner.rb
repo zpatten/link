@@ -2,11 +2,10 @@
 
 ################################################################################
 
-puts "register at exit"
 at_exit do
-  puts "AT_EXIT"
   $logger.fatal(:at_exit) { 'Shutting down!' }
-  shutdown!
+
+  stop!
 end
 
 ################################################################################
@@ -20,19 +19,19 @@ def start!(console: false)
   create_pid_file(LINK_SERVER_PID_FILE)
   trap_signals
 
-  $logger.info { "Starting Up" }
+  $logger.info(:main) { "Starting Up" }
   start_threads!
 
-  $logger.info { "Starting Sinatra" }
+  $logger.info(:main) { "Starting Sinatra" }
   WebServer.run!
   $logger.warn { "Sinatra Stopped"}
 end
 
-def shutdown!
-  $logger.info { "Stopping Threads" }
+def stop!
+  $logger.info(:main) { "Stopping Threads" }
   stop_threads!
 
-  $logger.info { "Saving Data" }
+  $logger.info(:main) { "Saving Data" }
   ItemType.save
   Storage.save
 end
@@ -46,7 +45,6 @@ end
 ################################################################################
 
 def start_threads!
-  start_thread_statistics
   start_thread_prometheus
   start_thread_signals
   start_thread_autosave
@@ -56,7 +54,7 @@ end
 
 def stop_threads!
   $origin.resolve
-  Servers.shutdown!(container: false)
+  Servers.stop!(container: false)
   $pool.shutdown
   $pool.wait_for_termination(3)
 end
@@ -104,8 +102,8 @@ def exception_handler
   begin
     yield
   rescue Exception => e
-    puts e.message.ai
-    puts e.backtrace.ai
+    $logger.fatal(:main) { e.message.ai }
+    $logger.fatal(:main) { e.backtrace.ai }
   end
 end
 

@@ -4,7 +4,7 @@ class Server
   module Logistics
 
     def start_thread_logistics
-      Tasks.schedule(:fulfillments, server: self) do
+      Tasks.schedule(:fulfillments, pool: @pool, cancellation: @cancellation, server: self) do
         command = %(remote.call('link', 'get_requests'))
         rcon_handler(command) do |requests|
           logistics = ::Logistics.new(self, requests)
@@ -16,7 +16,7 @@ class Server
         end
       end
 
-      Tasks.schedule(:providables, server: self) do
+      Tasks.schedule(:providables, pool: @pool, cancellation: @cancellation, server: self) do
         command = %(remote.call('link', 'get_providables'))
         rcon_handler(command) do |providables|
           $logger.debug(self.name) { "[LOGISTICS] providables: #{providables.ai}" }

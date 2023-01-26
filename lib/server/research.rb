@@ -7,7 +7,7 @@ class Server
 
     def start_thread_research
       if self.research
-        Tasks.schedule(:research_current, server: self) do
+        Tasks.schedule(:research_current, pool: @pool, cancellation: @cancellation, server: self) do
           command = %(remote.call('link', 'get_current_research'))
           payload = self.rcon_command(command)
           unless payload.nil? || payload.empty?
@@ -21,7 +21,7 @@ class Server
           end
         end
 
-        Tasks.schedule(:research, server: self) do
+        Tasks.schedule(:research, pool: @pool, cancellation: @cancellation, server: self) do
           command = %(remote.call('link', 'get_research'))
           payload = self.rcon_command(command)
           unless payload.nil? || payload.empty?

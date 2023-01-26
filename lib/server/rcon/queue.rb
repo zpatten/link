@@ -10,7 +10,7 @@ class Server
         unless callback.nil?
           register_packet_callback(packet_fields.id, callback)
         end
-        @responses[packet_fields.id] = Concurrent::Promises.resolvable_future_on($pool)
+        @responses[packet_fields.id] = Concurrent::Promises.resolvable_future_on(@pool)
         @packet_queue << OpenStruct.new(packet_fields: packet_fields)
         packet_fields
       end

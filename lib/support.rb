@@ -102,7 +102,7 @@ def run_command(tag, name, *args)
   args << %(2>/dev/null)
   command = args.flatten.compact.join(' ')
   output = %x(#{command}).strip
-  $logger.info(tag) { "[#{name}] Command: #{command.inspect} -> #{output.inspect}" }
+  $logger.info(tag) { "[#{name}] Command: #{command.inspect} -> #{output.inspect}" } unless command =~ /docker inspect/
   output
 end
 
