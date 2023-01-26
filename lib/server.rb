@@ -160,7 +160,7 @@ class Server
       $logger.info(@name) { "[BACKUP] Backed up #{latest_save_file.inspect} to #{backup_save_file.inspect}" }
     end
 
-    self.rcon_command %(/server-save)
+    rcon_command %(/server-save)
 
     true
   end
@@ -168,9 +168,9 @@ class Server
 ################################################################################
 
   def restart!(container: true)
-    self.stop!(container: container)
+    stop!(container: container)
     sleep 3
-    self.start!(container: container)
+    start!(container: container)
 
     true
   end
@@ -179,12 +179,12 @@ class Server
     #return false unless container && container_alive?
     # return false if !container && container_dead?
 
-    self.start_pool! unless @pool and @pool.running?
-    self.start_container! if container
-    self.start_rcon!
-    self.start_threads!
+    start_pool! unless @pool and @pool.running?
+    start_container! if container
+    start_rcon!
+    start_threads!
 
-    sleep 1 while self.unavailable?
+    sleep 1 while unavailable?
 
     true
   end
@@ -192,12 +192,12 @@ class Server
   def stop!(container: true)
     @pinged_at = Time.now.to_f - PING_TIMEOUT
 
-    self.stop_threads!
-    self.stop_rcon!
-    self.stop_container! if container
-    self.stop_pool!
+    stop_threads!
+    stop_rcon!
+    stop_container! if container
+    stop_pool!
 
-    sleep 1 while self.available?
+    sleep 1 while available?
 
     true
   end
@@ -227,10 +227,11 @@ class Server
 
     true
   end
+
 ################################################################################
 
   def start_threads!
-    sleep 1 until self.rcon.available?
+    sleep 1 until @rcon.available?
 
     start_thread_ping
     start_thread_id
@@ -280,10 +281,6 @@ class Server
       Config.factorio_docker_image
     )
 
-      # %(--volume=#{self.config_path}:/opt/factorio/config),
-      # %(--volume=#{self.mods_path}:/opt/factorio/mods),
-      # %(--volume=#{self.saves_path}:/opt/factorio/saves),
-
     true
   end
 
@@ -317,15 +314,17 @@ class Server
 ################################################################################
 
   def start_rcon!
+    sleep 1 until container_alive?
+
     @rcon = RCon.new(server: self)
-    self.rcon.start!
+    @rcon.start!
 
     true
   end
 
   def stop_rcon!
     self.rtt = nil
-    self.rcon.stop!
+    @rcon and @rcon.stop!
 
     true
   end
@@ -343,7 +342,7 @@ class Server
 ################################################################################
 
   def connected?
-    self.rcon.connected?
+    @rcon && @rcon.connected?
   end
 
   def disconnected?
@@ -353,7 +352,7 @@ class Server
 ################################################################################
 
   def authenticated?
-    self.rcon.authenticated?
+    @rcon && @rcon.authenticated?
   end
 
   def unauthenticated?
@@ -363,7 +362,7 @@ class Server
 ################################################################################
 
   def available?
-    self.rcon.available?
+    @rcon && @rcon.available?
   end
 
   def unavailable?
@@ -375,7 +374,7 @@ class Server
   def rcon_command_nonblock(command)
     return false if unavailable?
 
-    self.rcon.command_nonblock(command)
+    @rcon.command_nonblock(command)
 
     true
   end
@@ -383,7 +382,7 @@ class Server
   def rcon_command(command)
     return nil if unavailable?
 
-    self.rcon.command(command)
+    @rcon.command(command)
   end
 
 ################################################################################

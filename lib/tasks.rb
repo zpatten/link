@@ -83,8 +83,6 @@ class Tasks
         true
       end
 
-      # cancellation = (server ? $cancellation.join(server.cancellation) : $cancellation)
-
       result = Concurrent::Promises.future_on(pool,
         Config.master_value(:scheduler, what) || 120,
         cancellation,
