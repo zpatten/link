@@ -27,14 +27,12 @@ class Server
 
         buffer = ''
         while buffer.length < length do
-          begin
-            len = (length - buffer.length)
-            buffer += socket.recvmsg_nonblock(len).first
-          rescue IO::WaitReadable
+          len = (length - buffer.length)
+          data = socket.recvmsg_nonblock(len, exception: false)
+          if data == :wait_readable
             IO.select([socket])
-            # IO.select([socket], nil, nil, IO_SELECT_TIMEOUT_SECONDS)
-            # return nil if @cancellation.canceled?
-            retry
+          else
+            buffer += data.first
           end
         end
         buffer
@@ -82,14 +80,14 @@ class Server
         buffer.write(encoded_packet)
 
         total_sent = 0
-        begin
+        while total_sent < buffer.length
           buffer.seek(total_sent)
-          total_sent += socket.sendmsg_nonblock(buffer.read)
-        rescue IO::WaitWritable
-          # return if @cancellation.canceled?
-          # IO.select(nil, [socket], nil, IO_SELECT_TIMEOUT_SECONDS)
-          IO.select(nil, [socket])
-          retry
+          data = socket.sendmsg_nonblock(buffer.read)
+          if data == :wait_writeable
+            IO.select(nil, [socket])
+          else
+            total_sent += data
+          end
         end
 
         $logger.debug(tag) { %([RCON:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
