@@ -101,15 +101,6 @@ end
 
 ################################################################################
 
-def exception_handler
-  begin
-    yield
-  rescue Exception => e
-    $logger.fatal(:main) { e.message.ai }
-    $logger.fatal(:main) { e.backtrace.ai }
-  end
-end
-
 def stop_process(pid_file, name)
   pid = read_pid_file(pid_file)
 

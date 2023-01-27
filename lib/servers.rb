@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Servers
+  # include Enumerable
 
   module ClassMethods
 
@@ -47,7 +48,7 @@ class Servers
       @@servers.values.sort_by { |server| server.name }
     end
 
-    def list
+    def to_json
       server_list = Hash.new
       self.all.collect do |server|
         if server.available?
@@ -61,7 +62,7 @@ class Servers
           }
         end
       end
-      server_list
+      server_list.to_json
     end
 
     def select(&block)
@@ -87,7 +88,7 @@ class Servers
 
 ################################################################################
 
-    def rcon_command(what, command, except=[])
+    def rcon_command(what, command, except: [])
       self.find(what, except: except).each do |server|
         unless server.unavailable?
           server.rcon_command(command)
@@ -97,7 +98,7 @@ class Servers
       true
     end
 
-    def rcon_command_nonblock(what, command, except=[])
+    def rcon_command_nonblock(what, command, except: [])
       self.find(what, except: except).each do |server|
         unless server.unavailable?
           server.rcon_command_nonblock(command)

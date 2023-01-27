@@ -94,12 +94,6 @@ class Server
 ################################################################################
 
     def start!
-      # Tasks.repeat(
-      #   what: 'RCON',
-      #   pool: @pool,
-      #   cancellation: @cancellation,
-      #   server: @server
-      # ) do
       Tasks.onetime(
         what: 'RCON',
         pool: @pool,
@@ -116,40 +110,27 @@ class Server
         end
 
         if connected? && !@cancellation.canceled?
-          start_rx_thread
-          start_tx_thread
+          Tasks.repeat(
+            what: 'RCON.RX',
+            pool: @pool,
+            cancellation: @cancellation,
+            server: @server
+          ) { receive_packet }
+
+          Tasks.repeat(
+            what: 'RCON.TX',
+            pool: @pool,
+            cancellation: @cancellation,
+            server: @server
+          ) { send_packet(get_queued_packet.packet_fields) }
 
           authenticate if unauthenticated?
         end
-
-        # sleep 1 until @cancellation.canceled? || disconnected?
-
-        # stop!
       end
     end
 
     def stop!
       disconnect!
-    end
-
-################################################################################
-
-    def start_tx_thread
-      Tasks.repeat(
-        what: 'RCON.TX',
-        pool: @pool,
-        cancellation: @cancellation,
-        server: @server
-      ) { send_packet(get_queued_packet.packet_fields) }
-    end
-
-    def start_rx_thread
-      Tasks.repeat(
-        what: 'RCON.RX',
-        pool: @pool,
-        cancellation: @cancellation,
-        server: @server
-      ) { receive_packet }
     end
 
 ################################################################################

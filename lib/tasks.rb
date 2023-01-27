@@ -5,6 +5,14 @@ class Tasks
 
 ################################################################################
 
+    def exception_handler(what:, &block)
+      begin
+        yield
+      rescue Exception => e
+        $logger.fatal(what) { "CAUGHT EXCEPTION: #{e.message.ai}\n#{e.backtrace.ai}" }
+      end
+    end
+
     def metrics_handler(pool:, what:, server_tag:, &block)
       elapsed_time = Benchmark.realtime(&block)
       Metrics::Prometheus[:thread_duration_seconds].observe(elapsed_time,
@@ -35,14 +43,11 @@ class Tasks
       server_tag, tag = tags(what: what, server: server)
 
       Concurrent::Promises.future_on(pool) do
-        begin
-          $logger.info(tag) { "Process Started (onetime)" }
+        $logger.info(tag) { "Process Started (onetime)" }
+        exception_handler(what: what) do
           metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
-          $logger.info(tag) { "Process Finished (onetime)" }
-        rescue Exception => e
-          $logger.fatal(tag) { e.message.ai }
-          $logger.fatal(tag) { e.backtrace.ai }
         end
+        $logger.info(tag) { "Process Finished (onetime)" }
       end.run
     end
 
@@ -53,26 +58,19 @@ class Tasks
       server_tag, tag = tags(what: what, server: server)
 
       task = -> cancellation do
-        begin
-          $logger.info(tag) { "Process Started (repeat)" }
-          until cancellation.canceled? do
+        $logger.info(tag) { "Process Started (repeat)" }
+        until cancellation.canceled? do
+          exception_handler(what: what) do
             metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
           end
-          $logger.info(tag) { "Process Canceled (repeat)" }
-        rescue Exception => e
-          $logger.fatal(tag) { e.message.ai }
-          $logger.fatal(tag) { e.backtrace.ai }
         end
+        $logger.info(tag) { "Process Canceled (repeat)" }
       end
 
       result = Concurrent::Promises.future_on(pool,
         cancellation,
         &task
       ).run
-
-    rescue Exception => e
-      $logger.fatal(tag) { "EXCEPTION: #{e.message.ai}\n#{e.backtrace.ai}" }
-      # raise e
     end
 
 ################################################################################
@@ -94,11 +92,8 @@ class Tasks
           cancellation.check!
         end
         $logger.debug(tag) { "Scheduled Task Started" }
-        begin
-          metrics_handler(pool: pool, what: what, server_tag: server_tag) { block.call(server) }
-        rescue Exception => e
-          $logger.fatal(tag) { "EXCEPTION: #{e.message.ai}\n#{e.backtrace.ai}" }
-          # raise e
+        exception_handler(what: what) do
+          metrics_handler(pool: pool, what: what, server_tag: server_tag)  { block.call(server) }
         end
         $logger.debug(tag) { "Scheduled Task Finished" }
         true
@@ -169,7 +164,6 @@ end
 def start_thread_watchdog(**options)
   Tasks.schedule(what: :watchdog) do
     Servers.all.select(&:watch).each do |server|
-      # $logger.info(server.log_tag(:watchdog)) { "Checking Server" }
       if server.unresponsive?
         $logger.warn(server.log_tag(:watchdog)) { "Detected Unresponsive Server" }
         server.restart!(container: true)
