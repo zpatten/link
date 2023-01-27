@@ -6,19 +6,29 @@ class Storage
 
 ################################################################################
 
+    @@lock ||= Concurrent::ReadWriteLock.new
+    @@mutex ||= Mutex.new
     @@storage ||= Concurrent::Hash.new
-    @@storage_mutex ||= Mutex.new
 
 ################################################################################
 
     def [](item_name)
-      self.storage[item_name]
+      item_name = sanitize_item_name(item_name)
+
+      @@lock.with_read_lock do
+        @@storage[item_name].value
+      end
     end
 
-    def storage
-      @@storage.nil? and load
+    def []=(item_name, item_count)
+      item_name = sanitize_item_name(item_name)
 
-      @@storage
+      @@lock.with_write_lock do
+        @@storage[item_name].nil? and @@storage[item_name] = Concurrent::AtomicFixnum.new(0)
+        @@storage[item_name].update { |value| item_count }
+      end
+
+      item_count
     end
 
     def filename
@@ -28,10 +38,10 @@ class Storage
 ################################################################################
 
     def load
-      @@storage_mutex.synchronize do
+      @@lock.with_write_lock do
         h = (JSON.parse(IO.read(filename)) rescue Hash.new)
         h.transform_values! { |v| Concurrent::AtomicFixnum.new(v) }
-        $logger.debug { h.ai }
+        $logger.debug(:storage) { h.ai }
         @@storage.merge!(h)
       end
 
@@ -41,15 +51,9 @@ class Storage
     def save
       return false if @@storage.nil?
 
-      # @@storage_mutex.synchronize do
-      #   h = Hash.new
-      #   self.clone.each do |k,v|
-      #     h[k] = v.value if v.value > 0
-      #   end
-      #   h.delete_if { |k,v| v == 0 }
-      #   IO.write(filename, JSON.pretty_generate(h.sort.to_h))
-      # end
+      @@lock.with_read_lock do
         IO.write(filename, JSON.pretty_generate(self.clone.sort.to_h))
+      end
 
       true
     end
@@ -57,13 +61,9 @@ class Storage
 ################################################################################
 
     def clone
-      #deep_clone(@@storage)
-      # s = @@storage.clone
-
-      Hash[@@storage.clone].transform_values { |v| v.value.to_i }.delete_if{ |k,v| v == 0 }
-    rescue Exception => e
-      puts e.ai
-      puts e.backtrace.ai
+      @@lock.with_read_lock do
+        Hash[@@storage.clone].transform_values { |v| v.value.to_i }.delete_if{ |k,v| v == 0 }
+      end
     end
 
     def sanitize_item_name(item_name)
@@ -79,9 +79,11 @@ class Storage
     def add(item_name, item_count)
       item_name = sanitize_item_name(item_name)
 
-      @@storage[item_name].nil? and @@storage[item_name] = Concurrent::AtomicFixnum.new(0)
-      @@storage[item_name].update do |value|
-        value += item_count
+      @@lock.with_write_lock do
+        @@storage[item_name].nil? and @@storage[item_name] = Concurrent::AtomicFixnum.new(0)
+        @@storage[item_name].update do |value|
+          value + item_count
+        end
       end
 
       item_count
@@ -92,9 +94,11 @@ class Storage
 
       removed_count = 0
 
-      @@storage[item_name].update do |value|
-        removed_count = [value, item_count].min
-        value -= removed_count
+      @@lock.with_write_lock do
+        @@storage[item_name].update do |value|
+          removed_count = [value, item_count].min
+          value - removed_count
+        end
       end
 
       removed_count
@@ -109,11 +113,11 @@ class Storage
     end
 
     def bulk_remove(items)
-      hash = Hash.new(0)
+      removed_items = Hash.new
       items.each do |item_name, item_count|
-        hash[item_name] = remove(item_name, item_count)
+        removed_items[item_name] = remove(item_name, item_count)
       end
-      hash
+      removed_items
     end
 
 ################################################################################

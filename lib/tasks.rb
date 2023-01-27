@@ -27,8 +27,6 @@ class Tasks
       Timeout.timeout(THREAD_TIMEOUT, &block)
     end
 
-################################################################################
-
     def tags(**options)
       server = options[:server]
       what   = options[:what]
@@ -38,6 +36,8 @@ class Tasks
 
       [server_tag, tag]
     end
+
+################################################################################
 
     def onetime(what:, pool: $pool, cancellation: $cancellation, server: nil, **options, &block)
       server_tag, tag = tags(what: what, server: server)
@@ -50,7 +50,6 @@ class Tasks
         $logger.info(tag) { "Process Finished (onetime)" }
       end.run
     end
-
 
 ################################################################################
 
@@ -67,10 +66,7 @@ class Tasks
         $logger.info(tag) { "Process Canceled (repeat)" }
       end
 
-      result = Concurrent::Promises.future_on(pool,
-        cancellation,
-        &task
-      ).run
+      Concurrent::Promises.future_on(pool, cancellation, &task).run
     end
 
 ################################################################################
@@ -81,9 +77,7 @@ class Tasks
       server_tag, tag = tags(what: what, server: server)
 
       repeating_scheduled_task = -> interval, cancellation, task do
-        Concurrent::Promises.
-          schedule_on(pool, interval, cancellation, &task).
-          then { repeating_scheduled_task.call(interval, cancellation, task) }
+        Concurrent::Promises.schedule_on(pool, interval, cancellation, &task).then { repeating_scheduled_task.call(interval, cancellation, task) }
       end
 
       task = -> cancellation do
@@ -91,15 +85,17 @@ class Tasks
           $logger.debug(tag) { "Scheduled Task Canceled" }
           cancellation.check!
         end
+
         $logger.debug(tag) { "Scheduled Task Started" }
         exception_handler(what: what) do
           metrics_handler(pool: pool, what: what, server_tag: server_tag)  { block.call(server) }
         end
         $logger.debug(tag) { "Scheduled Task Finished" }
+
         true
       end
 
-      result = Concurrent::Promises.future_on(pool,
+      Concurrent::Promises.future_on(pool,
         Config.master_value(:scheduler, what) || 120,
         cancellation,
         task,
@@ -109,11 +105,6 @@ class Tasks
       $logger.info(tag) { "Added Scheduled Task" }
 
       true
-      rescue Exception => e
-        $logger.fatal(tag) { e.message.ai }
-        $logger.fatal(tag) { e.backtrace.ai }
-
-        raise e
     end
 
 ################################################################################

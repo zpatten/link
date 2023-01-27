@@ -15,10 +15,13 @@ class Server
       def packet_callback(packet_fields)
         unless (pc = @callbacks.delete(packet_fields.id)).nil?
           @responses.delete(pc.id)
-          tag = [tag, 'callback', pc.what, pc.id].compact.join('-')
-          @pool.post do
-            pc.callback.call(@name, packet_fields)
-          end
+          tag = ['rcon', 'callback', pc.what, pc.id].flatten.compact.join('.').upcase
+
+          Tasks.onetime(
+            what: 'RCON.CALLBACK',
+            pool: @pool,
+            server: @server
+          ) { pc.callback.call(@name, packet_fields) }
         end
       end
 

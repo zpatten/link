@@ -109,7 +109,7 @@ class Server
           end
         end
 
-        if connected? && !@cancellation.canceled?
+        unless @cancellation.canceled?
           Tasks.repeat(
             what: 'RCON.RX',
             pool: @pool,
@@ -124,7 +124,7 @@ class Server
             server: @server
           ) { send_packet(get_queued_packet.packet_fields) }
 
-          authenticate if unauthenticated?
+          authenticate
         end
       end
     end

@@ -8,9 +8,6 @@ require 'thin'
 require 'haml'
 
 class WebServer < Sinatra::Application
-  # enable :logging
-  # set :logger, $logger
-  # set :server, :puma
   set :server, :thin
   set :port, 4242
   set :bind, "0.0.0.0"
@@ -68,8 +65,7 @@ class WebServer < Sinatra::Application
   end
 
   get "/threads" do
-    # @threads = Thread.list.dup.delete_if { |t| t.nil? || t.name.nil? }
-    @threads = Thread.list.collect! do |t|
+    @threads = Thread.list.collect do |t|
       OpenStruct.new(
         pid: Process.pid,
         name: t.name,
@@ -78,11 +74,7 @@ class WebServer < Sinatra::Application
         # started_at: t[:started_at] || Time.now.to_i
       )
     end
-    # Servers.all.each do |s|
-    #   @threads += s.threads
-    # end
     @threads.compact!
-    # @threads.delete_if { |t| t.name.nil? }
     @threads = @threads.sort_by { |t| t.name || '-' }
     haml :threads
   end
@@ -167,21 +159,4 @@ class WebServer < Sinatra::Application
     end
   end
 
-  # get "/log", provides: 'text/event-stream' do
-  #   stream do |out|
-  #     loop do
-  #       unless out.closed?
-  #         message = $log_queue.pop
-  #         out << message
-  #       end
-  #       break if out.closed?
-  #     end
-  #   end
-  # end
-
 end
-
-# $pool.post do
-#   WebServer.run! do |server|
-#   end
-# end

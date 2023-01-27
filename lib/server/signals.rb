@@ -33,7 +33,7 @@ class Server
       if networks.count > 0
         # update rx signals with the signal networks
         command = %(remote.call('link', 'set_receiver_combinator', #{force}, '#{networks.to_json}'))
-        self.rcon_command(command)
+        rcon_command_nonblock(command)
         @rx_signals_initalized = true
       end
     end

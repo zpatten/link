@@ -31,8 +31,9 @@ class Server
             len = (length - buffer.length)
             buffer += socket.recvmsg_nonblock(len).first
           rescue IO::WaitReadable
-            IO.select([socket], nil, nil, IO_SELECT_TIMEOUT_SECONDS)
-            return if @cancellation.canceled?
+            IO.select([socket])
+            # IO.select([socket], nil, nil, IO_SELECT_TIMEOUT_SECONDS)
+            # return nil if @cancellation.canceled?
             retry
           end
         end
@@ -85,8 +86,9 @@ class Server
           buffer.seek(total_sent)
           total_sent += socket.sendmsg_nonblock(buffer.read)
         rescue IO::WaitWritable
-          return if @cancellation.canceled?
-          IO.select(nil, [socket], nil, IO_SELECT_TIMEOUT_SECONDS)
+          # return if @cancellation.canceled?
+          # IO.select(nil, [socket], nil, IO_SELECT_TIMEOUT_SECONDS)
+          IO.select(nil, [socket])
           retry
         end
 

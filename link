@@ -46,7 +46,7 @@ FUTURE_TIMEOUT       = 60
 PING_TIMEOUT         = 30
 RESPONSE_TIMEOUT     = 60
 PID_TIMEOUT          = 30
-IO_SELECT_TIMEOUT_SECONDS = 1
+IO_SELECT_TIMEOUT_SECONDS = 0.01
 
 ################################################################################
 

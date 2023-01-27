@@ -11,7 +11,7 @@ class Server
           fulfillments = logistics.fulfill
           unless fulfillments.nil? || fulfillments.empty?
             command = %(remote.call('link', 'set_fulfillments', '#{fulfillments.to_json}'))
-            rcon_command(command)
+            rcon_command_nonblock(command)
           end
         end
       end

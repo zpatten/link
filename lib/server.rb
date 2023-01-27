@@ -212,6 +212,7 @@ class Server
 
   def start_pool!
     raise "Existing thread pool is still running!" if @pool && @pool.running?
+    $logger.info(log_tag(:pool)) { "Starting Thread Pool" }
     @pool = Concurrent::CachedThreadPool.new(
       name: @name.downcase,
       auto_terminate: true,
@@ -226,11 +227,11 @@ class Server
   end
 
   def stop_pool!
-    $logger.info(@name) { "Pool Shutdown" }
+    $logger.info(log_tag(:pool)) { "Thread Pool Shutting Down" }
     @pool.kill
-    $logger.info(@name) { "Pool Wait for Termination" }
+    $logger.info(log_tag(:pool)) { "Waiting for Thread Pool Termination" }
     @pool.wait_for_termination
-    $logger.info(@name) { "Pool Shutdown Complete" }
+    $logger.info(log_tag(:pool)) { "Thread Pool Shutdown Complete" }
 
     true
   end
@@ -238,7 +239,7 @@ class Server
 ################################################################################
 
   def start_threads!
-    sleep 1 until @rcon.available?
+    sleep 1 until available?
 
     start_thread_ping
     start_thread_id

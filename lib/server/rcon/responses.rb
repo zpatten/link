@@ -18,7 +18,7 @@ class Server
 
       def find_response(packet_id)
         packet_fields = @responses[packet_id].value
-        $logger.debug(tag) { "Resolved Response(#{packet_id})" }
+        $logger.debug(tag) { "Resolved Response (#{packet_id})" }
         packet_fields
 
       ensure
