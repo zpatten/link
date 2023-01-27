@@ -39,25 +39,16 @@ class Server
     end
 
     def start_thread_signals
-      # ThreadPool.schedule_server(:signals, server: self) do
-      Tasks.schedule(:signals, pool: @pool, cancellation: @cancellation, server: self) do
+      Tasks.schedule(what: :signals, pool: @pool, cancellation: @cancellation, server: self) do
         force = !@tx_signals_initalized
         command = %(remote.call('link', 'get_transmitter_combinator', #{force}))
-        payload = self.rcon_command(command)
-        unless payload.nil? || payload.empty?
-          unit_network_list = JSON.parse(payload)
-          unless unit_network_list.nil? || unit_network_list.empty?
-            handle_transmitter_combinators(unit_network_list)
-          end
+        rcon_handler(command) do |unit_network_list|
+          handle_transmitter_combinators(unit_network_list)
         end
 
         command = %(remote.call('link', 'get_receiver_combinator_network_ids'))
-        payload = self.rcon_command(command)
-        unless payload.nil? || payload.empty?
-          network_ids = JSON.parse(payload)
-          unless network_ids.nil? || network_ids.empty?
-            handle_receiver_combinators(network_ids)
-          end
+        rcon_handler(command) do |network_ids|
+          handle_receiver_combinators(network_ids)
         end
       end
     end

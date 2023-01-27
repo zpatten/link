@@ -21,11 +21,7 @@ class Tasks
 
 ################################################################################
 
-    def repeat(pool: $pool, cancellation: $cancellation, what: nil, server: nil, **options, &block)
-      # pool         = options.delete(:pool) || $pool
-      # cancellation = options.delete(:cancellation) || $cancellation
-      # server       = options.delete(:server)
-
+    def repeat(what:, pool: $pool, cancellation: $cancellation, server: nil, **options, &block)
       server_tag = (server && server.name) || 'link'
       tag        = [(server && server.name), what].flatten.compact.join('.') || Thread.current.name
 
@@ -54,12 +50,12 @@ class Tasks
 
 ################################################################################
 
-    def schedule(what, **options, &block)
+    def schedule(what:, pool: $pool, cancellation: $cancellation, server: nil, **options, &block)
       return false unless !!Config.master_value(:scheduler, what)
 
-      pool         = options.delete(:pool) || $pool
-      cancellation = options.delete(:cancellation) || $cancellation
-      server       = options.delete(:server)
+      # pool         = options.delete(:pool) || $pool
+      # cancellation = options.delete(:cancellation) || $cancellation
+      # server       = options.delete(:server)
 
       server_tag = (server && server.name) || 'link'
       tag        = [(server && server.name), what].flatten.compact.join('.') || Thread.current.name
@@ -78,15 +74,6 @@ class Tasks
         $logger.debug(tag) { "Scheduled Task Started" }
         begin
           metrics_handler(pool: pool, what: what, server_tag: server_tag) { block.call(server) }
-          # elapsed_time = Benchmark.realtime do
-          #   block.call(server)
-          # end
-          # Metrics::Prometheus[:thread_duration_seconds].observe(elapsed_time,
-          #   labels: { server: server_tag.downcase, task: what.downcase }
-          # )
-          # Metrics::Prometheus[:threads].set(Thread.list.count)
-          # Metrics::Prometheus[:threads_running].set(Thread.list.count { |t| t.status == 'run' })
-          # Metrics::Prometheus[:threads_queue_length].set(pool.queue_length)
         rescue Exception => e
           $logger.fatal(tag) { "EXCEPTION: #{e.message.ai}\n#{e.backtrace.ai}" }
           # raise e
@@ -124,47 +111,46 @@ end
 ################################################################################
 
 def start_thread_mark(**options)
-  Tasks.schedule(:mark) do
+  Tasks.schedule(what: :mark) do
     $logger.info(:mark) { "---MARK--- @ #{Time.now.utc}" }
   end
 end
 
 def start_thread_backup(**options)
-  Tasks.schedule(:backup) do
+  Tasks.schedule(what: :backup) do
     Servers.backup
     Servers.trim_save_files
   end
 end
 
 def start_thread_autosave(**options)
-  Tasks.schedule(:autosave) do
+  Tasks.schedule(what: :autosave) do
     ItemType.save
     Storage.save
   end
 end
 
 def start_thread_signals(**options)
-  Tasks.schedule(:signals) do
+  Tasks.schedule(what: :signals) do
     Signals.update_inventory_signals
   end
 end
 
 def start_thread_prometheus(**options)
-  Tasks.schedule(:prometheus) do
+  Tasks.schedule(what: :prometheus) do
     Storage.metrics_handler
 
     Metrics::Prometheus.push
   end
 end
 
-def schedule_task_watchdog
-  ThreadPool.schedule_task(:watchdog, timeout: 300) do
-    Servers.all.each do |server|
-      if server.process_alive? && server.unresponsive?
-        $logger.warn(:servers) {
-          "[#{server.name}] Detected Unresponsive Server - Restarting"
-        }
-        server.restart!
+def start_thread_watchdog(**options)
+  Tasks.schedule(what: :watchdog) do
+    Servers.all.select(&:watch).each do |server|
+      # $logger.info(server.log_tag(:watchdog)) { "Checking Server" }
+      if server.unresponsive?
+        $logger.warn(server.log_tag(:watchdog)) { "Detected Unresponsive Server" }
+        server.restart!(container: true)
       end
     end
   end

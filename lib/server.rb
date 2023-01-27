@@ -35,6 +35,8 @@ class Server
   attr_reader :network_id
   attr_reader :pinged_at
 
+  attr_reader :watch
+
   attr_reader :method_proxy
   attr_reader :rcon
   attr_reader :pool
@@ -46,27 +48,26 @@ class Server
 ################################################################################
 
   def initialize(name, details)
-    @name                = name.dup
-    @id                  = Zlib::crc32(@name.to_s)
-    @network_id          = [@id].pack("L").unpack("l").first
-    @pinged_at           = 0
-    @rtt                 = 0
+    @name              = name.dup
+    @id                = Zlib::crc32(@name.to_s)
+    @network_id        = [@id].pack("L").unpack("l").first
+    @pinged_at         = Time.now.to_f
+    @rtt               = 0
+    @watch             = false
 
-    @details             = details
-    @active              = details['active']
-    @chats               = details['chats']
-    @client_password     = details['client_password']
-    @client_port         = details['client_port']
-    @command_whitelist   = details['command_whitelist']
-    @commands            = details['commands']
-    @factorio_port       = details['factorio_port']
-    @host                = details['host']
-    @research            = details['research']
+    @details           = details
+    @active            = details['active']
+    @chats             = details['chats']
+    @client_password   = details['client_password']
+    @client_port       = details['client_port']
+    @command_whitelist = details['command_whitelist']
+    @commands          = details['commands']
+    @factorio_port     = details['factorio_port']
+    @host              = details['host']
+    @research          = details['research']
 
     @rx_signals_initalized = false
     @tx_signals_initalized = false
-
-    @pinged_at = Time.now.to_f
   end
 
 ################################################################################
@@ -85,11 +86,7 @@ class Server
     end
   end
 
-  def rtt
-    @rtt
-  end
-
-  def rtt=(value)
+  def update_rtt(value)
     @pinged_at = Time.now.to_f unless value.nil?
     @rtt       = value
     update_websocket
@@ -102,7 +99,7 @@ class Server
     "#{@name}@#{@host}:#{@client_port}"
   end
 
-  def log_tag(what)
+  def log_tag(what=nil)
     [@name, what].flatten.compact.join('.').upcase
   end
 
@@ -148,6 +145,7 @@ class Server
 ################################################################################
 
   def backup(timestamp: false)
+    return false if container_dead? || unresponsive?
     if File.exist?(self.save_file)
       begin
         FileUtils.mkdir_p(Servers.factorio_saves)
@@ -172,17 +170,8 @@ class Server
 
 ################################################################################
 
-  def restart!(container: true)
-    stop!(container: container)
-    sleep 3
-    start!(container: container)
-
-    true
-  end
-
   def start!(container: true)
-    #return false unless container && container_alive?
-    # return false if !container && container_dead?
+    $logger.info(log_tag) { "Start Server (container: #{container.ai})" }
 
     start_pool! unless @pool and @pool.running?
     start_container! if container
@@ -191,11 +180,15 @@ class Server
 
     sleep 1 while unavailable?
 
+    @watch = true
+
     true
   end
 
   def stop!(container: true)
-    @pinged_at = Time.now.to_f - PING_TIMEOUT
+    $logger.info(log_tag) { "Stop Server (container: #{container.ai})" }
+
+    @watch = false
 
     stop_threads!
     stop_rcon!
@@ -207,6 +200,17 @@ class Server
     true
   end
 
+  def restart!(container: true)
+    $logger.info(log_tag) { "Restart Server (container: #{container.ai})" }
+
+    stop!(container: container)
+    sleep 3
+    start!(container: container)
+
+    true
+  end
+
+################################################################################
 
   def start_pool!
     raise "Existing thread pool is still running!" if @pool && @pool.running?
@@ -250,7 +254,7 @@ class Server
   end
 
   def stop_threads!
-    @origin and @origin.resolve
+    @origin.resolved? or @origin.resolve if @origin
 
     true
   end
@@ -320,7 +324,7 @@ class Server
 
   def start_rcon!
     sleep 1 until container_alive?
-
+    @pinged_at = Time.now.to_f
     @rcon = RCon.new(server: self)
     @rcon.start!
 
@@ -328,8 +332,10 @@ class Server
   end
 
   def stop_rcon!
-    self.rtt = 0
     @rcon and @rcon.stop!
+
+    @pinged_at = 0
+    @rtt       = 0
 
     true
   end
@@ -398,7 +404,11 @@ class Server
       data = JSON.parse(payload)
       unless data.nil? || data.empty?
         block.call(data)
+      # else
+      #   $logger.warn(log_tag(:rcon)) { "Missing Payload Data! #{command.ai}" }
       end
+    else
+      $logger.warn(log_tag(:rcon)) { "Missing Payload!" }
     end
   end
 

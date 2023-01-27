@@ -14,7 +14,7 @@ def start!(console: false)
   create_pid_file(LINK_SERVER_PID_FILE)
 
   $0 = 'Link Server'
-  $logger.info { "Loading Data" }
+  $logger.info(:main) { "Loading Data" }
   Config.load
   ItemType.load
   Storage.load
@@ -24,7 +24,7 @@ def start!(console: false)
 
   $logger.info(:main) { "Starting Sinatra" }
   WebServer.run!
-  $logger.warn { "Sinatra Stopped"}
+  $logger.warn(:main) { "Sinatra Stopped"}
 end
 
 def stop!
@@ -50,7 +50,8 @@ def start_threads!
   start_thread_signals
   start_thread_autosave
   start_thread_backup
-  Servers.start!(container: false)
+  Servers.select(&:container_alive?).each { |s| $pool.post { s.start!(container: false) } }
+  start_thread_watchdog
 end
 
 def stop_threads!

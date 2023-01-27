@@ -64,6 +64,10 @@ class Servers
       server_list
     end
 
+    def select(&block)
+      self.all.select(&block)
+    end
+
 ################################################################################
 
     def start!(container: false)
@@ -340,17 +344,6 @@ class Servers
 
       true
     end
-
-################################################################################
-
-    # def shutdown!(container: false)
-    #   self.all.each do |server|
-    #     $pool.post {
-    #       $logger.warn(server.name) { "[SERVER] Shutdown server #{server.host_tag}" }
-    #       server.stop!(container: container)
-    #     }
-    #   end
-    # end
 
 ################################################################################
 
