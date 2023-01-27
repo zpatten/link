@@ -59,7 +59,7 @@ def stop_threads!
   $origin.resolve
   Servers.stop!(container: false)
   $pool.shutdown
-  $pool.wait_for_termination(3)
+  $pool.wait_for_termination(30)
 end
 
 ################################################################################

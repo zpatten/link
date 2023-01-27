@@ -21,17 +21,44 @@ class Tasks
 
 ################################################################################
 
-    def repeat(what:, pool: $pool, cancellation: $cancellation, server: nil, **options, &block)
+    def tags(**options)
+      server = options[:server]
+      what   = options[:what]
+
       server_tag = (server && server.name) || 'link'
       tag        = [(server && server.name), what].flatten.compact.join('.') || Thread.current.name
 
+      [server_tag, tag]
+    end
+
+    def onetime(what:, pool: $pool, cancellation: $cancellation, server: nil, **options, &block)
+      server_tag, tag = tags(what: what, server: server)
+
+      Concurrent::Promises.future_on(pool) do
+        begin
+          $logger.info(tag) { "Process Started (onetime)" }
+          metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
+          $logger.info(tag) { "Process Finished (onetime)" }
+        rescue Exception => e
+          $logger.fatal(tag) { e.message.ai }
+          $logger.fatal(tag) { e.backtrace.ai }
+        end
+      end.run
+    end
+
+
+################################################################################
+
+    def repeat(what:, pool: $pool, cancellation: $cancellation, server: nil, **options, &block)
+      server_tag, tag = tags(what: what, server: server)
+
       task = -> cancellation do
         begin
-          $logger.info(tag) { "Process Started" }
+          $logger.info(tag) { "Process Started (repeat)" }
           until cancellation.canceled? do
             metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
           end
-          $logger.info(tag) { "Process Canceled" }
+          $logger.info(tag) { "Process Canceled (repeat)" }
         rescue Exception => e
           $logger.fatal(tag) { e.message.ai }
           $logger.fatal(tag) { e.backtrace.ai }
@@ -53,12 +80,7 @@ class Tasks
     def schedule(what:, pool: $pool, cancellation: $cancellation, server: nil, **options, &block)
       return false unless !!Config.master_value(:scheduler, what)
 
-      # pool         = options.delete(:pool) || $pool
-      # cancellation = options.delete(:cancellation) || $cancellation
-      # server       = options.delete(:server)
-
-      server_tag = (server && server.name) || 'link'
-      tag        = [(server && server.name), what].flatten.compact.join('.') || Thread.current.name
+      server_tag, tag = tags(what: what, server: server)
 
       repeating_scheduled_task = -> interval, cancellation, task do
         Concurrent::Promises.

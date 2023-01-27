@@ -100,6 +100,11 @@ class Server
       #   cancellation: @cancellation,
       #   server: @server
       # ) do
+      Tasks.onetime(
+        what: 'RCON',
+        pool: @pool,
+        server: @server
+      ) do
         until connected? || @cancellation.canceled? do
           begin
             connect!
@@ -120,7 +125,7 @@ class Server
         # sleep 1 until @cancellation.canceled? || disconnected?
 
         # stop!
-      # end
+      end
     end
 
     def stop!

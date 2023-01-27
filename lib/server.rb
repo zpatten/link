@@ -23,25 +23,23 @@ class Server
 
 ################################################################################
 
+  attr_reader :child_pid
   attr_reader :client_password
   attr_reader :client_port
   attr_reader :details
   attr_reader :factorio_port
   attr_reader :host
-  attr_reader :name
-  attr_reader :research
-  attr_reader :child_pid
   attr_reader :id
+  attr_reader :name
   attr_reader :network_id
   attr_reader :pinged_at
-
-  attr_reader :watch
-
-  attr_reader :method_proxy
-  attr_reader :rcon
-  attr_reader :pool
+  attr_reader :research
+  attr_reader :rtt
 
   attr_reader :cancellation
+  attr_reader :pool
+  attr_reader :rcon
+  attr_reader :watch
 
   RECV_MAX_LEN = 64 * 1024
 
@@ -87,7 +85,7 @@ class Server
   end
 
   def update_rtt(value)
-    @pinged_at = Time.now.to_f unless value.nil?
+    @pinged_at = Time.now.to_f
     @rtt       = value
     update_websocket
     @rtt
@@ -99,8 +97,8 @@ class Server
     "#{@name}@#{@host}:#{@client_port}"
   end
 
-  def log_tag(what=nil)
-    [@name, what].flatten.compact.join('.').upcase
+  def log_tag(*tags)
+    [@name, tags].flatten.compact.join('.').upcase
   end
 
 ################################################################################
@@ -398,7 +396,7 @@ class Server
 
 ################################################################################
 
-  def rcon_handler(command, &block)
+  def rcon_handler(what:, command:, &block)
     payload = self.rcon_command(command)
     unless payload.nil? || payload.empty?
       data = JSON.parse(payload)
@@ -408,7 +406,7 @@ class Server
       #   $logger.warn(log_tag(:rcon)) { "Missing Payload Data! #{command.ai}" }
       end
     else
-      $logger.warn(log_tag(:rcon)) { "Missing Payload!" }
+      $logger.warn(log_tag(:rcon, what)) { "Missing Payload!" }
     end
   end
 

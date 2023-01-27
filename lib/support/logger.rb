@@ -54,7 +54,8 @@ $logger.formatter = proc do |severity, datetime, progname, msg|
   message = if $logger.level == Logger::DEBUG
     DebugFormat % [severity[0..0], datetime, Process.pid, progname, msg, caller_name]
   else
-    InfoFormat % [severity[0..0], datetime, Process.pid, progname, msg]
+    DebugFormat % [severity[0..0], datetime, Process.pid, progname, msg, caller_name]
+    # InfoFormat % [severity[0..0], datetime, Process.pid, progname, msg]
   end
 
   if defined?(WebServer)
