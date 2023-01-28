@@ -8,4 +8,4 @@ mods/
 saves/
 servers/
 tmp/
-metrics/
+/metrics
