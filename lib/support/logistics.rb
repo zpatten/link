@@ -8,7 +8,7 @@ class Logistics
     @item_requests = item_requests
     @server        = server
 
-    $logger.debug(@server.name) { "[LOGISTICS] Requests: #{@item_requests.ai}" }
+    # $logger.debug(@server.name) { "[LOGISTICS] Requests: #{@item_requests.ai}" }
 
   end
 
@@ -20,7 +20,8 @@ class Logistics
       @item_totals.merge!(item_counts) { |k,o,n| o + n }
     end
 
-    @removed_item_totals = Storage.bulk_remove(@item_totals)
+    removed_items = $storage.bulk_remove(@item_totals)
+    @removed_item_totals = removed_items
 
     @obtained_all_requested_items ||= @item_totals.all? do |k,v|
       @removed_item_totals[k] == v
@@ -125,7 +126,7 @@ class Logistics
     end
 
     if !can_fulfill_all? && @removed_item_totals.values.any? { |v| v > 0 }
-      Storage.bulk_add(@removed_item_totals)
+      $storage.bulk_add(@removed_item_totals)
 
       $logger.debug(@server.name) { "[LOGISTICS] Overflow Items: #{@removed_item_totals.ai}" }
 
@@ -146,7 +147,7 @@ class Logistics
     calculate_fulfillment_items
     metrics_handler
 
-    $logger.debug(@server.name) { "[LOGISTICS] Fulfillments: #{@items_to_fulfill.ai}" }
+    # $logger.debug(@server.name) { "[LOGISTICS] Fulfillments: #{@items_to_fulfill.ai}" }
 
     if block_given?
       yield @items_to_fulfill

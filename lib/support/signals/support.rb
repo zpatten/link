@@ -115,7 +115,9 @@ class Signals
 
     def update_inventory_signals
       signals = Array.new
-      ::Storage.clone.each do |item_name, item_count|
+      storage = $storage.clone
+      storage.each do |item_name, item_count|
+        next if item_name == 'water-well-pump'
         item_name = 'link-signal-electricity' if item_name == 'electricity'
         item_type = ItemType[item_name]
         if item_name == 'link-signal-electricity'
@@ -126,8 +128,8 @@ class Signals
       end
 
       # circuit_network_synchronize(:inventory) do
-        signal_networks[:inventory] ||= Concurrent::Hash.new
-        signal_networks[:inventory][0] = deep_clone(signals)
+      signal_networks[:inventory] ||= Concurrent::Hash.new
+      signal_networks[:inventory][0] = deep_clone(signals)
       # end
 
       signals

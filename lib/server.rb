@@ -38,7 +38,6 @@ class Server
 
   attr_reader :cancellation
   attr_reader :pool
-  attr_reader :rcon
   attr_reader :watch
 
   RECV_MAX_LEN = 64 * 1024
@@ -324,7 +323,8 @@ class Server
   def start_rcon!
     sleep 1 until container_alive?
     @pinged_at = Time.now.to_f
-    @rcon = RCon.new(server: self)
+
+    @rcon = RConPool.new(server: self)
     @rcon.start!
 
     true

@@ -43,11 +43,11 @@ class Tasks
       server_tag, tag = tags(what: what, server: server)
 
       Concurrent::Promises.future_on(pool) do
-        $logger.info(tag) { "Process Started (onetime)" }
+        # $logger.info(tag) { "Process Started (onetime)" }
         exception_handler(what: what) do
           metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
         end
-        $logger.info(tag) { "Process Finished (onetime)" }
+        # $logger.info(tag) { "Process Finished (onetime)" }
       end.run
     end
 
@@ -57,13 +57,14 @@ class Tasks
       server_tag, tag = tags(what: what, server: server)
 
       task = -> cancellation do
-        $logger.info(tag) { "Process Started (repeat)" }
         until cancellation.canceled? do
+          # $logger.debug(tag) { "Process Started (repeat)" }
           exception_handler(what: what) do
             metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
           end
+          # $logger.debug(tag) { "Process Finished (repeat)" }
         end
-        $logger.info(tag) { "Process Canceled (repeat)" }
+        $logger.warn(tag) { "Process Canceled (repeat)" }
       end
 
       Concurrent::Promises.future_on(pool, cancellation, &task).run
@@ -86,11 +87,11 @@ class Tasks
           cancellation.check!
         end
 
-        $logger.debug(tag) { "Scheduled Task Started" }
+        # $logger.debug(tag) { "Scheduled Task Started" }
         exception_handler(what: what) do
           metrics_handler(pool: pool, what: what, server_tag: server_tag)  { block.call(server) }
         end
-        $logger.debug(tag) { "Scheduled Task Finished" }
+        # $logger.debug(tag) { "Scheduled Task Finished" }
 
         true
       end
@@ -134,7 +135,7 @@ end
 def start_thread_autosave(**options)
   Tasks.schedule(what: :autosave) do
     ItemType.save
-    Storage.save
+    $storage.save
   end
 end
 
@@ -146,7 +147,7 @@ end
 
 def start_thread_prometheus(**options)
   Tasks.schedule(what: :prometheus) do
-    Storage.metrics_handler
+    $storage.metrics_handler
 
     Metrics::Prometheus.push
   end

@@ -19,8 +19,8 @@ class Server
       Tasks.schedule(what: :providables, pool: @pool, cancellation: @cancellation, server: self) do
         command = %(remote.call('link', 'get_providables'))
         rcon_handler(what: :get_providables, command: command) do |providables|
-          $logger.debug(@name) { "[LOGISTICS] providables: #{providables.ai}" }
-          ::Storage.bulk_add(providables)
+          # $logger.debug(@name) { "[LOGISTICS] providables: #{providables.ai}" }
+          $storage.bulk_add(providables)
           providables.each do |item_name, item_count|
             Metrics::Prometheus[:providable_items_total].observe(item_count,
               labels: { server: self.name, item_name: item_name, item_type: ItemType[item_name] })

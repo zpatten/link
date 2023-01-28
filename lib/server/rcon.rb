@@ -8,6 +8,29 @@ require_relative 'rcon/queue'
 require_relative 'rcon/responses'
 
 class Server
+
+  class RConPool
+    SEND_TO_ALL_CONNECTIONS = %i( start! stop! connected? disconnected? authenticated? unauthenticated? available? unavailable? )
+
+    def initialize(pool_size: 3, server:)
+      @server      = server
+      @connections = Concurrent::Array.new
+
+      pool_size.times { @connections << RCon.new(server: @server) }
+    end
+
+    def method_missing(method_name, *args, **options, &block)
+      if SEND_TO_ALL_CONNECTIONS.include?(method_name)
+        @connections.all? { |connection| connection.send(method_name, *args, **options, &block) }
+      else
+        Thread.pass while (connection = @connections.shift).nil?
+        results = connection.send(method_name, *args, **options, &block)
+        @connections.push(connection)
+        results
+      end
+    end
+  end
+
   class RCon
 
 ################################################################################
@@ -37,9 +60,6 @@ class Server
       @id               = Zlib::crc32(@name.to_s)
 
       @authenticated    = false
-
-      # @manager_thread   = nil
-      # @manager_mutex    = Mutex.new
 
       @callbacks        = Concurrent::Hash.new
       @responses        = Concurrent::Hash.new

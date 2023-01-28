@@ -17,7 +17,7 @@ def start!(console: false)
   $logger.info(:main) { "Loading Data" }
   Config.load
   ItemType.load
-  Storage.load
+  $storage = Storage.new
   trap_signals
 
   start_threads!
@@ -32,7 +32,7 @@ def stop!
 
   $logger.info(:main) { "Saving Data" }
   ItemType.save
-  Storage.save
+  $storage.save
 end
 
 def trap_signals
@@ -50,7 +50,8 @@ def start_threads!
   start_thread_signals
   start_thread_autosave
   start_thread_backup
-  Servers.select(&:container_alive?).each { |s| $pool.post { s.start!(container: false) } }
+  # Servers.select(&:container_alive?).each { |s| $pool.post { s.start!(container: false) } }
+  Servers.select(&:container_alive?).each { |s| s.start!(container: false) }
   start_thread_watchdog
 end
 
