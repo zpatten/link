@@ -20,7 +20,7 @@ class Logistics
       @item_totals.merge!(item_counts) { |k,o,n| o + n }
     end
 
-    removed_items = $storage.bulk_remove(@item_totals)
+    removed_items = Storage.bulk_remove(@item_totals)
     @removed_item_totals = removed_items
 
     @obtained_all_requested_items ||= @item_totals.all? do |k,v|
@@ -105,7 +105,7 @@ class Logistics
   def metrics_handler
     @item_totals.each do |requested_item_name, requested_item_count|
       Metrics::Prometheus[:requested_items_total].observe(requested_item_count,
-        labels: { server: @server.name, item_name: requested_item_name, item_type: ItemType[requested_item_name] })
+        labels: { server: @server.name, item_name: requested_item_name, item_type: ItemTypes[requested_item_name] })
     end
 
     unfulfilled_item_counts = Hash.new
@@ -113,7 +113,7 @@ class Logistics
       fulfilled_items.each do |fulfilled_item_name, fulfilled_item_count|
         unfulfilled_item_counts[fulfilled_item_name] ||= @item_totals[fulfilled_item_name]
         Metrics::Prometheus[:fulfillment_items_total].observe(fulfilled_item_count,
-          labels: { server: @server.name, item_name: fulfilled_item_name, item_type: ItemType[fulfilled_item_name] })
+          labels: { server: @server.name, item_name: fulfilled_item_name, item_type: ItemTypes[fulfilled_item_name] })
         unfulfilled_item_counts[fulfilled_item_name] -= fulfilled_item_count
       end
     end
@@ -121,18 +121,18 @@ class Logistics
     unless can_fulfill_all?
       unfulfilled_item_counts.each do |unfulfilled_item_name, unfulfilled_item_count|
         Metrics::Prometheus[:unfulfilled_items_total].observe(unfulfilled_item_count,
-          labels: { server: @server.name, item_name: unfulfilled_item_name, item_type: ItemType[unfulfilled_item_name] })
+          labels: { server: @server.name, item_name: unfulfilled_item_name, item_type: ItemTypes[unfulfilled_item_name] })
       end
     end
 
     if !can_fulfill_all? && @removed_item_totals.values.any? { |v| v > 0 }
-      $storage.bulk_add(@removed_item_totals)
+      Storage.bulk_add(@removed_item_totals)
 
       $logger.debug(@server.name) { "[LOGISTICS] Overflow Items: #{@removed_item_totals.ai}" }
 
       @removed_item_totals.each do |item_name, item_count|
         Metrics::Prometheus[:overflow_items_total].observe(item_count,
-          labels: { server: @server.name, item_name: item_name, item_type: ItemType[item_name] })
+          labels: { server: @server.name, item_name: item_name, item_type: ItemTypes[item_name] })
       end
     end
 

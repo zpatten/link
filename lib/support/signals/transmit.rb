@@ -5,7 +5,7 @@ class Signals
 
     def calculate_signals(network_id)
       signals = Array.new
-      network_signals = self.clone(network_id)
+      network_signals = copy(network_id)
 
       unless network_signals.nil? || network_signals.empty?
         total_signals = network_signals.values.flatten.count

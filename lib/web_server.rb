@@ -44,7 +44,7 @@ class WebServer < Sinatra::Application
 
   get "/storage" do
     if !request.websocket?
-      @storage = $storage.clone
+      @storage = Storage.copy
       @total_count = @storage.values.sum
       haml :storage
     else

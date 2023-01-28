@@ -16,8 +16,6 @@ def start!(console: false)
   $0 = 'Link Server'
   $logger.info(:main) { "Loading Data" }
   Config.load
-  ItemType.load
-  $storage = Storage.new
   trap_signals
 
   start_threads!
@@ -31,8 +29,8 @@ def stop!
   stop_threads!
 
   $logger.info(:main) { "Saving Data" }
-  ItemType.save
-  $storage.save
+  ItemTypes.save
+  Storage.save
 end
 
 def trap_signals

@@ -3,14 +3,8 @@
 class Signals
   module Support
 
-    # def circuit_network_synchronize(network_id, &block)
-    #   @@circuit_network_mutex ||= Hash.new
-    #   @@circuit_network_mutex[network_id] ||= Mutex.new
-    #   @@circuit_network_mutex[network_id].synchronize(&block)
-    # end
-
     def signal_networks
-      @@signal_networks ||= Concurrent::Hash.new
+      @@signal_networks ||= Concurrent::Map.new
     end
 
     def extract_circuit_network_id(signals)
@@ -115,11 +109,10 @@ class Signals
 
     def update_inventory_signals
       signals = Array.new
-      storage = $storage.clone
-      storage.each do |item_name, item_count|
+      Storage.copy.each do |item_name, item_count|
         next if item_name == 'water-well-pump'
         item_name = 'link-signal-electricity' if item_name == 'electricity'
-        item_type = ItemType[item_name]
+        item_type = ItemTypes[item_name]
         if item_name == 'link-signal-electricity'
           item_count = item_count.div(GIGAJOULE)
         end
@@ -127,10 +120,8 @@ class Signals
         signals << build_signal(item_name, item_count, item_type)
       end
 
-      # circuit_network_synchronize(:inventory) do
-      signal_networks[:inventory] ||= Concurrent::Hash.new
+      signal_networks[:inventory] ||= Concurrent::Map.new
       signal_networks[:inventory][0] = deep_clone(signals)
-      # end
 
       signals
     end
@@ -141,31 +132,12 @@ class Signals
     end
 
     def get_network_ids
-      deep_clone(signal_networks.keys)
+      signal_networks.keys #deep_clone(signal_networks.keys)
     end
 
-    def clone(network_id)
-      # circuit_network_synchronize(network_id) do
-        deep_clone(signal_networks[network_id])
-      # end
+    def copy(network_id)
+      deep_clone(signal_networks[network_id])
     end
-
-    # def clone_all
-    #   networks = Hash.new
-    #   get_network_ids.each do |nid|
-    #     # circuit_network_synchronize(nid) do
-    #     network_signals = begin
-    #       signals = deep_clone(signal_networks[nid])
-    #       if signals.nil? || signals.empty?
-    #         {}
-    #       else
-    #         { nid => signals }
-    #       end
-    #     end
-    #     # end)
-    #     networks.merge!(network_signals)
-    #   end
-    # end
 
   end
 end

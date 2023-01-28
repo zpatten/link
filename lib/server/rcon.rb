@@ -61,8 +61,8 @@ class Server
 
       @authenticated    = false
 
-      @callbacks        = Concurrent::Hash.new
-      @responses        = Concurrent::Hash.new
+      @callbacks        = Concurrent::Map.new
+      @responses        = Concurrent::Map.new
       @packet_queue     = ::Queue.new
 
       @socket           = nil

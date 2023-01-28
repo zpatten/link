@@ -134,8 +134,8 @@ end
 
 def start_thread_autosave(**options)
   Tasks.schedule(what: :autosave) do
-    ItemType.save
-    $storage.save
+    ItemTypes.save
+    Storage.save
   end
 end
 
@@ -147,7 +147,7 @@ end
 
 def start_thread_prometheus(**options)
   Tasks.schedule(what: :prometheus) do
-    $storage.metrics_handler
+    Storage.metrics_handler
 
     Metrics::Prometheus.push
   end
