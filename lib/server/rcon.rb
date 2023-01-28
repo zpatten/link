@@ -1,5 +1,16 @@
 # frozen_string_literal: true
 
+# [
+#   Errno::ECONNABORTED,
+#   Errno::ECONNREFUSED,
+#   Errno::ECONNRESET,
+#   Errno::ENOTSOCK,
+#   Errno::EPIPE,
+#   IOError,
+#   Net::OpenTimeout,
+#   RuntimeError
+# ]
+
 require_relative 'rcon/authentication'
 require_relative 'rcon/callback'
 require_relative 'rcon/connection'

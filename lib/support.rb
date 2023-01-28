@@ -8,30 +8,6 @@ require_relative 'support/memory_cache'
 require_relative 'support/signals'
 require_relative 'support/storage'
 
-# def shutdown!
-#   $shutdown = true
-#   # EventMachine.stop
-#   ThreadPool.shutdown!
-#   # sleep 3
-#   # sleep SLEEP_TIME while running?
-
-#   if master?
-#     # Servers.shutdown!
-#     # Storage.save
-#   else
-#   end
-
-#   $logger.close
-#   # Process.kill('TERM', Process.pid)
-# end
-
-# def running?
-#   ThreadPool.running?
-# end
-
-# def shutdown?
-#   !!$shutdown
-# end
 
 # def platform
 #   case RUBY_PLATFORM
@@ -44,11 +20,6 @@ require_relative 'support/storage'
 
 def external_host
   Socket.getifaddrs.map(&:addr).select(&:ipv4?).reject(&:ipv4_loopback?).reject(&:ipv4_multicast?).first.ip_address
-  # if host =~ /^127/
-  #   Resolv.getaddress(Socket.gethostname)
-  # else
-  #   host
-  # end
 end
 
 class OpenStruct
@@ -56,21 +27,6 @@ class OpenStruct
     self.to_h.count
   end
 end
-
-# https://gist.github.com/Integralist/9503099
-# class Object
-#   def deep_symbolize_keys!
-#     return self.reduce({}) do |memo, (k, v)|
-#       memo.tap { |m| m[k.to_sym] = v.deep_symbolize_keys! }
-#     end if self.is_a? Hash
-
-#     return self.reduce([]) do |memo, v|
-#       memo << v.deep_symbolize_keys!; memo
-#     end if self.is_a? Array
-
-#     self
-#   end
-# end
 
 def filesize(size)
   units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'Pib', 'EiB']
@@ -128,67 +84,4 @@ def generate_port_number
     break if !existing_port_numbers.include?(port_number)
   end
   port_number
-end
-
-class RescueRetry
-  module ClassMethods
-    def default_max_attempts
-      3
-    end
-
-    def default_sleep_for
-      3
-    end
-
-    def default_rescue_exceptions
-      [
-        Errno::ECONNABORTED,
-        Errno::ECONNREFUSED,
-        Errno::ECONNRESET,
-        Errno::ENOTSOCK,
-        Errno::EPIPE,
-        IOError,
-        Net::OpenTimeout,
-        RuntimeError
-      ]
-    end
-
-    def attempt(options={}, &block)
-      max_attempts      = (options.delete(:max_attempts) || default_max_attempts)
-      rescue_exceptions = (options.delete(:rescue_exceptions) || default_rescue_exceptions)
-      sleep_for         = (options.delete(:sleep_for) || default_sleep_for)
-      on_exception      = options.delete(:on_exception)
-
-      attempts = 1
-
-      begin
-        block.call
-      rescue *rescue_exceptions => e
-
-        # calculate how long to sleep for; make sure we at most retry every minute
-        # sleep_for = (3 * attempts)
-        # sleep_for = attempts**2
-        # sleep_for = 60 if sleep_for > 60
-
-        # let the user know what is going on
-        $logger.fatal(:exception) { "Exception: #{e.full_message}" }
-        $logger.fatal(:exception) { "Sleeping for #{sleep_for} seconds then retrying...  (Attempt #{attempts} of #{max_attempts})" }
-
-        # if we exceed the max attempts throw the exception
-        raise e if ((max_attempts != -1) && (attempts > max_attempts))
-
-        # if we have an on_exception callback fire it
-        on_exception.nil? or on_exception.call(e)
-
-        # sleep before we try again
-        sleep sleep_for
-
-        attempts += 1
-        retry
-      end
-
-    end
-  end
-
-  extend ClassMethods
 end

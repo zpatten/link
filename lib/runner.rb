@@ -15,7 +15,6 @@ def start!(console: false)
 
   $0 = 'Link Server'
   $logger.info(:main) { "Loading Data" }
-  Config.load
   trap_signals
 
   start_threads!
