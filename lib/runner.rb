@@ -11,7 +11,7 @@ end
 ################################################################################
 
 def start!(console: false)
-  create_pid_file(LINK_SERVER_PID_FILE)
+  create_pid_file
 
   $0 = 'Link Server'
   $logger.info(:main) { "Loading Data" }
@@ -20,7 +20,11 @@ def start!(console: false)
   start_threads!
 
   $logger.info(:main) { "Starting Sinatra" }
-  WebServer.run!
+  if RUBY_ENGINE == 'ruby'
+    WebServer.run!
+  else
+    sleep 1 while $pool.running?
+  end
   $logger.warn(:main) { "Sinatra Stopped"}
 end
 
@@ -48,7 +52,9 @@ def start_threads!
   start_thread_autosave
   start_thread_backup
   # Servers.select(&:container_alive?).each { |s| $pool.post { s.start!(container: false) } }
-  Servers.select(&:container_alive?).each { |s| s.start!(container: false) }
+  # Servers.select(&:container_alive?).each { |s| s.start!(container: false) }
+  # Servers.select { |s| s.name == 'science' }.each { |s| s.start!(container: true) }
+  Servers.all.each { |s| s.start!(container: true) }
   start_thread_watchdog
 end
 
@@ -62,17 +68,17 @@ end
 
 ################################################################################
 
-def create_pid_file(pid_file)
-  IO.write(pid_file, Process.pid)
+def create_pid_file
+  IO.write(PID_FILE, Process.pid)
 end
 
-def read_pid_file(pid_file)
-  IO.read(pid_file).strip.to_i
+def read_pid_file
+  IO.read(PID_FILE).strip.to_i
 end
 
-def destroy_pid_file(pid_file)
+def destroy_pid_file
   begin
-    FileUtils.rm(pid_file)
+    FileUtils.rm(PID_FILE)
   rescue Errno::ENOENT
   end
 end
@@ -90,8 +96,8 @@ end
 def wait_for_process(pid)
   started_at = Time.now.to_f
   while (Time.now.to_f - started_at) < PID_TIMEOUT do
-    return true if !process_alive?(pid)
-    sleep 0.25
+    return true unless process_alive?(pid)
+    sleep 1
   end
 
   false
@@ -99,46 +105,47 @@ end
 
 ################################################################################
 
-def stop_process(pid_file, name)
-  pid = read_pid_file(pid_file)
+def stop_process!
+  pid = read_pid_file
 
+  $logger.warn(:stop) { "Invalid PID file!" }
   return false if pid == 0
 
-  %w( QUIT TERM KILL ).each do |signal|
+  PID_STOP_SIGNAL_ORDER.each do |signal|
     begin
-      $logger.fatal(:main) { "Attempting to stop #{name} (PID #{pid}) with #{signal}..." }
+      $logger.fatal(:stop) { "Attempting to stop server (PID #{pid.ai}) with #{signal.ai}..." }
       Process.kill(signal, pid)
       return true if wait_for_process(pid)
 
     rescue Errno::ESRCH
-      $logger.fatal(:main) { "Process for #{name} not found!" }
+      $logger.fatal(:stop) { "Process for server (PID #{pid.ai}) not found!" }
       break
     end
-    sleep 3
   end
 
   raise "Failed to stop #{name}! (PID #{pid})"
   false
 
 rescue Errno::ENOENT
-  $logger.fatal(:main) { "PID file for #{name} not found!" }
+  $logger.fatal(:stop) { "PID file not found!" }
   false
 
 ensure
-  destroy_pid_file(pid_file)
+  destroy_pid_file
 end
 
 ################################################################################
 
 if $stop
-  stop_process(LINK_SERVER_PID_FILE, 'Link Server')
+  stop_process!
 end
 
 if $start
   if $foreground
+    $logger.info(:main) { "Starting in foreground" }
     start!
   else
-    puts "BG"
+    $logger.info(:main) { "Starting in background" }
     Process.fork do
       Process.daemon(true)
       start!

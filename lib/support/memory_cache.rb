@@ -34,7 +34,7 @@ class MemoryCache
           else
             # $logger.debug(:cache) { "Read: #{key} (#{options})" }
             value = (cache_item[:value] == :nil ? nil : cache_item[:value])
-            return deep_clone(value)
+            return value
           end
         end
       end
@@ -54,7 +54,7 @@ class MemoryCache
         value = :nil if value.nil?
 
         cache_item = {
-          :value => deep_clone(value),
+          :value => value,
           :expires_at => expires_at
         }
 

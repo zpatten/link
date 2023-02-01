@@ -38,31 +38,36 @@ class Config
 
   def copy
     config = Hash.new
-    @config.clone.each do |item_name, item_count|
+    @config.each do |item_name, item_count|
       config[item_name] = item_count
     end
+    config
   end
 
 ################################################################################
 
   def master_value(*keys)
+    keys.delete_if { |x| x.is_a?(Hash) }
     key  = keys.join('-')
     keys = keys.map(&:to_s)
-    $logger.debug { "keys=#{keys}" }
-    MemoryCache.fetch(key) do
+    value = MemoryCache.fetch(key) do
       (copy.dig('master', *keys) rescue nil)
     end
+    $logger.debug(:config) { "keys=#{keys.ai}, value=#{value.ai}" }
+    value
   end
 
   def server_value(server, *keys)
     key    = [server, *keys].flatten.compact.join("-")
     keys   = keys.map(&:to_s)
     server = server.to_s
-    MemoryCache.fetch(key) do
+    value = MemoryCache.fetch(key) do
       sv = (copy.dig('servers', server, *keys) rescue nil)
       mv = (copy.dig('master', *keys) rescue nil)
       (sv || mv)
     end
+    $logger.debug(:config) { "server=#{server.ai}, keys=#{keys.ai}, value=#{value.ai}" }
+    value
   end
 
 ################################################################################

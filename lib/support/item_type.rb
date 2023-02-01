@@ -7,7 +7,7 @@ class ItemTypes
   module ClassMethods
     def method_missing(method_name, *args, **options, &block)
       @@item_types ||= ItemTypes.new
-      @@item_types.send(method_name, *args, **options, &block)
+      @@item_types.send(method_name, *args, &block)
     end
   end
   extend ClassMethods
@@ -38,7 +38,7 @@ class ItemTypes
 
   def copy
     item_types = Hash.new
-    @item_types.clone.each do |item_name, item_type|
+    @item_types.each do |item_name, item_type|
       item_types[item_name] = item_type
     end
     item_types

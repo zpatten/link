@@ -37,21 +37,21 @@ $cancellation, $origin = Concurrent::Cancellation.new
 
 ################################################################################
 
-GIGAJOULE            = 10 ** 9
-INT_32_MAX           = (2**32).div(2) - 1
-LINK_ROOT            = Dir.pwd
-THREAD_TIMEOUT       = 10
-METHOD_PROXY_TIMEOUT = THREAD_TIMEOUT.div(2)
-FUTURE_TIMEOUT       = 60
-PING_TIMEOUT         = 30
-RESPONSE_TIMEOUT     = 60
-PID_TIMEOUT          = 30
+GIGAJOULE                 = 10 ** 9
+INT_32_MAX                = (2**32).div(2) - 1
+LINK_ROOT                 = Dir.pwd
+THREAD_TIMEOUT            = 10
+METHOD_PROXY_TIMEOUT      = THREAD_TIMEOUT.div(2)
+FUTURE_TIMEOUT            = 60
+PING_TIMEOUT              = 30
+RESPONSE_TIMEOUT          = 60
 IO_SELECT_TIMEOUT_SECONDS = 0.01
 
 ################################################################################
 
-LINK_SERVER_PID_FILE   = File.join(LINK_ROOT, 'link.pid')
-LINK_WATCHDOG_PID_FILE = File.join(LINK_ROOT, 'link-watchdog.pid')
+PID_FILE              = File.join(LINK_ROOT, 'link.pid')
+PID_STOP_SIGNAL_ORDER = %w( QUIT TERM KILL )
+PID_TIMEOUT           = 30
 
 ################################################################################
 
@@ -62,7 +62,7 @@ require_relative 'lib/metrics'
 require_relative 'lib/server'
 require_relative 'lib/servers'
 require_relative 'lib/tasks'
-require_relative 'lib/web_server'
+require_relative 'lib/web_server' if RUBY_ENGINE == 'ruby'
 
 ################################################################################
 

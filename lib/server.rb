@@ -86,7 +86,7 @@ class Server
   def update_rtt(value)
     @pinged_at = Time.now.to_f
     @rtt       = value
-    update_websocket
+    # update_websocket
     @rtt
   end
 
@@ -227,7 +227,7 @@ class Server
 
   def stop_pool!
     $logger.info(log_tag(:pool)) { "Thread Pool Shutting Down" }
-    @pool.kill
+    @pool.shutdown
     $logger.info(log_tag(:pool)) { "Waiting for Thread Pool Termination" }
     @pool.wait_for_termination
     $logger.info(log_tag(:pool)) { "Thread Pool Shutdown Complete" }

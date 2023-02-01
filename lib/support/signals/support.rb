@@ -121,7 +121,7 @@ class Signals
       end
 
       signal_networks[:inventory] ||= Concurrent::Map.new
-      signal_networks[:inventory][0] = deep_clone(signals)
+      signal_networks[:inventory][0] = signals
 
       signals
     end
@@ -132,7 +132,7 @@ class Signals
     end
 
     def get_network_ids
-      signal_networks.keys #deep_clone(signal_networks.keys)
+      signal_networks.keys
     end
 
     def copy(network_id)

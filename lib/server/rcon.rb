@@ -32,10 +32,10 @@ class Server
 
     def method_missing(method_name, *args, **options, &block)
       if SEND_TO_ALL_CONNECTIONS.include?(method_name)
-        @connections.all? { |connection| connection.send(method_name, *args, **options, &block) }
+        @connections.all? { |connection| connection.send(method_name, *args, &block) }
       else
         Thread.pass while (connection = @connections.shift).nil?
-        results = connection.send(method_name, *args, **options, &block)
+        results = connection.send(method_name, *args, &block)
         @connections.push(connection)
         results
       end
@@ -59,25 +59,25 @@ class Server
     attr_reader :id
 
     def initialize(server:, debug: false)
-      @server           = server
-      @cancellation     = @server.cancellation
-      @pool             = @server.pool
-      @name             = @server.name
-      @host             = @server.host
-      @port             = @server.client_port
-      @password         = @server.client_password
-      @debug            = debug
+      @server        = server
+      @cancellation  = @server.cancellation
+      @pool          = @server.pool
+      @name          = @server.name
+      @host          = @server.host
+      @port          = @server.client_port
+      @password      = @server.client_password
+      @debug         = debug
 
-      @id               = Zlib::crc32(@name.to_s)
+      @id            = Zlib::crc32(@name.to_s)
 
-      @authenticated    = false
+      @authenticated = false
 
-      @callbacks        = Concurrent::Map.new
-      @responses        = Concurrent::Map.new
-      @packet_queue     = ::Queue.new
+      @callbacks     = Concurrent::Map.new
+      @responses     = Concurrent::Map.new
+      @packet_queue  = ::Queue.new
 
-      @socket           = nil
-      @socket_mutex     = Mutex.new
+      @socket        = nil
+      @socket_mutex  = Mutex.new
     end
 
 ################################################################################
@@ -109,7 +109,7 @@ class Server
     def command(command)
       packet_fields = enqueue_packet(build_command(command))
       response = find_response(packet_fields.id)
-      response.payload.strip
+      response.payload.strip unless response.nil?
     end
 
 ################################################################################

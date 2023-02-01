@@ -19,7 +19,7 @@ require_relative 'support/storage'
 # end
 
 def external_host
-  Socket.getifaddrs.map(&:addr).select(&:ipv4?).reject(&:ipv4_loopback?).reject(&:ipv4_multicast?).first.ip_address
+  Socket.getifaddrs.map(&:addr).select(&:ipv4?).reject(&:ipv4_loopback?).reject(&:ipv4_multicast?).last.ip_address
 end
 
 class OpenStruct

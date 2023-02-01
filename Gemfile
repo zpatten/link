@@ -9,7 +9,9 @@ gem 'haml', require: false
 gem 'influxdb', require: false
 gem 'prometheus-client', require: false
 gem 'pry', require: false
-gem 'sinatra', require: false
-gem 'sinatra-contrib', require: false
-gem 'sinatra-websocket', require: false
-gem 'thin', require: false
+if RUBY_ENGINE == 'ruby'
+  gem 'sinatra', require: false
+  gem 'sinatra-contrib', require: false
+  gem 'sinatra-websocket', require: false
+  gem 'thin', require: false
+end

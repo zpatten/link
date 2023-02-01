@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'stringio'
 
 class Server
   class RCon
@@ -28,14 +29,19 @@ class Server
         buffer = ''
         while buffer.length < length do
           len = (length - buffer.length)
-          data = socket.recvmsg_nonblock(len, exception: false)
-          if data == :wait_readable
-            IO.select([socket])
-          else
-            buffer += data.first
-          end
+          # IO.select([@socket])
+          data = @socket.recv(len)
+          buffer += data unless data.nil?
+          # data = socket.recvmsg_nonblock(len, exception: false)
+          # if data == :wait_readable
+          #   IO.select([socket])
+          # else
+          #   buffer += data.first
+          # end
         end
         buffer
+        # IO.select([@socket])
+        # buffer = @socket.recv(length)
       rescue Errno::ECONNABORTED, Errno::ESHUTDOWN
         # server is shutting down
       end
@@ -78,17 +84,24 @@ class Server
 
         buffer = StringIO.new
         buffer.write(encoded_packet)
+        buffer.rewind
 
-        total_sent = 0
-        while total_sent < buffer.length
-          buffer.seek(total_sent)
-          data = socket.sendmsg_nonblock(buffer.read)
-          if data == :wait_writeable
-            IO.select(nil, [socket])
-          else
-            total_sent += data
-          end
-        end
+        # total_sent = 0
+        # while total_sent < buffer.length
+        #   buffer.seek(total_sent)
+        #   # IO.select(nil, [@socket])
+        #   bytes_sent = @socket.send(buffer.read, 0)
+        #   total_sent += bytes_sent unless bytes_sent.nil?
+
+        #   # data = socket.sendmsg_nonblock(buffer.read)
+        #   # if data == :wait_writeable
+        #   #   IO.select(nil, [socket])
+        #   # else
+        #   #   total_sent += data
+        #   # end
+        # end
+        # IO.select(nil, [@socket])
+        total_sent = @socket.send(buffer.read, 0)
 
         $logger.debug(tag) { %([RCON:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 

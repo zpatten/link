@@ -30,8 +30,9 @@ module Metrics
       def push
         ::Prometheus::Client::Push.new(
           job: 'link',
-          gateway: 'https://pushgateway.tatooine.jovelabs.io',
-          grouping_key: { hostname: Socket.gethostname }
+          gateway: 'http://tatooine.lan:9091',
+          grouping_key: { hostname: 'zara' }
+            #Socket.gethostname }
        ).replace(@@prometheus)
       end
 

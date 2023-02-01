@@ -122,6 +122,7 @@ end
 def start_thread_mark(**options)
   Tasks.schedule(what: :mark) do
     $logger.info(:mark) { "---MARK--- @ #{Time.now.utc}" }
+    GC.start(full_mark: true, immediate_sweep: true) if RUBY_ENGINE == 'ruby'
   end
 end
 
@@ -158,7 +159,7 @@ def start_thread_watchdog(**options)
     Servers.all.select(&:watch).each do |server|
       if server.unresponsive?
         $logger.warn(server.log_tag(:watchdog)) { "Detected Unresponsive Server" }
-        server.restart!(container: true)
+        $pool.post { server.restart!(container: true) }
       end
     end
   end

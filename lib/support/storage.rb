@@ -7,14 +7,14 @@ class Storage
   module ClassMethods
     def method_missing(method_name, *args, **options, &block)
       @@storage ||= Storage.new
-      @@storage.send(method_name, *args, **options, &block)
+      @@storage.send(method_name, *args, &block)
     end
   end
   extend ClassMethods
 
   def initialize
-    @storage = Concurrent::Map.new
-    storage = (JSON.parse(IO.read(filename)) rescue Concurrent::Map.new)
+    @storage = Concurrent::Map.new { 0 }
+    storage = (JSON.parse(IO.read(filename)) rescue Concurrent::Map.new { 0 })
     storage.each do |item_name, item_count|
       @storage[item_name] = item_count
     end
@@ -38,7 +38,7 @@ class Storage
 
   def copy
     storage = Hash.new
-    @storage.clone.each do |item_name, item_count|
+    @storage.each do |item_name, item_count|
       storage[item_name] = item_count
     end
     storage
