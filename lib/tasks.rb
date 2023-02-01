@@ -43,31 +43,41 @@ class Tasks
       server_tag, tag = tags(what: what, server: server)
 
       Concurrent::Promises.future_on(pool) do
-        # $logger.info(tag) { "Process Started (onetime)" }
+        $logger.debug(tag) { "Process Started (onetime)" }
         exception_handler(what: what) do
           metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
         end
-        # $logger.info(tag) { "Process Finished (onetime)" }
+        $logger.debug(tag) { "Process Finished (onetime)" }
       end.run
+
+      true
     end
 
 ################################################################################
 
-    def repeat(what:, pool: $pool, cancellation: $cancellation, server: nil, **options, &block)
+    def repeat(what:, pool: $pool, cancellation: $cancellation, server: nil, metrics: true, **options, &block)
       server_tag, tag = tags(what: what, server: server)
 
       task = -> cancellation do
         until cancellation.canceled? do
-          # $logger.debug(tag) { "Process Started (repeat)" }
+          $logger.debug(tag) { "Process Started (repeat)" }
           exception_handler(what: what) do
-            metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
+            if metrics
+              metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
+            else
+              block.call
+            end
           end
-          # $logger.debug(tag) { "Process Finished (repeat)" }
+          $logger.debug(tag) { "Process Finished (repeat)" }
         end
         $logger.warn(tag) { "Process Canceled (repeat)" }
       end
 
       Concurrent::Promises.future_on(pool, cancellation, &task).run
+
+      $logger.debug(tag) { "Added Process (repeat)" }
+
+      true
     end
 
 ################################################################################
@@ -87,11 +97,11 @@ class Tasks
           cancellation.check!
         end
 
-        # $logger.debug(tag) { "Scheduled Task Started" }
+        $logger.debug(tag) { "Scheduled Task Started" }
         exception_handler(what: what) do
           metrics_handler(pool: pool, what: what, server_tag: server_tag)  { block.call(server) }
         end
-        # $logger.debug(tag) { "Scheduled Task Finished" }
+        $logger.debug(tag) { "Scheduled Task Finished" }
 
         true
       end

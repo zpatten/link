@@ -83,7 +83,7 @@ class Server
 ################################################################################
 
     def tag
-      "#{@name}.RCON"
+      @server.log_tag("RCON")
     end
 
 ################################################################################
@@ -140,19 +140,21 @@ class Server
           end
         end
 
-        unless @cancellation.canceled?
+        unless disconnected? || @cancellation.canceled?
           Tasks.repeat(
             what: 'RCON.RX',
             pool: @pool,
             cancellation: @cancellation,
-            server: @server
+            server: @server,
+            metrics: false
           ) { receive_packet }
 
           Tasks.repeat(
             what: 'RCON.TX',
             pool: @pool,
             cancellation: @cancellation,
-            server: @server
+            server: @server,
+            metrics: false
           ) { send_packet(get_queued_packet.packet_fields) }
 
           authenticate

@@ -59,7 +59,9 @@ class Storage
   def add(item_name, item_count)
     item_name = sanitize_item_name(item_name)
 
-    @storage[item_name] += item_count
+    @storage.compute(item_name) do |value|
+      value + item_count
+    end
 
     item_count
   end

@@ -29,9 +29,11 @@ class Server
         buffer = ''
         while buffer.length < length do
           len = (length - buffer.length)
-          # IO.select([@socket])
-          data = @socket.recv(len)
-          buffer += data unless data.nil?
+          IO.select([@socket], nil, nil, 1) unless disconnected? || @cancellation.canceled?
+          unless disconnected? || @cancellation.canceled?
+            data = @socket.recv(len)
+            buffer += data unless data.nil?
+          end
           # data = socket.recvmsg_nonblock(len, exception: false)
           # if data == :wait_readable
           #   IO.select([socket])
@@ -100,8 +102,8 @@ class Server
         #   #   total_sent += data
         #   # end
         # end
-        # IO.select(nil, [@socket])
-        total_sent = @socket.send(buffer.read, 0)
+        IO.select(nil, [@socket], nil, 1) unless disconnected? || @cancellation.canceled?
+        total_sent = @socket.send(buffer.read, 0) unless disconnected? || @cancellation.canceled?
 
         $logger.debug(tag) { %([RCON:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 

@@ -175,7 +175,7 @@ class Server
     start_rcon!
     start_threads!
 
-    sleep 1 while unavailable?
+    # sleep 1 while unavailable?
 
     @watch = true
 
@@ -192,7 +192,7 @@ class Server
     stop_container! if container
     stop_pool!
 
-    sleep 1 while available?
+    # sleep 1 while available?
 
     true
   end
@@ -212,6 +212,7 @@ class Server
   def start_pool!
     raise "Existing thread pool is still running!" if @pool && @pool.running?
     $logger.info(log_tag(:pool)) { "Starting Thread Pool" }
+    # @pool = Concurrent::ImmediateExecutor.new
     @pool = Concurrent::CachedThreadPool.new(
       name: @name.downcase,
       auto_terminate: true,
@@ -227,9 +228,9 @@ class Server
 
   def stop_pool!
     $logger.info(log_tag(:pool)) { "Thread Pool Shutting Down" }
-    @pool.shutdown
+    @pool.kill
     $logger.info(log_tag(:pool)) { "Waiting for Thread Pool Termination" }
-    @pool.wait_for_termination
+    @pool.wait_for_termination(3)
     $logger.info(log_tag(:pool)) { "Thread Pool Shutdown Complete" }
 
     true
