@@ -149,11 +149,7 @@ class Server
             cancellation: @cancellation,
             server: @server,
             metrics: false
-          ) do
-            Timeout.timeout(Config.master_value(:timeout, :socket)) do
-              receive_packet
-            end
-          end
+          ) { receive_packet }
 
           Tasks.repeat(
             what: 'RCON.TX',
@@ -161,11 +157,7 @@ class Server
             cancellation: @cancellation,
             server: @server,
             metrics: false
-          ) do
-            Timeout.timeout(Config.master_value(:timeout, :socket)) do
-              send_packet
-            end
-          end
+          ) { send_packet }
 
           authenticate
         end

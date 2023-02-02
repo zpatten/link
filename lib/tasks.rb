@@ -105,7 +105,8 @@ class Tasks
 
         $logger.debug(tag) { "Scheduled Task Started" }
         exception_handler(what: what) do
-          Timeout.timeout(Config.master_value(:timeout, :thread)) do
+          timeout = Config.master_value(:timeout, what) || Config.master_value(:timeout, :thread)
+          Timeout.timeout(timeout) do
             metrics_handler(pool: pool, what: what, server_tag: server_tag)  { block.call(server) }
           end
         end
