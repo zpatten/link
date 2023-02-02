@@ -23,9 +23,32 @@ def start!(console: false)
   if RUBY_ENGINE == 'ruby'
     WebServer.run!
   else
+    console
     sleep 1 while $pool.running?
   end
   $logger.warn(:main) { "Sinatra Stopped"}
+end
+
+def console
+  while command = gets.strip
+    case command
+    when /threads/i
+      threads = Thread.list.collect do |t|
+        OpenStruct.new(
+          pid: Process.pid,
+          name: t.name,
+          status: t.status,
+          priority: t.priority
+          # started_at: t[:started_at] || Time.now.to_i
+        )
+      end
+      threads.compact!
+      threads = threads.sort_by { |t| t.name || '-' }
+      thread.each do |thread|
+        puts "#{thread.pid} - #{thread.name} - #{thread.status} - #{thread.priority}"
+      end
+    end
+  end
 end
 
 def stop!

@@ -23,7 +23,7 @@ class Server
   class RConPool
     SEND_TO_ALL_CONNECTIONS = %i( start! stop! connected? disconnected? authenticated? unauthenticated? available? unavailable? )
 
-    def initialize(pool_size: 1, server:)
+    def initialize(pool_size: Config.master_value(:rcon, :pool_size), server:)
       @server          = server
       @all_connections = Concurrent::Array.new
 
@@ -129,7 +129,8 @@ class Server
       Tasks.onetime(
         what: 'RCON',
         pool: @pool,
-        server: @server
+        server: @server,
+        metrics: false
       ) do
         until connected? || @cancellation.canceled? do
           begin
@@ -148,7 +149,11 @@ class Server
             cancellation: @cancellation,
             server: @server,
             metrics: false
-          ) { receive_packet }
+          ) do
+            Timeout.timeout(Config.master_value(:timeout, :socket)) do
+              receive_packet
+            end
+          end
 
           Tasks.repeat(
             what: 'RCON.TX',
@@ -156,7 +161,11 @@ class Server
             cancellation: @cancellation,
             server: @server,
             metrics: false
-          ) { send_packet }
+          ) do
+            Timeout.timeout(Config.master_value(:timeout, :socket)) do
+              send_packet
+            end
+          end
 
           authenticate
         end

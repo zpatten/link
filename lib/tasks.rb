@@ -39,13 +39,17 @@ class Tasks
 
 ################################################################################
 
-    def onetime(what:, pool: $pool, cancellation: $cancellation, server: nil, **options, &block)
+    def onetime(what:, pool: $pool, cancellation: $cancellation, server: nil, metrics: true, **options, &block)
       server_tag, tag = tags(what: what, server: server)
 
       Concurrent::Promises.future_on(pool) do
         $logger.debug(tag) { "Process Started (onetime)" }
         exception_handler(what: what) do
-          metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
+          if metrics
+            metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
+          else
+            block.call
+          end
         end
         $logger.debug(tag) { "Process Finished (onetime)" }
       end.run
@@ -62,7 +66,7 @@ class Tasks
         until cancellation.canceled? do
           $logger.debug(tag) { "Process Started (repeat)" }
           exception_handler(what: what) do
-            Timeout.timeout(3) do
+            Timeout.timeout(Config.master_value(:timeout, :thread)) do
               if metrics
                 metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
               else
@@ -100,10 +104,10 @@ class Tasks
         end
 
         $logger.debug(tag) { "Scheduled Task Started" }
-            Timeout.timeout(3) do
         exception_handler(what: what) do
-          metrics_handler(pool: pool, what: what, server_tag: server_tag)  { block.call(server) }
-        end
+          Timeout.timeout(Config.master_value(:timeout, :thread)) do
+            metrics_handler(pool: pool, what: what, server_tag: server_tag)  { block.call(server) }
+          end
         end
         $logger.debug(tag) { "Scheduled Task Finished" }
 
@@ -111,7 +115,7 @@ class Tasks
       end
 
       Concurrent::Promises.future_on(pool,
-        Config.master_value(:scheduler, what) || 120,
+        Config.master_value(:scheduler, what),
         cancellation,
         task,
         &repeating_scheduled_task
