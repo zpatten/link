@@ -15,6 +15,10 @@ class Server
         packet_fields
       end
 
+      def get_queue_count
+        @packet_queue.length
+      end
+
       def get_queued_packet
         @packet_queue.shift
       end

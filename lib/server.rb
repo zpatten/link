@@ -170,8 +170,8 @@ class Server
   def start!(container: true)
     $logger.info(log_tag) { "Start Server (container: #{container.ai})" }
 
-    start_pool! unless @pool and @pool.running?
     start_container! if container
+    start_pool! unless @pool and @pool.running?
     start_rcon!
     start_threads!
 
@@ -188,9 +188,10 @@ class Server
     @watch = false
 
     stop_threads!
+    sleep 3
     stop_rcon!
-    stop_container! if container
     stop_pool!
+    stop_container! if container
 
     # sleep 1 while available?
 
@@ -219,7 +220,7 @@ class Server
       min_threads: [2, (Concurrent.processor_count * 0.25).floor].max,
       max_threads: [2, Concurrent.processor_count].max,
       max_queue: [2, Concurrent.processor_count * 5].max,
-      fallback_policy: :caller_runs
+      fallback_policy: :abort
     )
     @cancellation, @origin = Concurrent::Cancellation.new
 
@@ -228,9 +229,9 @@ class Server
 
   def stop_pool!
     $logger.info(log_tag(:pool)) { "Thread Pool Shutting Down" }
-    @pool.kill
+    @pool.shutdown
     $logger.info(log_tag(:pool)) { "Waiting for Thread Pool Termination" }
-    @pool.wait_for_termination(3)
+    @pool.wait_for_termination
     $logger.info(log_tag(:pool)) { "Thread Pool Shutdown Complete" }
 
     true

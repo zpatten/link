@@ -62,10 +62,12 @@ class Tasks
         until cancellation.canceled? do
           $logger.debug(tag) { "Process Started (repeat)" }
           exception_handler(what: what) do
-            if metrics
-              metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
-            else
-              block.call
+            Timeout.timeout(3) do
+              if metrics
+                metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
+              else
+                block.call
+              end
             end
           end
           $logger.debug(tag) { "Process Finished (repeat)" }
@@ -98,8 +100,10 @@ class Tasks
         end
 
         $logger.debug(tag) { "Scheduled Task Started" }
+            Timeout.timeout(3) do
         exception_handler(what: what) do
           metrics_handler(pool: pool, what: what, server_tag: server_tag)  { block.call(server) }
+        end
         end
         $logger.debug(tag) { "Scheduled Task Finished" }
 

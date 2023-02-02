@@ -28,12 +28,11 @@ class Server
 
         buffer = ''
         while buffer.length < length do
+          break if disconnected? || @cancellation.canceled?
           len = (length - buffer.length)
-          IO.select([@socket], nil, nil, 1) unless disconnected? || @cancellation.canceled?
-          unless disconnected? || @cancellation.canceled?
-            data = @socket.recv(len)
-            buffer += data unless data.nil?
-          end
+          data = nil
+          data = @socket.recv(len) unless disconnected? || @cancellation.canceled? || IO.select([@socket], nil, nil, 1).nil?
+          buffer += data unless data.nil?
           # data = socket.recvmsg_nonblock(len, exception: false)
           # if data == :wait_readable
           #   IO.select([socket])
@@ -57,6 +56,7 @@ class Server
         buffer.write(length)
 
         length = length.unpack("L<").first
+        return nil if length.nil?
         data = recv_packet_data(length)
         buffer.write(data)
 
@@ -79,9 +79,17 @@ class Server
         packet_callback(received_packet)
       end
 
-      def send_packet(packet_fields)
-        return nil if disconnected?
+      def send_packet
+        # loop do
+        #   return nil if disconnected? || @cancellation.canceled?
+        #   break if get_queue_count > 0
+        #   Thread.pass
+        # end
+        # return nil if disconnected?
 
+        # return nil if get_queue_count == 0
+        packet         = get_queued_packet
+        packet_fields  = packet.packet_fields
         encoded_packet = encode_packet(packet_fields)
 
         buffer = StringIO.new
@@ -102,8 +110,9 @@ class Server
         #   #   total_sent += data
         #   # end
         # end
-        IO.select(nil, [@socket], nil, 1) unless disconnected? || @cancellation.canceled?
-        total_sent = @socket.send(buffer.read, 0) unless disconnected? || @cancellation.canceled?
+
+        total_sent = 0
+        total_sent = @socket.send(buffer.read, 0) unless disconnected? || @cancellation.canceled? || IO.select(nil, [@socket], nil, 1).nil?
 
         $logger.debug(tag) { %([RCON:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 

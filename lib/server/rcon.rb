@@ -23,20 +23,21 @@ class Server
   class RConPool
     SEND_TO_ALL_CONNECTIONS = %i( start! stop! connected? disconnected? authenticated? unauthenticated? available? unavailable? )
 
-    def initialize(pool_size: 3, server:)
-      @server      = server
-      @connections = Concurrent::Array.new
+    def initialize(pool_size: 1, server:)
+      @server          = server
+      @all_connections = Concurrent::Array.new
 
-      pool_size.times { @connections << RCon.new(server: @server) }
+      pool_size.times { @all_connections << RCon.new(server: @server) }
+      @available_connections = @all_connections.dup
     end
 
     def method_missing(method_name, *args, **options, &block)
       if SEND_TO_ALL_CONNECTIONS.include?(method_name)
-        @connections.all? { |connection| connection.send(method_name, *args, &block) }
+        @all_connections.all? { |connection| connection.send(method_name) }
       else
-        Thread.pass while (connection = @connections.shift).nil?
+        Thread.pass while (connection = @available_connections.shift).nil?
         results = connection.send(method_name, *args, &block)
-        @connections.push(connection)
+        @available_connections.push(connection)
         results
       end
     end
@@ -155,7 +156,7 @@ class Server
             cancellation: @cancellation,
             server: @server,
             metrics: false
-          ) { send_packet(get_queued_packet.packet_fields) }
+          ) { send_packet }
 
           authenticate
         end
