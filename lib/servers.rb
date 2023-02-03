@@ -298,7 +298,7 @@ class Servers
         'name' => "Link Server: #{server.name}",
         'description' => 'Factorio Link Server',
         'max_players' => 0,
-        'tags' => [ 'link' ],
+        'tags' => [ PROGRAM_NAME ],
         'visibility' => {
           'public' => false,
           'steam' => false,

@@ -8,7 +8,7 @@ module Metrics
 
       TIME_PRECISION = 'ns'
 
-      @@influxdb ||= ::InfluxDB::Client.new('link',
+      @@influxdb ||= ::InfluxDB::Client.new(PROGRAM_NAME,
         url: 'https://influxdb.tatooine.jovelabs.io',
         time_precision: TIME_PRECISION
       )

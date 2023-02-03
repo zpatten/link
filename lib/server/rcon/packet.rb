@@ -43,7 +43,7 @@ class Server
         buffer
         # IO.select([@socket])
         # buffer = @socket.recv(length)
-      rescue Errno::ECONNABORTED, Errno::ESHUTDOWN
+      rescue Errno::ECONNABORTED, Errno::ESHUTDOWN, IOError
         # server is shutting down
       end
 

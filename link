@@ -36,10 +36,10 @@ $cancellation, $origin = Concurrent::Cancellation.new
 
 ################################################################################
 
-PROGRAM_NAME     = 'link'
-GIGAJOULE        = 10 ** 9
-INT_32_MAX       = (2**32).div(2) - 1
-LINK_ROOT        = Dir.pwd
+PROGRAM_NAME = 'link'
+GIGAJOULE    = 10 ** 9
+INT_32_MAX   = (2**32).div(2) - 1
+LINK_ROOT    = Dir.pwd
 
 ################################################################################
 

@@ -9,7 +9,7 @@ class Tasks
       begin
         yield
       rescue Exception => e
-        LinkLogger.fatal(tag) { "CAUGHT EXCEPTION: #{e.message.ai}\n#{e.backtrace.ai}" }
+        LinkLogger.fatal(tag) { "CAUGHT EXCEPTION: #{e.ai} - #{e.message.ai}\n#{e.backtrace.ai}" }
       end
     end
 
@@ -23,9 +23,11 @@ class Tasks
       Metrics::Prometheus[:threads_queue_length].set(pool.queue_length)
     end
 
-    def timeout_handler(timeout: Config.value(:timeout, :thread), what: nil, &block)
+    def timeout_handler(timeout: Config.value(:timeout, :thread), what: nil, tag: nil, &block)
       timeout = Config.value(:timeout, what) || Config.value(:timeout, :thread) if what
       Timeout.timeout(timeout, &block)
+    rescue Timeout::Error => e
+      LinkLogger.warn(tag) { "Timeout after #{timeout.ai} seconds" }
     end
 
     def tags(**options)
@@ -67,7 +69,7 @@ class Tasks
         until cancellation.canceled? do
           LinkLogger.debug(tag) { "Process Started (repeat)" }
           exception_handler(tag: tag) do
-            timeout_handler(what: what) do
+            timeout_handler(what: what, tag: tag) do
               if metrics
                 metrics_handler(pool: pool, what: what, server_tag: server_tag) { block.call(server) }
               else
@@ -106,7 +108,7 @@ class Tasks
 
         LinkLogger.debug(tag) { "Scheduled Task Started" }
         exception_handler(tag: tag) do
-          timeout_handler(what: what) do
+          timeout_handler(what: what, tag: tag) do
             metrics_handler(pool: pool, what: what, server_tag: server_tag)  { block.call(server) }
           end
         end
