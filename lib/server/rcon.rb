@@ -23,7 +23,7 @@ class Server
   class RConPool
     SEND_TO_ALL_CONNECTIONS = %i( start! stop! connected? disconnected? authenticated? unauthenticated? available? unavailable? )
 
-    def initialize(pool_size: Config.master_value(:rcon, :pool_size), server:)
+    def initialize(pool_size: Config.value(:rcon, :pool_size), server:)
       @server          = server
       @all_connections = Concurrent::Array.new
 

@@ -22,7 +22,7 @@ class Storage
   end
 
   def save
-    IO.write(filename, JSON.pretty_generate(copy.sort.to_h))
+    IO.write(filename, JSON.pretty_generate(to_h.sort.to_h))
     LinkLogger.info(:storage) { "Saved Storage" }
 
     true
@@ -51,8 +51,8 @@ class Storage
   def add(item_name, item_count)
     item_name = sanitize_item_name(item_name)
 
-    @storage.compute(item_name) do |value|
-      value + item_count
+    @storage.compute(item_name) do |current_value|
+      current_value + item_count
     end
 
     item_count
@@ -62,9 +62,9 @@ class Storage
     return 0 if @storage[item_name].nil?
     removed_count = 0
 
-    @storage.compute(item_name) do |value|
-      removed_count = [value, item_count].min
-      value - removed_count
+    @storage.compute(item_name) do |current_value|
+      removed_count = [current_value, item_count].min
+      current_value - removed_count
     end
 
     removed_count

@@ -53,8 +53,12 @@ TRAP_SIGNALS = (RUBY_ENGINE == 'ruby' ? %w( INT TERM QUIT ) : %w( INT TERM ))
 
 ################################################################################
 
-require_relative 'lib/support'
+require_relative 'lib/support/logger'
 require_relative 'lib/options'
+
+################################################################################
+
+require_relative 'lib/support'
 require_relative 'lib/metrics'
 
 require_relative 'lib/server'

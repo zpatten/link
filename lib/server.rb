@@ -49,7 +49,7 @@ class Server
     @id                = Zlib::crc32(@name.to_s)
     @network_id        = [@id].pack("L").unpack("l").first
     @pinged_at         = Time.now.to_f
-    @ping_timeout      = Config.master_value(:timeout, :ping)
+    @ping_timeout      = Config.value(:timeout, :ping)
     @rtt               = 0
     @watch             = false
 
@@ -302,7 +302,7 @@ class Server
 
   def container_alive?
     key = [@name, 'container-alive'].join('-')
-    MemoryCache.fetch(key, expires_in: 10) do
+    Cache.fetch(key, expires_in: 10) do
       output = run_command(@name,
         %(docker inspect),
         %(-f '{{.State.Running}}'),

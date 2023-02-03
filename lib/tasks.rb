@@ -23,8 +23,8 @@ class Tasks
       Metrics::Prometheus[:threads_queue_length].set(pool.queue_length)
     end
 
-    def timeout_handler(timeout: Config.master_value(:timeout, :thread), what: nil, &block)
-      timeout = Config.master_value(:timeout, what) || Config.master_value(:timeout, :thread) if what
+    def timeout_handler(timeout: Config.value(:timeout, :thread), what: nil, &block)
+      timeout = Config.value(:timeout, what) || Config.value(:timeout, :thread) if what
       Timeout.timeout(timeout, &block)
     end
 
@@ -90,7 +90,7 @@ class Tasks
 ################################################################################
 
     def schedule(what:, pool: $pool, cancellation: $cancellation, server: nil, **options, &block)
-      return false unless !!Config.master_value(:scheduler, what)
+      return false unless !!Config.value(:scheduler, what)
 
       server_tag, tag = tags(what: what, server: server)
 
@@ -116,7 +116,7 @@ class Tasks
       end
 
       Concurrent::Promises.future_on(pool,
-        Config.master_value(:scheduler, what),
+        Config.value(:scheduler, what),
         cancellation,
         task,
         &repeating_scheduled_task

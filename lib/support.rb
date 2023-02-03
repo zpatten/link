@@ -2,10 +2,10 @@
 
 require_relative 'support/logger'
 
+require_relative 'support/cache'
 require_relative 'support/config'
 require_relative 'support/item_type'
 require_relative 'support/logistics'
-require_relative 'support/memory_cache'
 require_relative 'support/signals'
 require_relative 'support/storage'
 

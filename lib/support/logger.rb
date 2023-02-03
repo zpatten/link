@@ -41,7 +41,7 @@ class LinkLogger < Logger
     self.formatter       = Proc.new do |severity, datetime, progname, msg|
       progname    = "[#{progname.to_s.upcase.gsub("_", "-")}]"
       thread_name = Thread.current.name || "main"
-      loc         = caller_locations(4,1).first
+      loc         = caller_locations(5,1).first
       caller_name = "(#{thread_name}:#{File.basename(loc.path)}:#{loc.lineno}:#{loc.label})"
       datetime    = Time.now.strftime('%Y-%m-%d %H:%M:%S.%6N')
 

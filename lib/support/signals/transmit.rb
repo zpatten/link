@@ -57,7 +57,7 @@ class Signals
       current_signals = index_signals(current_signals)
 
       cache_key = [ "signals-tx-previous", server_id, network_id ].compact.join("-")
-      previous_signals = MemoryCache.read(cache_key)
+      previous_signals = Cache.read(cache_key)
       network_signals = Array.new
       if !!previous_signals && !force
 
@@ -111,7 +111,7 @@ class Signals
         network_signals
       end
 
-      MemoryCache.write(cache_key, current_signals)
+      Cache.write(cache_key, current_signals)
 
       # deep_clone(signals)
       signals

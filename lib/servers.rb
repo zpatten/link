@@ -23,7 +23,7 @@ class Servers
       what = what.to_sym
       servers = case what
       when :commands, :chat, :ping, :command_whitelist, :logistics, :fulfillments, :providables, :signals, :id
-        all.select { |s| !!Config.server_value(s.name, what) }
+        all.select { |s| !!Config.server(s.name, what) }
       when :research, :research_current
         all.select { |s| s.research }
       when :non_research
@@ -330,7 +330,7 @@ class Servers
       end
 
       server_adminlist_path = File.join(server.config_path, 'server-adminlist.json')
-      IO.write(server_adminlist_path, JSON.pretty_generate(Config.server_value(server.name, :admins)))
+      IO.write(server_adminlist_path, JSON.pretty_generate(Config.server(server.name, :admins)))
 
       FileUtils.rm_r(server.mods_path)
       FileUtils.cp_r(factorio_mods, server.path)
