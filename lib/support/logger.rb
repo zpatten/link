@@ -1,8 +1,17 @@
 # frozen_string_literal: true
 
+################################################################################
+
 class MultiLogger
+  def method_missing(method_name, *method_args, &block)
+    self.class.loggers.each do |logger|
+      logger.send(method_name, *method_args, &block)
+    end
+  end
+
   module ClassMethods
     @@loggers ||= Array.new
+
     def add(logger)
       @@loggers << logger
     end
@@ -11,20 +20,8 @@ class MultiLogger
       @@loggers
     end
   end
+
   extend ClassMethods
-
-  def mutex(logger)
-    @logger_mutex ||= Hash.new
-    @logger_mutex[logger] ||= Mutex.new
-  end
-
-  def method_missing(method_name, *method_args, &block)
-    self.class.loggers.each do |logger|
-      # mutex(logger.to_s).synchronize do
-        logger.send(method_name, *method_args, &block)
-      # end
-    end
-  end
 end
 
 ################################################################################

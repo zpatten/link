@@ -109,7 +109,7 @@ class Signals
 
     def update_inventory_signals
       signals = Array.new
-      Storage.copy.each do |item_name, item_count|
+      Storage.to_h.each do |item_name, item_count|
         next if item_name == 'water-well-pump'
         item_name = 'link-signal-electricity' if item_name == 'electricity'
         item_type = ItemTypes[item_name]

@@ -49,6 +49,7 @@ class Server
     @id                = Zlib::crc32(@name.to_s)
     @network_id        = [@id].pack("L").unpack("l").first
     @pinged_at         = Time.now.to_f
+    @ping_timeout      = Config.master_value(:timeout, :ping)
     @rtt               = 0
     @watch             = false
 
@@ -70,7 +71,7 @@ class Server
 ################################################################################
 
   def update_websocket
-    ::WebServer.settings.server_sockets.each do |s|
+    WebServer.settings.server_sockets.each do |s|
       s.send({
         name: @name,
         connected: connected?,
@@ -86,7 +87,7 @@ class Server
   def update_rtt(value)
     @pinged_at = Time.now.to_f
     @rtt       = value
-    # update_websocket
+    update_websocket if defined?(WebServer)
     @rtt
   end
 
@@ -175,8 +176,6 @@ class Server
     start_rcon!
     start_threads!
 
-    # sleep 1 while unavailable?
-
     @watch = true
 
     true
@@ -188,12 +187,9 @@ class Server
     @watch = false
 
     stop_threads!
-    sleep 3
     stop_rcon!
     stop_pool!
     stop_container! if container
-
-    # sleep 1 while available?
 
     true
   end
@@ -344,7 +340,7 @@ class Server
 ################################################################################
 
   def unresponsive?
-    ((@pinged_at + PING_TIMEOUT) < Time.now.to_f)
+    ((@pinged_at + @ping_timeout) < Time.now.to_f)
   end
 
   def responsive?

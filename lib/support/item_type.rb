@@ -22,13 +22,13 @@ class ItemTypes
   end
 
   def save
-    IO.write(filename, JSON.pretty_generate(copy.sort.to_h))
+    IO.write(filename, JSON.pretty_generate(to_h.sort.to_h))
     LinkLogger.info(:item_types) { "Saved Item Types" }
 
     true
   end
 
-  def copy
+  def to_h
     item_types = Hash.new
     @item_types.each do |item_name, item_type|
       item_types[item_name] = item_type

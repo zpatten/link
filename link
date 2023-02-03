@@ -36,19 +36,20 @@ $cancellation, $origin = Concurrent::Cancellation.new
 
 ################################################################################
 
-PROGRAM_NAME              = 'link'
-GIGAJOULE                 = 10 ** 9
-INT_32_MAX                = (2**32).div(2) - 1
-LINK_ROOT                 = Dir.pwd
-PING_TIMEOUT              = 30
-RESPONSE_TIMEOUT          = 60
-IO_SELECT_TIMEOUT_SECONDS = 0.01
+PROGRAM_NAME     = 'link'
+GIGAJOULE        = 10 ** 9
+INT_32_MAX       = (2**32).div(2) - 1
+LINK_ROOT        = Dir.pwd
 
 ################################################################################
 
 PID_FILE              = File.join(LINK_ROOT, 'link.pid')
 PID_STOP_SIGNAL_ORDER = %w( QUIT TERM KILL )
 PID_TIMEOUT           = 30
+
+################################################################################
+
+TRAP_SIGNALS = (RUBY_ENGINE == 'ruby' ? %w( INT TERM QUIT ) : %w( INT TERM ))
 
 ################################################################################
 

@@ -28,7 +28,7 @@ class Storage
     true
   end
 
-  def copy
+  def to_h
     storage = Hash.new
     @storage.each do |item_name, item_count|
       storage[item_name] = item_count

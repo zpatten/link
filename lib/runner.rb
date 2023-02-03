@@ -19,13 +19,13 @@ def start!(console: false)
 
   start_threads!
 
-  LinkLogger.info(:main) { "Starting Sinatra" }
-  if RUBY_ENGINE == 'ruby'
+  LinkLogger.info(:main) { "Link Started" }
+  if defined?(WebServer)
     WebServer.run!
   else
     sleep 1 while $pool.running?
   end
-  LinkLogger.warn(:main) { "Sinatra Stopped"}
+  LinkLogger.warn(:main) { "Link Stopped" }
 end
 
 def stop!
@@ -37,8 +37,7 @@ def stop!
 end
 
 def trap_signals
-  signals = (RUBY_ENGINE == 'jruby' ? %w( INT TERM ) : %w( INT TERM QUIT ))
-  signals.each do |signal|
+  TRAP_SIGNALS.each do |signal|
     Signal.trap(signal, 'EXIT')
   end
 end
