@@ -111,7 +111,8 @@ class Runner
     create_pid_file
     trap_signals
 
-    $0 = 'Link Server'
+    Metrics::Prometheus.configure!
+
     LinkLogger.info(:main) { "Starting" }
     start_threads!
 

@@ -31,6 +31,51 @@ module Metrics
 
 ################################################################################
 
+    def configure!
+      guage(:storage_items_total,
+        docstring: 'Link Storage Items',
+        labels: [:item_name, :item_type])
+
+      histogram(:fulfillment_items_total,
+        docstring: 'Link Fulfillment Items',
+        labels: [:server, :item_name, :item_type])
+
+      histogram(:unfulfilled_items_total,
+        docstring: 'Link Fulfillment Items',
+        labels: [:server, :item_name, :item_type])
+
+      histogram(:requested_items_total,
+        docstring: 'Link Requested Items',
+        labels: [:server, :item_name, :item_type])
+
+      histogram(:overflow_items_total,
+        docstring: 'Link Overflow Items',
+        labels: [:server, :item_name, :item_type])
+
+      histogram(:providable_items_total,
+        docstring: 'Link Providable Items',
+        labels: [:server, :item_name, :item_type])
+
+      guage(:server_rtt,
+        docstring: 'Factorio Server RTT',
+        labels: [:server])
+
+      histogram(:thread_duration_seconds,
+        docstring: 'Link Thread Timings',
+        labels: [:server, :task])
+
+      guage(:threads,
+        docstring: 'Link Threads')
+
+      guage(:threads_running,
+        docstring: 'Link Threads Running')
+
+      guage(:threads_queue_length,
+        docstring: 'Link Threads Queue Length')
+    end
+
+################################################################################
+
     def push
       ::Prometheus::Client::Push.new(
         job: PROGRAM_NAME,
@@ -58,6 +103,8 @@ module Metrics
       LinkLogger.debug { h.ai }
       h
     end
+
+################################################################################
 
     def guage(key, **options)
       key = scrub_key(key)
