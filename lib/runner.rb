@@ -29,14 +29,6 @@ class Runner
         exit
       end
 
-      # op.on("-m", "--master", "Run as master") do
-      #   thread = ThreadPool.thread("sinatra", priority: -100) do
-      #     WebServer.run! do |server|
-      #       Servers.all.each { |s| s.running? && s.start_rcon! }
-      #     end
-      #   end
-      # end
-
       op.on("--start", "Start the Link") do
         @options[:start] = true
       end
@@ -47,7 +39,7 @@ class Runner
 
       op.on("--restart", "Restart the Link") do
         @options[:start] = true
-        @options[:stop] = true
+        @options[:stop]  = true
       end
 
       op.on('-f', 'Run in foreground') do
@@ -117,11 +109,10 @@ class Runner
 
   def start!(console: false)
     create_pid_file
-
-    $0 = 'Link Server'
-    LinkLogger.info(:main) { "Loading Data" }
     trap_signals
 
+    $0 = 'Link Server'
+    LinkLogger.info(:main) { "Starting" }
     start_threads!
 
     LinkLogger.info(:main) { "Link Started" }
@@ -136,7 +127,7 @@ class Runner
   def stop!
     stop_threads!
 
-    LinkLogger.info(:main) { "Saving Data" }
+    LinkLogger.info(:main) { "Stopping" }
     ItemTypes.save
     Storage.save
   end
