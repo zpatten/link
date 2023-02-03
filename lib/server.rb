@@ -212,8 +212,8 @@ class Server
     # @pool = Concurrent::ImmediateExecutor.new
     @pool = Concurrent::CachedThreadPool.new(
       name: @name.downcase,
-      auto_terminate: true,
-      min_threads: [2, (Concurrent.processor_count * 0.25).floor].max,
+      auto_terminate: false,
+      min_threads: 2,
       max_threads: [2, Concurrent.processor_count].max,
       max_queue: [2, Concurrent.processor_count * 5].max,
       fallback_policy: :abort

@@ -27,6 +27,7 @@ parser = OptionParser.new do |op|
 
   op.on("--start", "Start the Link") do
     $start = true
+    Runner.options[:start] = true
   end
 
   op.on("--stop", "Stop the Link") do

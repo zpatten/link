@@ -61,6 +61,8 @@ class Server
         buffer.write(data)
 
         buffer.rewind
+        return nil if buffer.length != (length + 4)
+
         packet_fields = decode_packet(buffer.read)
         if packet_fields.payload.to_s =~ /error/i then
           LinkLogger.error(tag) { %([RCON:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }

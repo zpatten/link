@@ -20,27 +20,27 @@ class OpenStruct
   end
 end
 
-def filesize(size)
-  units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'Pib', 'EiB']
+# def filesize(size)
+#   units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'Pib', 'EiB']
 
-  return '0.0 B' if size == 0
-  exp = (Math.log(size) / Math.log(1024)).to_i
-  exp = 6 if exp > 6
+#   return '0.0 B' if size == 0
+#   exp = (Math.log(size) / Math.log(1024)).to_i
+#   exp = 6 if exp > 6
 
-  '%.1f %s' % [size.to_f / 1024 ** exp, units[exp]]
-end
+#   '%.1f %s' % [size.to_f / 1024 ** exp, units[exp]]
+# end
 
-def countsize(size)
-  units = ['', 'k', 'M', 'G', 'T', 'P', 'E']
-  decimal = [0, 1, 1, 2, 2, 3, 3]
-  size = size.to_i
+# def countsize(size)
+#   units = ['', 'k', 'M', 'G', 'T', 'P', 'E']
+#   decimal = [0, 1, 1, 2, 2, 3, 3]
+#   size = size.to_i
 
-  return '0' if size == 0
-  exp = (Math.log(size) / Math.log(1000)).to_i
-  exp = 6 if exp > 6
+#   return '0' if size == 0
+#   exp = (Math.log(size) / Math.log(1000)).to_i
+#   exp = 6 if exp > 6
 
-  "%.#{decimal[exp]}f %s" % [size.to_f / 1000 ** exp, units[exp]]
-end
+#   "%.#{decimal[exp]}f %s" % [size.to_f / 1000 ** exp, units[exp]]
+# end
 
 def deep_clone(object)
   Marshal.load(Marshal.dump(object))
@@ -64,16 +64,16 @@ def rcon_redirect(host, packet_fields, (player_index, command, origin_host))
   origin.rcon_command_nonblock(command, method(:rcon_print))
 end
 
-def debug?
-  !!ENV['DEBUG']
-end
+# def debug?
+#   !!ENV['DEBUG']
+# end
 
 def generate_port_number
   port_number = nil
+  existing_port_numbers = Servers.all.collect { |s| [s['factorio_port'], s['client_port']] }.flatten.compact
   loop do
     port_number = SecureRandom.random_number(65_535 - 1_024) + 1_024
-    existing_port_numbers = Servers.all.collect { |s| [s['factorio_port'], s['client_port']] }.flatten.compact
-    break if !existing_port_numbers.include?(port_number)
+    break unless existing_port_numbers.include?(port_number)
   end
   port_number
 end

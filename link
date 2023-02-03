@@ -27,10 +27,10 @@ require 'concurrent-edge'
 $pool = Concurrent::CachedThreadPool.new(
   name: 'link',
   auto_terminate: false,
-  min_threads: [2, (Concurrent.processor_count * 0.25).floor].max,
+  min_threads: 2,
   max_threads: [2, Concurrent.processor_count].max,
   max_queue: [2, Concurrent.processor_count * 5].max,
-  fallback_policy: :caller_runs
+  fallback_policy: :abort
 )
 $cancellation, $origin = Concurrent::Cancellation.new
 
@@ -53,21 +53,61 @@ TRAP_SIGNALS = (RUBY_ENGINE == 'ruby' ? %w( INT TERM QUIT ) : %w( INT TERM ))
 
 ################################################################################
 
-require_relative 'lib/support/logger'
-require_relative 'lib/options'
-
-################################################################################
-
-require_relative 'lib/support'
 require_relative 'lib/metrics'
-
+require_relative 'lib/runner'
 require_relative 'lib/server'
 require_relative 'lib/servers'
+require_relative 'lib/support'
 require_relative 'lib/tasks'
 require_relative 'lib/web_server' if RUBY_ENGINE == 'ruby'
 
 ################################################################################
 
-require_relative 'lib/runner'
+Metrics::Prometheus.guage(:storage_items_total,
+  docstring: 'Link Storage Items',
+  labels: [:item_name, :item_type])
+
+Metrics::Prometheus.histogram(:fulfillment_items_total,
+  docstring: 'Link Fulfillment Items',
+  labels: [:server, :item_name, :item_type])
+
+Metrics::Prometheus.histogram(:unfulfilled_items_total,
+  docstring: 'Link Fulfillment Items',
+  labels: [:server, :item_name, :item_type])
+
+Metrics::Prometheus.histogram(:requested_items_total,
+  docstring: 'Link Requested Items',
+  labels: [:server, :item_name, :item_type])
+
+Metrics::Prometheus.histogram(:overflow_items_total,
+  docstring: 'Link Overflow Items',
+  labels: [:server, :item_name, :item_type])
+
+Metrics::Prometheus.histogram(:providable_items_total,
+  docstring: 'Link Providable Items',
+  labels: [:server, :item_name, :item_type])
 
 ################################################################################
+
+Metrics::Prometheus.guage(:server_rtt,
+  docstring: 'Factorio Server RTT',
+  labels: [:server])
+
+################################################################################
+
+Metrics::Prometheus.histogram(:thread_duration_seconds,
+  docstring: 'Link Thread Timings',
+  labels: [:server, :task])
+
+Metrics::Prometheus.guage(:threads,
+  docstring: 'Link Threads')
+
+Metrics::Prometheus.guage(:threads_running,
+  docstring: 'Link Threads Running')
+
+Metrics::Prometheus.guage(:threads_queue_length,
+  docstring: 'Link Threads Queue Length')
+
+################################################################################
+
+Runner.run!
