@@ -9,7 +9,7 @@ parser = OptionParser.new do |op|
   op.banner = "Usage: #{$0} [options]"
 
   op.on("-v", "--[no-]verbose", "Run verbosely") do |v|
-    $logger.level = (v ? Logger::DEBUG : Logger::INFO)
+    LinkLogger.level = (v ? Logger::DEBUG : Logger::INFO)
   end
 
   op.on("-h", "--help", "Print this help") do

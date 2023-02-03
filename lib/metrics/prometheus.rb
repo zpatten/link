@@ -51,14 +51,14 @@ module Metrics
             aggregation: :max
           }
         }.merge!(options)
-        $logger.debug { h.ai }
+        LinkLogger.debug { h.ai }
         h
       end
 
       def guage(key, **options)
         key = scrub_key(key)
         @@metrics[key] ||= begin
-          $logger.info(:metrics) { "Creating Gauge #{key.ai}" }
+          LinkLogger.info(:metrics) { "Creating Gauge #{key.ai}" }
           metric = ::Prometheus::Client::Gauge.new(key, **build_options(options))
           @@prometheus.register(metric)
           metric
@@ -68,7 +68,7 @@ module Metrics
       def histogram(key, **options)
         key = scrub_key(key)
         @@metrics[key] ||= begin
-          $logger.info(:metrics) { "Creating Histogram #{key.ai}" }
+          LinkLogger.info(:metrics) { "Creating Histogram #{key.ai}" }
           metric = ::Prometheus::Client::Histogram.new(key, **build_options(options))
           @@prometheus.register(metric)
           metric
@@ -78,7 +78,7 @@ module Metrics
       def summary(key, **options)
         key = scrub_key(key)
         @@metrics[key] ||= begin
-          $logger.info(:metrics) { "Creating Summary #{key.ai}" }
+          LinkLogger.info(:metrics) { "Creating Summary #{key.ai}" }
           metric = ::Prometheus::Client::Summary.new(key, **build_options(options))
           @@prometheus.register(metric)
           metric

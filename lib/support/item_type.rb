@@ -4,14 +4,6 @@ class ItemTypes
 
 ################################################################################
 
-  module ClassMethods
-    def method_missing(method_name, *args, **options, &block)
-      @@item_types ||= ItemTypes.new
-      @@item_types.send(method_name, *args, &block)
-    end
-  end
-  extend ClassMethods
-
   def initialize
     @item_types = Concurrent::Map.new
     item_types = (JSON.parse(IO.read(filename)) rescue Concurrent::Map.new)
@@ -19,8 +11,8 @@ class ItemTypes
       @item_types[item_name] = item_type
     end
 
-    $logger.info(:item_types) { "Loaded Item Types" }
-    $logger.debug(:item_types) { @item_types.ai }
+    LinkLogger.info(:item_types) { "Loaded Item Types" }
+    LinkLogger.debug(:item_types) { @item_types.ai }
   end
 
 ################################################################################
@@ -31,7 +23,7 @@ class ItemTypes
 
   def save
     IO.write(filename, JSON.pretty_generate(copy.sort.to_h))
-    $logger.info(:item_types) { "Saved Item Types" }
+    LinkLogger.info(:item_types) { "Saved Item Types" }
 
     true
   end
@@ -56,7 +48,7 @@ class ItemTypes
       type.strip!
       @item_types[item_name] = type
 
-      $logger.debug(:item_type) { "#{item_name} == #{@item_types[item_name]}" }
+      LinkLogger.debug(:item_type) { "#{item_name} == #{@item_types[item_name]}" }
     end
     type
   end
@@ -64,6 +56,18 @@ class ItemTypes
   def []=(item_name, item_type)
     @item_types[item_name] = item_type
   end
+
+################################################################################
+
+  module ClassMethods
+    @@item_types ||= ItemTypes.new
+
+    def method_missing(method_name, *args, **options, &block)
+      @@item_types.send(method_name, *args, &block)
+    end
+  end
+
+  extend ClassMethods
 
 ################################################################################
 

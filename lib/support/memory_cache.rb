@@ -11,12 +11,12 @@ class MemoryCache
       # $_memory_cache_fetch_mutex.synchronize do
         value = nil
         if (value = read(key, options)).nil?
-          # $logger.debug(:cache) { "Fetch: #{key} (#{options})" }
+          # LinkLogger.debug(:cache) { "Fetch: #{key} (#{options})" }
           return nil if !block_given?
           value = block.call
           write(key, value, options)
         else
-          # $logger.debug(:cache) { "Hit: #{key} (#{options})" }
+          # LinkLogger.debug(:cache) { "Hit: #{key} (#{options})" }
         end
 
         value
@@ -29,17 +29,17 @@ class MemoryCache
 
         unless cache_item.nil?
           if expired?(cache_item[:expires_at])
-            # $logger.debug(:cache) { "Expired: #{key} (#{options})" }
+            # LinkLogger.debug(:cache) { "Expired: #{key} (#{options})" }
             delete(key, options)
           else
-            # $logger.debug(:cache) { "Read: #{key} (#{options})" }
+            # LinkLogger.debug(:cache) { "Read: #{key} (#{options})" }
             value = (cache_item[:value] == :nil ? nil : cache_item[:value])
             return value
           end
         end
       end
 
-      # $logger.debug(:cache) { "Miss: #{key} (#{options})" }
+      # LinkLogger.debug(:cache) { "Miss: #{key} (#{options})" }
 
       nil
     end
@@ -49,7 +49,7 @@ class MemoryCache
         expires_in = (options.delete(:expires_in) || -1)
         expires_at = (expires_in == -1 ? -1 : (Time.now.to_i + expires_in))
 
-        # $logger.debug(:cache) { "Write: #{key} (#{options})" }
+        # LinkLogger.debug(:cache) { "Write: #{key} (#{options})" }
 
         value = :nil if value.nil?
 
@@ -69,7 +69,7 @@ class MemoryCache
         $_memory_cache_store.delete(key)
       end
 
-      # $logger.debug(:cache) { "Delete: #{key}" }
+      # LinkLogger.debug(:cache) { "Delete: #{key}" }
     end
 
     def expired?(expires_at)

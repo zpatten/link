@@ -8,17 +8,17 @@ class Server
     def handle_transmitter_combinators(unit_network_list)
       if unit_network_list["noop"].nil?
         network_ids = unit_network_list.values.map(&:keys).flatten.uniq.sort
-        $logger.debug(:combinator_tx) { "[#{self.name}] Received signals for circuit networks: #{network_ids.ai}" }
+        LinkLogger.debug(:combinator_tx) { "[#{self.name}] Received signals for circuit networks: #{network_ids.ai}" }
         # signals received from transmitters
         ::Signals.rx(unit_network_list, server_id: self.network_id)
         @tx_signals_initalized = true
       else
-        $logger.debug(:combinator_tx) { "[#{self.name}] NOOP" }
+        LinkLogger.debug(:combinator_tx) { "[#{self.name}] NOOP" }
       end
     end
 
     def handle_receiver_combinators(network_ids)
-      $logger.debug(:signals_rx) { "[#{self.name}] Transmitting signals for circuit networks: #{network_ids.ai}" }
+      LinkLogger.debug(:signals_rx) { "[#{self.name}] Transmitting signals for circuit networks: #{network_ids.ai}" }
 
       force = !@rx_signals_initalized
       networks = Hash.new

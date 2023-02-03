@@ -157,7 +157,7 @@ class Server
       backup_save_file = File.join(Servers.factorio_saves, filename)
       latest_save_file = self.latest_save_file
       FileUtils.cp_r(latest_save_file, backup_save_file)
-      $logger.info(log_tag(:backup)) { "Backed up #{latest_save_file.inspect} to #{backup_save_file.inspect}" }
+      LinkLogger.info(log_tag(:backup)) { "Backed up #{latest_save_file.inspect} to #{backup_save_file.inspect}" }
     end
 
     rcon_command %(/server-save)
@@ -168,7 +168,7 @@ class Server
 ################################################################################
 
   def start!(container: true)
-    $logger.info(log_tag) { "Start Server (container: #{container.ai})" }
+    LinkLogger.info(log_tag) { "Start Server (container: #{container.ai})" }
 
     start_container! if container
     start_pool! unless @pool and @pool.running?
@@ -183,7 +183,7 @@ class Server
   end
 
   def stop!(container: true)
-    $logger.info(log_tag) { "Stop Server (container: #{container.ai})" }
+    LinkLogger.info(log_tag) { "Stop Server (container: #{container.ai})" }
 
     @watch = false
 
@@ -199,7 +199,7 @@ class Server
   end
 
   def restart!(container: true)
-    $logger.info(log_tag) { "Restart Server (container: #{container.ai})" }
+    LinkLogger.info(log_tag) { "Restart Server (container: #{container.ai})" }
 
     stop!(container: container)
     sleep 3
@@ -212,7 +212,7 @@ class Server
 
   def start_pool!
     raise "Existing thread pool is still running!" if @pool && @pool.running?
-    $logger.info(log_tag(:pool)) { "Starting Thread Pool" }
+    LinkLogger.info(log_tag(:pool)) { "Starting Thread Pool" }
     # @pool = Concurrent::ImmediateExecutor.new
     @pool = Concurrent::CachedThreadPool.new(
       name: @name.downcase,
@@ -228,11 +228,11 @@ class Server
   end
 
   def stop_pool!
-    $logger.info(log_tag(:pool)) { "Thread Pool Shutting Down" }
+    LinkLogger.info(log_tag(:pool)) { "Thread Pool Shutting Down" }
     @pool.shutdown
-    $logger.info(log_tag(:pool)) { "Waiting for Thread Pool Termination" }
+    LinkLogger.info(log_tag(:pool)) { "Waiting for Thread Pool Termination" }
     @pool.wait_for_termination
-    $logger.info(log_tag(:pool)) { "Thread Pool Shutdown Complete" }
+    LinkLogger.info(log_tag(:pool)) { "Thread Pool Shutdown Complete" }
 
     true
   end
@@ -406,10 +406,10 @@ class Server
       unless data.nil? || data.empty?
         block.call(data)
       # else
-      #   $logger.warn(log_tag(:rcon)) { "Missing Payload Data! #{command.ai}" }
+      #   LinkLogger.warn(log_tag(:rcon)) { "Missing Payload Data! #{command.ai}" }
       end
     else
-      $logger.warn(log_tag(:rcon, what)) { "Missing Payload!" }
+      LinkLogger.warn(log_tag(:rcon, what)) { "Missing Payload!" }
     end
   end
 

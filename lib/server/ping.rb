@@ -22,7 +22,7 @@ class Server
         # Update Prometheus with our current RTT
         Metrics::Prometheus[:server_rtt].set(rtt_ms, labels: { server: @name })
 
-        $logger.debug(log_tag(:ping)) { "RTT: #{rtt_ms}ms" }
+        LinkLogger.debug(log_tag(:ping)) { "RTT: #{rtt_ms}ms" }
       end
     end
 

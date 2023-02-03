@@ -9,7 +9,7 @@ class Server
       chat_events.each do |chat_event|
         message = %(#{chat_event["player_name"]}@#{@name}: #{chat_event["message"]})
         command = %(game.print('#{message}', {r = 1, g = 0, b = 1, a = 0.5}))
-        $logger.info(log_tag(:chat)) { message.ai }
+        LinkLogger.info(log_tag(:chat)) { message.ai }
         Servers.rcon_command_nonblock(:chat, command, except: [@name])
       end
     end

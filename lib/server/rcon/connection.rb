@@ -25,12 +25,12 @@ class Server
       end
 
       def connect!
-        $logger.info(tag) { "Attempting connection to #{host_tag}" }
+        LinkLogger.info(tag) { "Attempting connection to #{host_tag}" }
 
         @socket = @socket_mutex.synchronize { TCPSocket.new(@host, @port) }
 
         if connected?
-          $logger.info(tag) { "Connected to #{host_tag}" }
+          LinkLogger.info(tag) { "Connected to #{host_tag}" }
 
           true
         else
@@ -41,7 +41,7 @@ class Server
       def disconnect!
         if connected?
           @socket_mutex.synchronize { @socket.shutdown }
-          $logger.info(tag) { "Disconnected from #{host_tag}" }
+          LinkLogger.info(tag) { "Disconnected from #{host_tag}" }
         end
 
         @authenticated = false

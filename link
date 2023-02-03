@@ -40,7 +40,6 @@ PROGRAM_NAME              = 'link'
 GIGAJOULE                 = 10 ** 9
 INT_32_MAX                = (2**32).div(2) - 1
 LINK_ROOT                 = Dir.pwd
-LOG_FILENAME              = 'link.log'
 PING_TIMEOUT              = 30
 RESPONSE_TIMEOUT          = 60
 IO_SELECT_TIMEOUT_SECONDS = 0.01

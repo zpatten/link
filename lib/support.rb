@@ -50,7 +50,7 @@ def run_command(tag, *args)
   args << %(2>/dev/null)
   command = args.flatten.compact.join(' ')
   output = %x(#{command}).strip
-  $logger.info(tag) { "#{command.ai} -> #{output.ai}" } unless command =~ /docker inspect/
+  LinkLogger.info(tag) { "#{command.ai} -> #{output.ai}" } unless command =~ /docker inspect/
   output
 end
 

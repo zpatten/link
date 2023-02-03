@@ -4,14 +4,6 @@ class Storage
 
 ################################################################################
 
-  module ClassMethods
-    def method_missing(method_name, *args, &block)
-      @@storage ||= Storage.new
-      @@storage.send(method_name, *args, &block)
-    end
-  end
-  extend ClassMethods
-
   def initialize
     @storage = Concurrent::Map.new { 0 }
     storage = (JSON.parse(IO.read(filename)) rescue Concurrent::Map.new { 0 })
@@ -19,8 +11,8 @@ class Storage
       @storage[item_name] = item_count
     end
 
-    $logger.info(:storage) { "Loaded Storage" }
-    $logger.debug(:storage) { @storage.ai }
+    LinkLogger.info(:storage) { "Loaded Storage" }
+    LinkLogger.debug(:storage) { @storage.ai }
   end
 
 ################################################################################
@@ -31,7 +23,7 @@ class Storage
 
   def save
     IO.write(filename, JSON.pretty_generate(copy.sort.to_h))
-    $logger.info(:storage) { "Saved Storage" }
+    LinkLogger.info(:storage) { "Saved Storage" }
 
     true
   end
@@ -106,6 +98,18 @@ class Storage
 
     true
   end
+
+################################################################################
+
+  module ClassMethods
+    @@storage ||= Storage.new
+
+    def method_missing(method_name, *args, &block)
+      @@storage.send(method_name, *args, &block)
+    end
+  end
+
+  extend ClassMethods
 
 ################################################################################
 

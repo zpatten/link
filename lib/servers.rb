@@ -42,7 +42,7 @@ class Servers
         if @@servers[server_name].nil?
           server = Server.new(server_name, server_details)
           @@servers[server_name] = server
-          $logger.info(:servers) { "[#{server.id}] Loaded server #{server.host_tag}" }
+          LinkLogger.info(:servers) { "[#{server.id}] Loaded server #{server.host_tag}" }
         end
       end
       @@servers.values.sort_by { |server| server.name }
@@ -72,17 +72,17 @@ class Servers
 ################################################################################
 
     def start!(container: false)
-      $logger.info(:servers) { "Start Servers (container: #{container.ai})" }
+      LinkLogger.info(:servers) { "Start Servers (container: #{container.ai})" }
       self.all.each { |server| $pool.post { server.start!(container: container) } }
     end
 
     def stop!(container: false)
-      $logger.warn(:servers) { "Stopping Servers (container: #{container.ai})" }
+      LinkLogger.warn(:servers) { "Stopping Servers (container: #{container.ai})" }
       self.all.each { |server| $pool.post { server.stop!(container: container) } }
     end
 
     def restart!(container: false)
-      $logger.warn(:servers) { "Restart Servers (container: #{container.ai})" }
+      LinkLogger.warn(:servers) { "Restart Servers (container: #{container.ai})" }
       self.all.each { |server| $pool.post { server.restart!(container: container) } }
     end
 
@@ -111,7 +111,7 @@ class Servers
 ################################################################################
 
     def backup
-      $logger.debug(:servers) { "Backing Up Servers" }
+      LinkLogger.debug(:servers) { "Backing Up Servers" }
       self.all.each do |server|
         if server.available?
           server.backup(timestamp: true)
@@ -140,7 +140,7 @@ class Servers
     end
 
     def trim_save_files
-      $logger.debug(:servers) { "Trimming save files..." }
+      LinkLogger.debug(:servers) { "Trimming save files..." }
       save_file_hash = Hash.new
       save_files = Dir.glob(File.join(factorio_saves, "*.zip"), File::FNM_CASEFOLD)
       save_files.each do |save_file|
@@ -189,7 +189,7 @@ class Servers
 
         delete_save_files.flatten!.uniq!
         delete_save_files.each do |delete_save_file|
-          $logger.debug(:servers) { "Trimming save file #{File.basename(delete_save_file).inspect}" }
+          LinkLogger.debug(:servers) { "Trimming save file #{File.basename(delete_save_file).inspect}" }
         end
         FileUtils.rm(delete_save_files, force: true)
       end
@@ -220,7 +220,7 @@ class Servers
 
         FileUtils.rm_r(server.path)
 
-        $logger.warn(:servers) { "Deleted server #{server_name}" }
+        LinkLogger.warn(:servers) { "Deleted server #{server_name}" }
       end
     end
 
@@ -324,8 +324,8 @@ class Servers
 
       if server_saves.collect { |save| save[:file] }.include?(server_type)
         factorio_save = File.join(factorio_saves, server_type)
-        $logger.info { "factorio_save=#{factorio_save}" }
-        $logger.info { "server.save_path=#{server.save_file}" }
+        LinkLogger.info { "factorio_save=#{factorio_save}" }
+        LinkLogger.info { "server.save_path=#{server.save_file}" }
         FileUtils.cp(factorio_save, server.save_file)
       end
 
@@ -339,7 +339,7 @@ class Servers
       Config['servers'].merge!(server.to_h)
       Config.save!
 
-      $logger.info(:servers) { "Created server #{server_name}" }
+      LinkLogger.info(:servers) { "Created server #{server_name}" }
 
       server.start!
 

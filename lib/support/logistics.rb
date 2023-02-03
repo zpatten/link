@@ -8,7 +8,7 @@ class Logistics
     @item_requests = item_requests
     @server        = server
 
-    # $logger.debug(@server.name) { "[LOGISTICS] Requests: #{@item_requests.ai}" }
+    # LinkLogger.debug(@server.name) { "[LOGISTICS] Requests: #{@item_requests.ai}" }
 
   end
 
@@ -27,7 +27,7 @@ class Logistics
       @removed_item_totals[k] == v
     end
 
-    $logger.debug(@server.name) { "[LOGISTICS] Request Totals: #{@item_totals.ai}" }
+    LinkLogger.debug(@server.name) { "[LOGISTICS] Request Totals: #{@item_totals.ai}" }
 
     true
   end
@@ -48,7 +48,7 @@ class Logistics
       @item_ratios[item_name] = item_ratio
     end
 
-    $logger.debug(@server.name) { "[LOGISTICS] Request Ratios: #{@item_ratios.ai}" }
+    LinkLogger.debug(@server.name) { "[LOGISTICS] Request Ratios: #{@item_ratios.ai}" }
 
     true
   end
@@ -128,7 +128,7 @@ class Logistics
     if !can_fulfill_all? && @removed_item_totals.values.any? { |v| v > 0 }
       Storage.bulk_add(@removed_item_totals)
 
-      $logger.debug(@server.name) { "[LOGISTICS] Overflow Items: #{@removed_item_totals.ai}" }
+      LinkLogger.debug(@server.name) { "[LOGISTICS] Overflow Items: #{@removed_item_totals.ai}" }
 
       @removed_item_totals.each do |item_name, item_count|
         Metrics::Prometheus[:overflow_items_total].observe(item_count,
@@ -147,7 +147,7 @@ class Logistics
     calculate_fulfillment_items
     metrics_handler
 
-    # $logger.debug(@server.name) { "[LOGISTICS] Fulfillments: #{@items_to_fulfill.ai}" }
+    # LinkLogger.debug(@server.name) { "[LOGISTICS] Fulfillments: #{@items_to_fulfill.ai}" }
 
     if block_given?
       yield @items_to_fulfill

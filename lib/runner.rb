@@ -3,7 +3,7 @@
 ################################################################################
 
 at_exit do
-  $logger.fatal(:at_exit) { 'Shutting down!' }
+  LinkLogger.fatal(:at_exit) { 'Shutting down!' }
 
   stop!
 end
@@ -14,24 +14,24 @@ def start!(console: false)
   create_pid_file
 
   $0 = 'Link Server'
-  $logger.info(:main) { "Loading Data" }
+  LinkLogger.info(:main) { "Loading Data" }
   trap_signals
 
   start_threads!
 
-  $logger.info(:main) { "Starting Sinatra" }
+  LinkLogger.info(:main) { "Starting Sinatra" }
   if RUBY_ENGINE == 'ruby'
     WebServer.run!
   else
     sleep 1 while $pool.running?
   end
-  $logger.warn(:main) { "Sinatra Stopped"}
+  LinkLogger.warn(:main) { "Sinatra Stopped"}
 end
 
 def stop!
   stop_threads!
 
-  $logger.info(:main) { "Saving Data" }
+  LinkLogger.info(:main) { "Saving Data" }
   ItemTypes.save
   Storage.save
 end
@@ -46,7 +46,7 @@ end
 ################################################################################
 
 def start_threads!
-  $logger.info(:main) { "Starting Threads" }
+  LinkLogger.info(:main) { "Starting Threads" }
   start_thread_mark
   start_thread_prometheus
   start_thread_signals
@@ -60,7 +60,7 @@ def start_threads!
 end
 
 def stop_threads!
-  $logger.info(:main) { "Stopping Threads" }
+  LinkLogger.info(:main) { "Stopping Threads" }
   $origin.resolve
   Servers.stop!(container: false)
   $pool.shutdown
@@ -109,17 +109,17 @@ end
 def stop_process!
   pid = read_pid_file
 
-  $logger.warn(:stop) { "Invalid PID file!" }
+  LinkLogger.warn(:stop) { "Invalid PID file!" }
   return false if pid == 0
 
   PID_STOP_SIGNAL_ORDER.each do |signal|
     begin
-      $logger.fatal(:stop) { "Attempting to stop server (PID #{pid.ai}) with #{signal.ai}..." }
+      LinkLogger.fatal(:stop) { "Attempting to stop server (PID #{pid.ai}) with #{signal.ai}..." }
       Process.kill(signal, pid)
       return true if wait_for_process(pid)
 
     rescue Errno::ESRCH
-      $logger.fatal(:stop) { "Process for server (PID #{pid.ai}) not found!" }
+      LinkLogger.fatal(:stop) { "Process for server (PID #{pid.ai}) not found!" }
       break
     end
   end
@@ -128,7 +128,7 @@ def stop_process!
   false
 
 rescue Errno::ENOENT
-  $logger.fatal(:stop) { "PID file not found!" }
+  LinkLogger.fatal(:stop) { "PID file not found!" }
   false
 
 ensure
@@ -143,10 +143,10 @@ end
 
 if $start
   if $foreground
-    $logger.info(:main) { "Starting in foreground" }
+    LinkLogger.info(:main) { "Starting in foreground" }
     start!
   else
-    $logger.info(:main) { "Starting in background" }
+    LinkLogger.info(:main) { "Starting in background" }
     Process.fork do
       Process.daemon(true)
       start!

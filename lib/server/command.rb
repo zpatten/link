@@ -5,7 +5,7 @@ def get_commands(host, packet_fields, data)
   unless payload.nil? || payload.empty?
     command_events = JSON.parse(payload)
     unless command_events.empty?
-      $logger.debug(:commands) { command_events.ai }
+      LinkLogger.debug(:commands) { command_events.ai }
       origin_server = Servers.find_by_name(host)
       (Servers.find(:commands) - [origin_server]).each do |server|
         command_events.each do |command_event|

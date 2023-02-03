@@ -19,8 +19,8 @@ class Config
       @config[item_name] = item_count
     end
 
-    $logger.info(:config) { "Loaded Config" }
-    $logger.debug(:config) { copy.ai }
+    LinkLogger.info(:config) { "Loaded Config" }
+    LinkLogger.debug(:config) { copy.ai }
   end
 
 ################################################################################
@@ -31,7 +31,7 @@ class Config
 
   def save
     IO.write(filename, JSON.pretty_generate(copy.sort.to_h))
-    $logger.info(:config) { "Saved Config" }
+    LinkLogger.info(:config) { "Saved Config" }
 
     true
   end
@@ -53,7 +53,7 @@ class Config
     value = MemoryCache.fetch(key) do
       (copy.dig('master', *keys) rescue nil)
     end
-    $logger.debug(:config) { "keys=#{keys.ai}, value=#{value.ai}" }
+    LinkLogger.debug(:config) { "keys=#{keys.ai}, value=#{value.ai}" }
     value
   end
 
@@ -66,7 +66,7 @@ class Config
       mv = (copy.dig('master', *keys) rescue nil)
       (sv || mv)
     end
-    $logger.debug(:config) { "server=#{server.ai}, keys=#{keys.ai}, value=#{value.ai}" }
+    LinkLogger.debug(:config) { "server=#{server.ai}, keys=#{keys.ai}, value=#{value.ai}" }
     value
   end
 

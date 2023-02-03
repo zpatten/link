@@ -137,7 +137,7 @@ class Server
             connect!
             break if connected? || @cancellation.canceled?
           rescue Errno::ECONNABORTED, Errno::ECONNREFUSED, Errno::ECONNRESET => e
-            $logger.fatal(tag) { "Caught Exception: #{e.message}" }
+            LinkLogger.fatal(tag) { "Caught Exception: #{e.message}" }
             sleep 3
           end
         end

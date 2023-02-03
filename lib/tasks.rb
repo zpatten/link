@@ -9,7 +9,7 @@ class Tasks
       begin
         yield
       rescue Exception => e
-        $logger.fatal(tag) { "CAUGHT EXCEPTION: #{e.message.ai}\n#{e.backtrace.ai}" }
+        LinkLogger.fatal(tag) { "CAUGHT EXCEPTION: #{e.message.ai}\n#{e.backtrace.ai}" }
       end
     end
 
@@ -44,7 +44,7 @@ class Tasks
       server_tag, tag = tags(what: what, server: server)
 
       Concurrent::Promises.future_on(pool) do
-        $logger.debug(tag) { "Process Started (onetime)" }
+        LinkLogger.debug(tag) { "Process Started (onetime)" }
         exception_handler(tag: tag) do
           if metrics
             metrics_handler(pool: pool, what: what, server_tag: server_tag) { block.call(server) }
@@ -52,7 +52,7 @@ class Tasks
             block.call(server)
           end
         end
-        $logger.debug(tag) { "Process Finished (onetime)" }
+        LinkLogger.debug(tag) { "Process Finished (onetime)" }
       end.run
 
       true
@@ -65,7 +65,7 @@ class Tasks
 
       task = -> cancellation do
         until cancellation.canceled? do
-          $logger.debug(tag) { "Process Started (repeat)" }
+          LinkLogger.debug(tag) { "Process Started (repeat)" }
           exception_handler(tag: tag) do
             timeout_handler(what: what) do
               if metrics
@@ -75,14 +75,14 @@ class Tasks
               end
             end
           end
-          $logger.debug(tag) { "Process Finished (repeat)" }
+          LinkLogger.debug(tag) { "Process Finished (repeat)" }
         end
-        $logger.warn(tag) { "Process Canceled (repeat)" }
+        LinkLogger.warn(tag) { "Process Canceled (repeat)" }
       end
 
       Concurrent::Promises.future_on(pool, cancellation, &task).run
 
-      $logger.debug(tag) { "Added Process (repeat)" }
+      LinkLogger.debug(tag) { "Added Process (repeat)" }
 
       true
     end
@@ -100,17 +100,17 @@ class Tasks
 
       task = -> cancellation do
         if cancellation.canceled?
-          $logger.debug(tag) { "Scheduled Task Canceled" }
+          LinkLogger.debug(tag) { "Scheduled Task Canceled" }
           cancellation.check!
         end
 
-        $logger.debug(tag) { "Scheduled Task Started" }
+        LinkLogger.debug(tag) { "Scheduled Task Started" }
         exception_handler(tag: tag) do
           timeout_handler(what: what) do
             metrics_handler(pool: pool, what: what, server_tag: server_tag)  { block.call(server) }
           end
         end
-        $logger.debug(tag) { "Scheduled Task Finished" }
+        LinkLogger.debug(tag) { "Scheduled Task Finished" }
 
         true
       end
@@ -122,7 +122,7 @@ class Tasks
         &repeating_scheduled_task
       ).run
 
-      $logger.info(tag) { "Added Scheduled Task" }
+      LinkLogger.info(tag) { "Added Scheduled Task" }
 
       true
     end
@@ -140,7 +140,7 @@ end
 
 def start_thread_mark(**options)
   Tasks.schedule(what: :mark) do
-    $logger.info(:mark) { "---MARK--- @ #{Time.now.utc}" }
+    LinkLogger.info(:mark) { "---MARK--- @ #{Time.now.utc}" }
     GC.start(full_mark: true, immediate_sweep: true) if RUBY_ENGINE == 'ruby'
   end
 end
@@ -177,7 +177,7 @@ def start_thread_watchdog(**options)
   Tasks.schedule(what: :watchdog) do
     Servers.all.select(&:watch).each do |server|
       if server.unresponsive?
-        $logger.warn(server.log_tag(:watchdog)) { "Detected Unresponsive Server" }
+        LinkLogger.warn(server.log_tag(:watchdog)) { "Detected Unresponsive Server" }
         $pool.post { server.restart!(container: true) }
       end
     end

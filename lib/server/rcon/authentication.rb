@@ -19,7 +19,7 @@ class Server
 
       def authenticate_callback(host, packet_fields)
         @authenticated = true
-        $logger.info(tag) { "Authenticated to #{host_tag}" }
+        LinkLogger.info(tag) { "Authenticated to #{host_tag}" }
       end
 
     end

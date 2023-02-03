@@ -27,11 +27,11 @@ class WebServer < Sinatra::Application
   respond_to :html, :json
 
   configure do
-    use ::Rack::CommonLogger, $logger
+    use ::Rack::CommonLogger, LinkLogger
   end
 
   # before do
-  #   env['rack.errors'] = $logger
+  #   env['rack.errors'] = LinkLogger
   # end
 
   get "/" do

@@ -19,7 +19,7 @@ class Server
           type: type,
           payload: payload
         )
-        $logger.debug(tag) { "Built Packet ID #{packet_fields.id}" }
+        LinkLogger.debug(tag) { "Built Packet ID #{packet_fields.id}" }
         packet_fields
       end
 
@@ -63,9 +63,9 @@ class Server
         buffer.rewind
         packet_fields = decode_packet(buffer.read)
         if packet_fields.payload.to_s =~ /error/i then
-          $logger.error(tag) { %([RCON:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
+          LinkLogger.error(tag) { %([RCON:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
         else
-          $logger.debug(tag) { %([RCON:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
+          LinkLogger.debug(tag) { %([RCON:#{packet_fields.id}] RCON< #{packet_fields.payload.to_s.strip}) }
         end
         register_response(packet_fields)
         packet_fields
@@ -114,7 +114,7 @@ class Server
         total_sent = 0
         total_sent = @socket.send(buffer.read, 0) unless disconnected? || @cancellation.canceled? || IO.select(nil, [@socket], nil, 1).nil?
 
-        $logger.debug(tag) { %([RCON:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
+        LinkLogger.debug(tag) { %([RCON:#{packet_fields.id}] RCON> #{packet_fields.payload.to_s.strip}) }
 
         total_sent
       rescue Errno::ECONNABORTED, Errno::ESHUTDOWN

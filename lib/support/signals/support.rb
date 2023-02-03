@@ -15,7 +15,7 @@ class Signals
           break
         end
       end
-      $logger.debug { "Extracted Network ID: #{network_id}" }
+      LinkLogger.debug { "Extracted Network ID: #{network_id}" }
       network_id
     end
 
