@@ -9,15 +9,6 @@ require_relative 'support/signals'
 require_relative 'support/storage'
 
 
-# def platform
-#   case RUBY_PLATFORM
-#   when /mingw/i
-#     :windows
-#   when /linux/i
-#     :linux
-#   end
-# end
-
 def external_host
   Socket.getifaddrs.map(&:addr).select(&:ipv4?).reject(&:ipv4_loopback?).reject(&:ipv4_multicast?).last.ip_address
 end

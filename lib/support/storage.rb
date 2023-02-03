@@ -5,7 +5,7 @@ class Storage
 ################################################################################
 
   module ClassMethods
-    def method_missing(method_name, *args, **options, &block)
+    def method_missing(method_name, *args, &block)
       @@storage ||= Storage.new
       @@storage.send(method_name, *args, &block)
     end

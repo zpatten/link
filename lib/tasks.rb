@@ -5,11 +5,11 @@ class Tasks
 
 ################################################################################
 
-    def exception_handler(what:, &block)
+    def exception_handler(tag:, &block)
       begin
         yield
       rescue Exception => e
-        $logger.fatal(what) { "CAUGHT EXCEPTION: #{e.message.ai}\n#{e.backtrace.ai}" }
+        $logger.fatal(tag) { "CAUGHT EXCEPTION: #{e.message.ai}\n#{e.backtrace.ai}" }
       end
     end
 
@@ -23,15 +23,16 @@ class Tasks
       Metrics::Prometheus[:threads_queue_length].set(pool.queue_length)
     end
 
-    def timeout_handler(&block)
-      Timeout.timeout(THREAD_TIMEOUT, &block)
+    def timeout_handler(timeout: Config.master_value(:timeout, :thread), what: nil, &block)
+      timeout = Config.master_value(:timeout, what) || Config.master_value(:timeout, :thread) if what
+      Timeout.timeout(timeout, &block)
     end
 
     def tags(**options)
       server = options[:server]
       what   = options[:what]
 
-      server_tag = (server && server.name) || 'link'
+      server_tag = (server && server.name) || PROGRAM_NAME
       tag        = [(server && server.name), what].flatten.compact.join('.') || Thread.current.name
 
       [server_tag, tag]
@@ -44,11 +45,11 @@ class Tasks
 
       Concurrent::Promises.future_on(pool) do
         $logger.debug(tag) { "Process Started (onetime)" }
-        exception_handler(what: what) do
+        exception_handler(tag: tag) do
           if metrics
-            metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
+            metrics_handler(pool: pool, what: what, server_tag: server_tag) { block.call(server) }
           else
-            block.call
+            block.call(server)
           end
         end
         $logger.debug(tag) { "Process Finished (onetime)" }
@@ -65,12 +66,12 @@ class Tasks
       task = -> cancellation do
         until cancellation.canceled? do
           $logger.debug(tag) { "Process Started (repeat)" }
-          exception_handler(what: what) do
-            Timeout.timeout(Config.master_value(:timeout, :thread)) do
+          exception_handler(tag: tag) do
+            timeout_handler(what: what) do
               if metrics
-                metrics_handler(pool: pool, what: what, server_tag: server_tag, &block)
+                metrics_handler(pool: pool, what: what, server_tag: server_tag) { block.call(server) }
               else
-                block.call
+                block.call(server)
               end
             end
           end
@@ -104,9 +105,8 @@ class Tasks
         end
 
         $logger.debug(tag) { "Scheduled Task Started" }
-        exception_handler(what: what) do
-          timeout = Config.master_value(:timeout, what) || Config.master_value(:timeout, :thread)
-          Timeout.timeout(timeout) do
+        exception_handler(tag: tag) do
+          timeout_handler(what: what) do
             metrics_handler(pool: pool, what: what, server_tag: server_tag)  { block.call(server) }
           end
         end

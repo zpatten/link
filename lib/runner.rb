@@ -37,7 +37,8 @@ def stop!
 end
 
 def trap_signals
-  %w( INT TERM QUIT ).each do |signal|
+  signals = (RUBY_ENGINE == 'jruby' ? %w( INT TERM ) : %w( INT TERM QUIT ))
+  signals.each do |signal|
     Signal.trap(signal, 'EXIT')
   end
 end
