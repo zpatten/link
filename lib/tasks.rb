@@ -42,7 +42,7 @@ class Tasks
 
 ################################################################################
 
-    def onetime(what:, pool: $pool, cancellation: $cancellation, server: nil, metrics: true, **options, &block)
+    def onetime(what:, pool: Runner.pool, cancellation: Runner.cancellation, server: nil, metrics: true, **options, &block)
       server_tag, tag = tags(what: what, server: server)
 
       Concurrent::Promises.future_on(pool) do
@@ -62,7 +62,7 @@ class Tasks
 
 ################################################################################
 
-    def repeat(what:, pool: $pool, cancellation: $cancellation, server: nil, metrics: true, **options, &block)
+    def repeat(what:, pool: Runner.pool, cancellation: Runner.cancellation, server: nil, metrics: true, **options, &block)
       server_tag, tag = tags(what: what, server: server)
 
       task = -> cancellation do
@@ -91,7 +91,7 @@ class Tasks
 
 ################################################################################
 
-    def schedule(what:, pool: $pool, cancellation: $cancellation, server: nil, **options, &block)
+    def schedule(what:, pool: Runner.pool, cancellation: Runner.cancellation, server: nil, **options, &block)
       return false unless !!Config.value(:scheduler, what)
 
       server_tag, tag = tags(what: what, server: server)
@@ -180,7 +180,7 @@ def start_thread_watchdog(**options)
     Servers.all.select(&:watch).each do |server|
       if server.unresponsive?
         LinkLogger.warn(server.log_tag(:watchdog)) { "Detected Unresponsive Server" }
-        $pool.post { server.restart!(container: true) }
+        Runner.pool.post { server.restart!(container: true) }
       end
     end
   end

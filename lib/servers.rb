@@ -73,17 +73,17 @@ class Servers
 
     def start!(container: false)
       LinkLogger.info(:servers) { "Start Servers (container: #{container.ai})" }
-      self.all.each { |server| $pool.post { server.start!(container: container) } }
+      self.all.each { |server| Runner.pool.post { server.start!(container: container) } }
     end
 
     def stop!(container: false)
       LinkLogger.warn(:servers) { "Stopping Servers (container: #{container.ai})" }
-      self.all.each { |server| $pool.post { server.stop!(container: container) } }
+      self.all.each { |server| Runner.pool.post { server.stop!(container: container) } }
     end
 
     def restart!(container: false)
       LinkLogger.warn(:servers) { "Restart Servers (container: #{container.ai})" }
-      self.all.each { |server| $pool.post { server.restart!(container: container) } }
+      self.all.each { |server| Runner.pool.post { server.restart!(container: container) } }
     end
 
 ################################################################################

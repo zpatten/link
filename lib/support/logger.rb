@@ -45,14 +45,14 @@ class LinkLogger < Logger
       caller_name = "(#{thread_name}:#{File.basename(loc.path)}:#{loc.lineno}:#{loc.label})"
       datetime    = Time.now.strftime('%Y-%m-%d %H:%M:%S.%6N')
 
-      message = if LinkLogger.level == Logger::DEBUG
+      message = if self.level == Logger::DEBUG
         DebugFormat % [severity[0..0], datetime, progname, msg, caller_name]
       else
         DebugFormat % [severity[0..0], datetime, progname, msg, caller_name]
         # InfoFormat % [severity[0..0], datetime, progname, msg]
       end
 
-      if RUBY_ENGINE == 'ruby' && defined?(WebServer)
+      if defined?(WebServer)
         WebServer.settings.sockets.each do |s|
           s.send(message)
         end
@@ -60,6 +60,8 @@ class LinkLogger < Logger
 
       message
     end
+
+    self.info(:logger) { "---START--- @ #{Time.now.utc}" }
   end
 
 ################################################################################

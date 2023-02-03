@@ -209,8 +209,7 @@ class Server
   def start_pool!
     raise "Existing thread pool is still running!" if @pool && @pool.running?
     LinkLogger.info(log_tag(:pool)) { "Starting Thread Pool" }
-    # @pool = Concurrent::ImmediateExecutor.new
-    @pool = Concurrent::CachedThreadPool.new(
+    @pool = THREAD_EXECUTOR.new(
       name: @name.downcase,
       auto_terminate: false,
       min_threads: 2,
@@ -219,6 +218,7 @@ class Server
       fallback_policy: :abort
     )
     @cancellation, @origin = Concurrent::Cancellation.new
+    @cancellation = @cancellation.join(Runner.cancellation)
 
     true
   end
@@ -236,8 +236,6 @@ class Server
 ################################################################################
 
   def start_threads!
-    sleep 1 until available?
-
     start_thread_ping
     start_thread_id
     start_thread_research
@@ -250,7 +248,8 @@ class Server
   end
 
   def stop_threads!
-    @origin.resolved? or @origin.resolve if @origin
+    @origin and (@origin.resolved? or @origin.resolve)
+    sleep (Config.value(:timeout, :thread) + 1)
 
     true
   end

@@ -13,6 +13,8 @@ end
 
 class Runner
 
+  attr_reader :pool, :cancellation, :origin
+
 ################################################################################
 
   def initialize
@@ -87,10 +89,10 @@ class Runner
 
     if @options[:start]
       if @options[:foreground]
-        LinkLogger.info(:main) { "Starting in foreground" }
+        LinkLogger.info(:runner) { "Starting in foreground" }
         start!
       else
-        LinkLogger.info(:main) { "Starting in background" }
+        LinkLogger.info(:runner) { "Starting in background" }
         Process.fork do
           Process.daemon(true)
           start!
@@ -113,22 +115,24 @@ class Runner
 
     Metrics::Prometheus.configure!
 
-    LinkLogger.info(:main) { "Starting" }
+    LinkLogger.info(:runner) { "Starting" }
+    start_pool!
     start_threads!
 
-    LinkLogger.info(:main) { "Link Started" }
+    LinkLogger.info(:runner) { "Link Started" }
     if defined?(WebServer)
       WebServer.run!
     else
-      sleep 1 while $pool.running?
+      sleep 1 while Runner.pool.running?
     end
-    LinkLogger.warn(:main) { "Link Stopped" }
+    LinkLogger.warn(:runner) { "Link Stopped" }
   end
 
   def stop!
     stop_threads!
+    stop_pool!
 
-    LinkLogger.info(:main) { "Stopping" }
+    LinkLogger.info(:runner) { "Stopping" }
     ItemTypes.save
     Storage.save
   end
@@ -136,13 +140,13 @@ class Runner
 ################################################################################
 
   def start_threads!
-    LinkLogger.info(:main) { "Starting Threads" }
+    LinkLogger.info(:runner) { "Starting Threads" }
     start_thread_mark
     start_thread_prometheus
     start_thread_signals
     start_thread_autosave
     start_thread_backup
-    # Servers.select(&:container_alive?).each { |s| $pool.post { s.start!(container: false) } }
+    # Servers.select(&:container_alive?).each { |s| Runner.pool.post { s.start!(container: false) } }
     # Servers.select(&:container_alive?).each { |s| s.start!(container: false) }
     # Servers.select { |s| s.name == 'science' }.each { |s| s.start!(container: true) }
     Servers.all.each { |s| s.start!(container: true) }
@@ -150,11 +154,29 @@ class Runner
   end
 
   def stop_threads!
-    LinkLogger.info(:main) { "Stopping Threads" }
-    $origin.resolve
+    LinkLogger.info(:runner) { "Stopping Threads" }
+    @origin and (@origin.resolved? or @origin.resolve)
+    sleep 3
     Servers.stop!(container: false)
-    $pool.shutdown
-    $pool.wait_for_termination(30)
+  end
+
+################################################################################
+
+  def start_pool!
+    @pool = THREAD_EXECUTOR.new(
+      name: 'link',
+      auto_terminate: false,
+      min_threads: 2,
+      max_threads: [2, Concurrent.processor_count].max,
+      max_queue: [2, Concurrent.processor_count * 5].max,
+      fallback_policy: :abort
+    )
+    @cancellation, @origin = Concurrent::Cancellation.new
+  end
+
+  def stop_pool!
+    @pool.shutdown
+    @pool.wait_for_termination(30)
   end
 
 ################################################################################
