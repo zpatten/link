@@ -11,11 +11,14 @@
     %th Filename
     %th File Timestamp
   - @mods.each do |mod|
+    - name = mod[:file].split('_')[0..-2].join('_')
     %tr
       %td
         %input{ type: 'checkbox', name: 'type', value: mod[:file] }
       %td.align-right
-        = mod[:file].split('_')[0..-2].join('_')
+        #{name}
+        |
+        %a{ href: Config.factorio_mod_url+'/mod/'+name, target: '_blank' } View
       %td.align-right
         = mod[:file]
       %td.align-left
