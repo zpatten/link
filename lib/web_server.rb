@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
 require 'sinatra'
-require 'sinatra-websocket'
+# require 'sinatra-websocket'
 require 'sinatra/json'
 require 'sinatra/respond_with'
-require 'thin'
+# require 'sinatra/custom_logger'
+require 'puma'
 require 'haml'
 
 class WebServer < Sinatra::Application
-  set :server, :thin
+  # helpers Sinatra::CustomLogger
+
+  set :server, :puma
   set :port, 4242
   set :bind, "0.0.0.0"
   set :sockets, []
@@ -26,9 +29,11 @@ class WebServer < Sinatra::Application
 
   respond_to :html, :json
 
-  configure do
-    use ::Rack::CommonLogger, LinkLogger
-  end
+  # configure do
+  #   disable :logging
+  #   # set :logger, LinkLogger
+  #   use Rack::Logger
+  # end
 
   # before do
   #   env['rack.errors'] = LinkLogger
@@ -43,21 +48,21 @@ class WebServer < Sinatra::Application
   end
 
   get "/storage" do
-    if !request.websocket?
+    # if !request.websocket?
       @storage = Storage.to_h
       @total_count = @storage.values.sum
       haml :storage
-    else
-      request.websocket do |ws|
-        ws.onopen do
-          settings.storage_sockets << ws
-        end
+    # else
+    #   request.websocket do |ws|
+    #     ws.onopen do
+    #       settings.storage_sockets << ws
+    #     end
 
-        ws.onclose do
-          settings.storage_sockets.delete(ws)
-        end
-      end
-    end
+    #     ws.onclose do
+    #       settings.storage_sockets.delete(ws)
+    #     end
+    #   end
+    # end
   end
 
   get "/signals" do
@@ -80,19 +85,19 @@ class WebServer < Sinatra::Application
   end
 
   get "/servers" do
-    if !request.websocket?
+    # if !request.websocket?
       haml :servers
-    else
-      request.websocket do |ws|
-        ws.onopen do
-          settings.server_sockets << ws
-        end
+    # else
+    #   request.websocket do |ws|
+    #     ws.onopen do
+    #       settings.server_sockets << ws
+    #     end
 
-        ws.onclose do
-          settings.server_sockets.delete(ws)
-        end
-      end
-    end
+    #     ws.onclose do
+    #       settings.server_sockets.delete(ws)
+    #     end
+    #   end
+    # end
   end
 
   get '/servers/start/:name' do

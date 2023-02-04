@@ -236,13 +236,15 @@ class Server
 ################################################################################
 
   def start_threads!
-    start_ping
-    start_id
-    start_research
-    start_chat
-    start_logistics
-    start_server_list
-    start_signals
+    schedule_task_ping
+    schedule_task_id
+    schedule_task_research_current
+    schedule_task_research
+    schedule_task_chat
+    schedule_task_fulfillments
+    schedule_task_providables
+    schedule_task_server_list
+    schedule_task_signals
 
     true
   end

@@ -46,7 +46,7 @@ class Tasks
       server_tag, tag = tags(what: what, server: server)
 
       Concurrent::Promises.future_on(pool) do
-        Thread.current.name = tag
+        Thread.current.name = server_tag
         LinkLogger.debug(tag) { "Process Started (onetime)" }
         exception_handler(tag: tag) do
           if metrics
@@ -56,6 +56,7 @@ class Tasks
           end
         end
         LinkLogger.debug(tag) { "Process Finished (onetime)" }
+        Thread.current.name = "stopped-#{tag}"
       end.run
 
       true
@@ -67,7 +68,7 @@ class Tasks
       server_tag, tag = tags(what: what, server: server)
 
       task = -> cancellation do
-        Thread.current.name = tag
+        Thread.current.name = server_tag
         until cancellation.canceled? do
           LinkLogger.debug(tag) { "Process Started (repeat)" }
           exception_handler(tag: tag) do
@@ -82,6 +83,7 @@ class Tasks
           LinkLogger.debug(tag) { "Process Finished (repeat)" }
         end
         LinkLogger.warn(tag) { "Process Canceled (repeat)" }
+        Thread.current.name = "stopped-#{tag}"
       end
 
       Concurrent::Promises.future_on(pool, cancellation, &task).run
@@ -106,7 +108,7 @@ class Tasks
       end
 
       task = -> cancellation do
-        Thread.current.name = tag
+        Thread.current.name = server_tag
         if cancellation.canceled?
           LinkLogger.debug(tag) { "Scheduled Task Canceled" }
           cancellation.check!
@@ -119,6 +121,7 @@ class Tasks
           end
         end
         LinkLogger.debug(tag) { "Scheduled Task Finished" }
+        Thread.current.name = "stopped-#{tag}"
 
         true
       end
@@ -146,34 +149,34 @@ end
 # Tasks
 ################################################################################
 
-def start_mark
+def schedule_task_mark
   Tasks.schedule(what: :mark) do
     LinkLogger.info(:mark) { "---MARK--- @ #{Time.now.utc}" }
     GC.start(full_mark: true, immediate_sweep: true) if RUBY_ENGINE == 'ruby'
   end
 end
 
-def start_backup
+def schedule_task_backup
   Tasks.schedule(what: :backup) do
     Servers.backup
     Servers.trim_save_files
   end
 end
 
-def start_autosave
+def schedule_task_autosave
   Tasks.schedule(what: :autosave) do
     ItemTypes.save
     Storage.save
   end
 end
 
-def start_signals
+def schedule_task_signals
   Tasks.schedule(what: :signals) do
     Signals.update_inventory_signals
   end
 end
 
-def start_prometheus
+def schedule_task_prometheus
   Tasks.schedule(what: :prometheus) do
     Storage.metrics_handler
 
@@ -181,7 +184,7 @@ def start_prometheus
   end
 end
 
-def start_watchdog
+def schedule_task_watchdog
   Tasks.schedule(what: :watchdog) do
     Servers.select(&:watch).each do |server|
       if server.unresponsive?

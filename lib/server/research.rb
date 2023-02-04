@@ -5,7 +5,7 @@
 class Server
   module Research
 
-    def start_research
+    def schedule_task_research_current
       if @research
         Tasks.schedule(what: :research_current, pool: @pool, cancellation: @cancellation, server: self) do
           command = %(remote.call('link', 'get_current_research'))
@@ -16,7 +16,11 @@ class Server
             Servers.rcon_command_nonblock(:non_research, command)
           end
         end
+      end
+    end
 
+    def schedule_task_research
+      if @research
         Tasks.schedule(what: :research, pool: @pool, cancellation: @cancellation, server: self) do
           command = %(remote.call('link', 'get_research'))
           rcon_handler(what: :get_research, command: command) do |research|

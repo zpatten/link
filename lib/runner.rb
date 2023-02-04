@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'optparse'
 
 ################################################################################
@@ -145,16 +146,16 @@ class Runner
 
   def start_threads!
     LinkLogger.info(:runner) { "Starting Threads" }
-    start_mark
-    start_prometheus
-    start_signals
-    start_autosave
-    start_backup
+    schedule_task_mark
+    schedule_task_prometheus
+    schedule_task_signals
+    schedule_task_autosave
+    schedule_task_backup
     # Servers.select(&:container_alive?).each { |s| Runner.pool.post { s.start!(container: false) } }
     # Servers.select(&:container_alive?).each { |s| s.start!(container: false) }
     # Servers.select { |s| s.name == 'science' }.each { |s| s.start!(container: true) }
     Servers.each { |s| s.start!(container: true) }
-    start_watchdog
+    schedule_task_watchdog
   end
 
   def stop_threads!

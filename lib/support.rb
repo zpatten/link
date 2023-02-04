@@ -30,17 +30,17 @@ end
 #   '%.1f %s' % [size.to_f / 1024 ** exp, units[exp]]
 # end
 
-# def countsize(size)
-#   units = ['', 'k', 'M', 'G', 'T', 'P', 'E']
-#   decimal = [0, 1, 1, 2, 2, 3, 3]
-#   size = size.to_i
+def countsize(size)
+  units = [''] + %w( k M G T P E Z Y R Q )
+  decimal = [0, 1, 1, 2, 2, 3, 3, 3, 3, 3]
+  size = size.to_i
 
-#   return '0' if size == 0
-#   exp = (Math.log(size) / Math.log(1000)).to_i
-#   exp = 6 if exp > 6
+  return '0' if size == 0
+  exp = (Math.log(size) / Math.log(1000)).to_i
+  exp = units.length if exp > units.length
 
-#   "%.#{decimal[exp]}f %s" % [size.to_f / 1000 ** exp, units[exp]]
-# end
+  "%.#{decimal[exp]}f %s" % [size.to_f / 1000 ** exp, units[exp]]
+end
 
 def deep_clone(object)
   Marshal.load(Marshal.dump(object))
