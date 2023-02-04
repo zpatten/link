@@ -3,7 +3,6 @@ require 'optparse'
 
 ################################################################################
 
-
 class Runner
 
   attr_reader :pool, :cancellation, :origin

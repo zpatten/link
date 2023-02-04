@@ -74,9 +74,9 @@ class Server
     WebServer.settings.server_sockets.each do |s|
       s.send({
         name: @name,
-        connected: connected?,
         authenticated: authenticated?,
         available: available?,
+        connected: connected?,
         container: container_alive?,
         responsive: responsive?,
         rtt: @rtt.nil? ? '-' : "#{@rtt} ms"
