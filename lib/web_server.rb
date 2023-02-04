@@ -107,12 +107,26 @@ class WebServer < Sinatra::Application
     mod_files = Dir.glob(File.join(Servers.factorio_mods, '*.zip'), File::FNM_CASEFOLD)
     @mods = mod_files.collect do |mod_file|
       {
+        name: File.basename(mod_file).split('_')[0..-2].join('_'),
         file: File.basename(mod_file),
         size: File.size(mod_file),
         time: File.mtime(mod_file)
       }
     end.sort_by { |mod_file| mod_file[:file] }
+    @mod_names = (%w( base ) + @mods.collect { |m| m[:name] }.uniq).sort_by { |m| m.downcase }
     haml :mods
+  end
+
+  post '/mods/enable' do
+    ModList.enable(params[:name])
+    ModList.save
+    redirect '/mods'
+  end
+
+  post '/mods/disable' do
+    ModList.disable(params[:name])
+    ModList.save
+    redirect '/mods'
   end
 
   post '/mods/search' do

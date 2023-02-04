@@ -48,6 +48,8 @@ class Runner
   def run!
     @parser.parse!(ARGV.dup)
 
+    require_relative 'web_server'
+
     if @options[:stop]
       stop_process!
     end

@@ -8,7 +8,7 @@ class ItemTypes
 
   def initialize
     @item_types = Concurrent::Map.new
-    item_types = (JSON.parse(IO.read(filename)) rescue Concurrent::Map.new)
+    item_types = (JSON.parse(IO.read(filename).strip) rescue Concurrent::Map.new)
     item_types.each do |item_name, item_type|
       @item_types[item_name] = item_type
     end
@@ -20,7 +20,7 @@ class ItemTypes
 ################################################################################
 
   def filename
-    File.join(LINK_ROOT, "item_types.json")
+    File.expand_path(File.join(LINK_ROOT, "item_types.json"))
   end
 
   def save
@@ -50,7 +50,7 @@ class ItemTypes
       type.strip!
       @item_types[item_name] = type
 
-      LinkLogger.debug(:item_type) { "#{item_name} == #{@item_types[item_name]}" }
+      LinkLogger.debug(:item_types) { "#{item_name} == #{@item_types[item_name]}" }
     end
     type
   end

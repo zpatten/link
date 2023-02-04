@@ -40,6 +40,14 @@ td {
   background-color: white;
 }
 
+.green {
+  color: green;
+}
+
+.red {
+  color: red;
+}
+
 .align-right {
   text-align: right;
 }

@@ -49,7 +49,6 @@ require_relative 'lib/runner'
 require_relative 'lib/server'
 require_relative 'lib/servers'
 require_relative 'lib/tasks'
-require_relative 'lib/web_server'
 
 ################################################################################
 

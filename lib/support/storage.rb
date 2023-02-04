@@ -8,7 +8,7 @@ class Storage
 
   def initialize
     @storage = Concurrent::Map.new { 0 }
-    storage = (JSON.parse(IO.read(filename)) rescue Concurrent::Map.new { 0 })
+    storage = (JSON.parse(IO.read(filename).strip) rescue Concurrent::Map.new { 0 })
     storage.each do |item_name, item_count|
       @storage[item_name] = item_count
     end
@@ -20,7 +20,7 @@ class Storage
 ################################################################################
 
   def filename
-    File.join(LINK_ROOT, "storage.json")
+    File.expand_path(File.join(LINK_ROOT, "storage.json"))
   end
 
   def save

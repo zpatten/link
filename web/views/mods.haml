@@ -1,25 +1,37 @@
-%h1 Create Server
+%h1 Mods
 %form{ method: :post, action: '/mods/search' }
   %p
     %label Search for Factorio Mod Name:
     %input{ type: 'text', name: 'name' }
   %input{ type: 'submit'}
-%table
+%table.fleft
   %tr
-    %th &nbsp;
-    %th Name
-    %th Filename
-    %th File Timestamp
-  - @mods.each do |mod|
-    - name = mod[:file].split('_')[0..-2].join('_')
+    %th Toggle
+    %th Enabled?
+    %th.align-left Name
+  - ModList.names.each do |mod_name|
     %tr
       %td
-        %input{ type: 'checkbox', name: 'type', value: mod[:file] }
-      %td.align-right
-        #{name}
+        %form{ method: :post, action: "/mods/#{ModList.enabled?(mod_name) ? 'disable' : 'enable'}" }
+          %input{ type: 'hidden', name: 'name', value: mod_name }
+          %input{ type: 'submit', value: ModList.enabled?(mod_name) ? 'Disable' : 'Enable' }
+      %td
+        - if ModList.enabled?(mod_name)
+          ENABLED
+      %td.align-left
+        = mod_name
         |
-        %a{ href: Config.factorio_mod_url+'/mod/'+name, target: '_blank' } View
-      %td.align-right
+        %a{ href: Config.factorio_mod_url+'/mod/'+mod_name, target: '_blank' } View
+%table.fright
+  %tr
+    %th.align-left Filename
+    %th.align-left File Timestamp
+  - ModList.files.each do |mod|
+    %tr
+      %td.align-left
         = mod[:file]
       %td.align-left
-        #{mod[:time]} [#{filesize(mod[:size])}]
+        = mod[:time]
+        [
+        = filesize(mod[:size])
+        ]

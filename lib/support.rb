@@ -6,9 +6,11 @@ require_relative 'support/cache'
 require_relative 'support/config'
 require_relative 'support/item_type'
 require_relative 'support/logistics'
+require_relative 'support/mod_list'
 require_relative 'support/signals'
 require_relative 'support/storage'
 
+################################################################################
 
 def external_host
   Socket.getifaddrs.map(&:addr).select(&:ipv4?).reject(&:ipv4_loopback?).reject(&:ipv4_multicast?).last.ip_address
