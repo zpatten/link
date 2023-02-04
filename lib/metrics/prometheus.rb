@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'prometheus/client'
 require 'prometheus/client/push'
 require 'prometheus/client/data_stores/direct_file_store'
