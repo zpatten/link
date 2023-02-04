@@ -4,8 +4,8 @@ storage.json*
 *.log
 *.pid
 
-mods/
-saves/
-servers/
-tmp/
+/mods
+/saves
+/servers
+/tmp
 /metrics

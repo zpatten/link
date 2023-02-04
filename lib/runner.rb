@@ -40,36 +40,6 @@ class Runner
       op.on('-f', 'Run in foreground') do
         @options[:foreground] = true
       end
-
-      # op.on("--start=NAME", "Start a server") do |name|
-      #   server = Servers.find_by_name(name)
-      #   server.start!
-      #   exit
-      # end
-
-      # op.on("--stop=NAME", "Stop a server") do |name|
-      #   server = Servers.find_by_name(name)
-      #   server.stop!
-      #   exit
-      # end
-
-      # op.on("--add=NAME,[TYPE]", "Add a server") do |list|
-      #   name, type = list.split(',')
-      #   params = {
-      #     name: name,
-      #     type: type
-      #   }
-      #   Servers.create(params)
-      #   exit
-      # end
-
-      # op.on("--remove=NAME", "Remove a server") do |name|
-      #   params = {
-      #     name: name
-      #   }
-      #   Servers.destroy(params)
-      #   exit
-      # end
     end
   end
 
@@ -180,20 +150,20 @@ class Runner
   end
 
   def stop_pool!
-    @pool.shutdown
+    @pool.kill
 
-    puts "@pool.running?=#{@pool.running?.ai}"
-    puts ("-" * 80)
-    threads = Thread.list.sort_by { |t| t.name || '-' }
-    puts "Threads Running: #{threads.count}"
-    threads.each { |t| puts "thread:#{t.name || '-'}" }
-    while @pool.running? do
-      puts ("-" * 80)
-      threads = Thread.list.sort_by { |t| t.name || '-' }
-      puts "Threads Running: #{threads.count}"
-      threads.each { |t| puts "thread:#{t.name || '-'}" }
-      sleep 1
-    end
+    # puts "@pool.running?=#{@pool.running?.ai}"
+    # puts ("-" * 80)
+    # threads = Thread.list.sort_by { |t| t.name || '-' }
+    # puts "Threads Running: #{threads.count}"
+    # threads.each { |t| puts "thread:#{t.name || '-'}" }
+    # while @pool.running? do
+    #   puts ("-" * 80)
+    #   threads = Thread.list.sort_by { |t| t.name || '-' }
+    #   puts "Threads Running: #{threads.count}"
+    #   threads.each { |t| puts "thread:#{t.name || '-'}" }
+    #   sleep 1
+    # end
 
     @pool.wait_for_termination(30)
     puts Thread.list.count.ai

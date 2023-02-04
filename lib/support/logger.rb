@@ -56,7 +56,7 @@ class LinkLogger < Logger
 
       if defined?(WebServer)
         WebServer.settings.sockets.each do |s|
-          s.send(message)
+          s.write(message) unless s.closed?
         end
       end
 

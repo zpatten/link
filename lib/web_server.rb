@@ -3,6 +3,7 @@
 require 'sinatra'
 require 'sinatra/json'
 require 'sinatra/respond_with'
+require 'sinatra/streaming'
 require 'puma'
 require 'haml'
 
@@ -27,22 +28,11 @@ class WebServer < Sinatra::Application
 
   respond_to :html, :json
 
-  # configure do
-  #   disable :logging
-  #   # set :logger, LinkLogger
-  #   use Rack::Logger
-  # end
-
-  # before do
-  #   env['rack.errors'] = LinkLogger
-  # end
-
   get "/" do
     respond_to do |f|
       f.json { :index }
       f.html { haml :index }
     end
-    # haml :index
   end
 
   get "/storage" do
@@ -147,19 +137,23 @@ class WebServer < Sinatra::Application
   end
 
   get "/log" do
-    if !request.websocket?
-      haml :log
-    else
-      request.websocket do |ws|
-        ws.onopen do
-          settings.sockets << ws
-        end
-
-        ws.onclose do
-          settings.sockets.delete(ws)
-        end
-      end
+    stream(:keep_open) do |out|
+      settings.sockets << out
+      settings.sockets.reject!(&:closed?)
     end
+    # if !request.websocket?
+    #   haml :log
+    # else
+    #   request.websocket do |ws|
+    #     ws.onopen do
+    #       settings.sockets << ws
+    #     end
+
+    #     ws.onclose do
+    #       settings.sockets.delete(ws)
+    #     end
+    #   end
+    # end
   end
 
 end

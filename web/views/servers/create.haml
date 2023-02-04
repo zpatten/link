@@ -1,0 +1,38 @@
+%h1 Create Server
+%form{ method: :post, action: '/servers/create' }
+  %p
+    %label Server Name:
+    %input{ type: 'text', name: 'name' }
+  %p
+    %label Biters:
+    %input{ type: 'radio', name: 'biters', value: 'true', checked: true } Yes
+    %input{ type: 'radio', name: 'biters', value: 'false' } No
+  %p
+    %label Server Type:
+    %table
+      %tr
+        %th &nbsp;
+        %th Type
+        %th Name/Filename
+        %th File Timestamp
+      - Servers.server_create_types.each do |server_type|
+        %tr
+          - if server_type.is_a?(Hash)
+            %td
+              %input{ type: 'radio', name: 'type', value: server_type[:file] }
+            %td
+              file
+            %td.align-right
+              #{server_type[:file]}
+            %td.align-left
+              #{server_type[:time]} [#{filesize(server_type[:size])}]
+          - else
+            %td
+              %input{ type: 'radio', name: 'type', value: server_type }
+            %td
+              preset
+            %td
+              #{server_type}
+            %td
+              \-
+  %input{ type: 'submit'}
