@@ -236,13 +236,13 @@ class Server
 ################################################################################
 
   def start_threads!
-    start_thread_ping
-    start_thread_id
-    start_thread_research
-    start_thread_chat
-    start_thread_logistics
-    start_thread_server_list
-    start_thread_signals
+    start_ping
+    start_id
+    start_research
+    start_chat
+    start_logistics
+    start_server_list
+    start_signals
 
     true
   end

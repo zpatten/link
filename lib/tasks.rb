@@ -37,7 +37,7 @@ class Tasks
       server_tag = (server && server.name) || PROGRAM_NAME
       tag        = [(server && server.name), what].flatten.compact.join('.') || Thread.current.name
 
-      [server_tag, tag]
+      [server_tag.downcase, tag.downcase]
     end
 
 ################################################################################
@@ -46,6 +46,7 @@ class Tasks
       server_tag, tag = tags(what: what, server: server)
 
       Concurrent::Promises.future_on(pool) do
+        Thread.current.name = tag
         LinkLogger.debug(tag) { "Process Started (onetime)" }
         exception_handler(tag: tag) do
           if metrics
@@ -66,6 +67,7 @@ class Tasks
       server_tag, tag = tags(what: what, server: server)
 
       task = -> cancellation do
+        Thread.current.name = tag
         until cancellation.canceled? do
           LinkLogger.debug(tag) { "Process Started (repeat)" }
           exception_handler(tag: tag) do
@@ -104,6 +106,7 @@ class Tasks
       end
 
       task = -> cancellation do
+        Thread.current.name = tag
         if cancellation.canceled?
           LinkLogger.debug(tag) { "Scheduled Task Canceled" }
           cancellation.check!
@@ -143,34 +146,34 @@ end
 # Tasks
 ################################################################################
 
-def start_thread_mark(**options)
+def start_mark
   Tasks.schedule(what: :mark) do
     LinkLogger.info(:mark) { "---MARK--- @ #{Time.now.utc}" }
     GC.start(full_mark: true, immediate_sweep: true) if RUBY_ENGINE == 'ruby'
   end
 end
 
-def start_thread_backup(**options)
+def start_backup
   Tasks.schedule(what: :backup) do
     Servers.backup
     Servers.trim_save_files
   end
 end
 
-def start_thread_autosave(**options)
+def start_autosave
   Tasks.schedule(what: :autosave) do
     ItemTypes.save
     Storage.save
   end
 end
 
-def start_thread_signals(**options)
+def start_signals
   Tasks.schedule(what: :signals) do
     Signals.update_inventory_signals
   end
 end
 
-def start_thread_prometheus(**options)
+def start_prometheus
   Tasks.schedule(what: :prometheus) do
     Storage.metrics_handler
 
@@ -178,7 +181,7 @@ def start_thread_prometheus(**options)
   end
 end
 
-def start_thread_watchdog(**options)
+def start_watchdog
   Tasks.schedule(what: :watchdog) do
     Servers.select(&:watch).each do |server|
       if server.unresponsive?

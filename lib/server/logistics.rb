@@ -3,7 +3,7 @@
 class Server
   module Logistics
 
-    def start_thread_logistics
+    def start_logistics
       Tasks.schedule(what: :fulfillments, pool: @pool, cancellation: @cancellation, server: self) do
         command = %(remote.call('link', 'get_requests'))
         rcon_handler(what: :get_requests, command: command) do |requests|

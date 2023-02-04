@@ -38,7 +38,7 @@ class Server
       end
     end
 
-    def start_thread_signals
+    def start_signals
       Tasks.schedule(what: :signals, pool: @pool, cancellation: @cancellation, server: self) do
         force = !@tx_signals_initalized
         command = %(remote.call('link', 'get_transmitter_combinator', #{force}))

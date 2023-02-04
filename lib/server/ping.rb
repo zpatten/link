@@ -3,7 +3,7 @@
 class Server
   module Ping
 
-    def start_thread_ping
+    def start_ping
       Tasks.schedule(what: :ping, pool: @pool, cancellation: @cancellation, server: self) do
         # Calculate round-trip time to RCON
         command = %(remote.call('link', 'ping'))

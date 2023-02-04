@@ -5,7 +5,7 @@
 class Server
   module Research
 
-    def start_thread_research
+    def start_research
       if @research
         Tasks.schedule(what: :research_current, pool: @pool, cancellation: @cancellation, server: self) do
           command = %(remote.call('link', 'get_current_research'))

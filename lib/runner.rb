@@ -145,16 +145,16 @@ class Runner
 
   def start_threads!
     LinkLogger.info(:runner) { "Starting Threads" }
-    start_thread_mark
-    start_thread_prometheus
-    start_thread_signals
-    start_thread_autosave
-    start_thread_backup
+    start_mark
+    start_prometheus
+    start_signals
+    start_autosave
+    start_backup
     # Servers.select(&:container_alive?).each { |s| Runner.pool.post { s.start!(container: false) } }
     # Servers.select(&:container_alive?).each { |s| s.start!(container: false) }
     # Servers.select { |s| s.name == 'science' }.each { |s| s.start!(container: true) }
     Servers.each { |s| s.start!(container: true) }
-    start_thread_watchdog
+    start_watchdog
   end
 
   def stop_threads!
@@ -182,6 +182,9 @@ class Runner
     @pool.shutdown
 
     puts "@pool.running?=#{@pool.running?.ai}"
+    threads = Thread.list
+    puts "Threads Running: #{threads.count}"
+    threads.each { |t| puts "Thread #{t.name}" }
     while @pool.running? do
       threads = Thread.list
       puts "Threads Running: #{threads.count}"

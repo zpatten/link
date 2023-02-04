@@ -5,7 +5,7 @@
 class Server
   module ID
 
-    def start_thread_id
+    def start_id
       Tasks.schedule(what: :id, pool: @pool, cancellation: @cancellation, server: self) do
         command = %(remote.call('link', 'set_id', '#{self.id}'))
         rcon_command_nonblock(command)
