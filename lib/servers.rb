@@ -18,8 +18,7 @@ class Servers
 
   def each(&block)
     if block_given?
-      # @servers.values.sort_by { |server| server.name }.each(&block)
-      @servers.values.each(&block)
+      @servers.values.sort_by { |server| server.name }.each(&block)
     else
       to_enum(:each)
     end
