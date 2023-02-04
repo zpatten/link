@@ -2,9 +2,6 @@ require 'prometheus/client'
 require 'prometheus/client/push'
 require 'prometheus/client/data_stores/direct_file_store'
 
-# #<Errno::ECONNREFUSED: Failed to open TCP connection to pushgateway.tatooine.jovelabs.io:443 (Connection refused - connect(2) for "pushgateway.tatooine.jovelabs.io" port 443)>
-
-
 module Metrics
   class Prometheus
 
