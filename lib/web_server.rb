@@ -125,6 +125,14 @@ class WebServer < Sinatra::Application
   end
 
   get '/mods' do
+    mod_files = Dir.glob(File.join(Servers.factorio_mods, '*.zip'), File::FNM_CASEFOLD)
+    @mods = mod_files.collect do |mod_file|
+      {
+        file: File.basename(mod_file),
+        size: File.size(mod_file),
+        time: File.mtime(mod_file)
+      }
+    end.sort_by { |mod_file| mod_file[:file] }
     haml :mods
   end
 
@@ -139,13 +147,21 @@ class WebServer < Sinatra::Application
       }.delete_if { |k,v| v.nil? || v == '' }
     }
     LinkLogger.info(:http) { "query=#{query.ai}" }
-    response         = HTTParty.get(Config.factorio_mod_url, query)
+    response         = HTTParty.get("#{Config.factorio_mod_url}/api/mods", query)
     @name            = params[:name]
     @parsed_response = response.parsed_response
     haml 'mods/search'.to_sym
   end
 
   post '/mods/download' do
+    filename = File.join(Servers.factorio_mods, params[:file_name])
+    LinkLogger.info(:http) { "Downloading #{filename.ai}" }
+    File.open(filename, 'wb') do |file|
+      HTTParty.get(Config.factorio_mod_url+params[:download_url], stream_body: true) do |data|
+        file.write(data)
+      end
+    end
+    LinkLogger.info(:http) { "Downloaded #{filename.ai} (#{countsize(File.size(filename)).ai})" }
     redirect '/mods'
   end
 

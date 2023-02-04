@@ -4,3 +4,19 @@
     %label Search for Factorio Mod Name:
     %input{ type: 'text', name: 'name' }
   %input{ type: 'submit'}
+%table
+  %tr
+    %th &nbsp;
+    %th Name
+    %th Filename
+    %th File Timestamp
+  - @mods.each do |mod|
+    %tr
+      %td
+        %input{ type: 'checkbox', name: 'type', value: mod[:file] }
+      %td.align-right
+        = mod[:file].split('_')[0..-2].join('_')
+      %td.align-right
+        = mod[:file]
+      %td.align-left
+        #{mod[:time]} [#{filesize(mod[:size])}]

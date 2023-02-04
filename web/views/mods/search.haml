@@ -9,10 +9,14 @@
     %th Downloads
   - result = @parsed_response['results']
   - @parsed_response['results'].each do |result|
+    - latest_release = result['releases'].sort_by { |r| r['released_at'] }.reverse.first
+    = result['releases'].sort_by { |r| r['released_at'] }.reverse.first
     %tr
       %td.one
-        %form{ method: :post, action: '/mods/search' }
+        %form{ method: :post, action: '/mods/download' }
           %input{ type: 'hidden', name: 'name', value: result['name'] }
+          %input{ type: 'hidden', name: 'download_url', value: latest_release['download_url'] }
+          %input{ type: 'hidden', name: 'file_name', value: latest_release['file_name'] }
           %input{ type: 'submit', value: 'Download' }
       %td.align-left.one= result['title']
       %td.align-left.one= result['owner']
