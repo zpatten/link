@@ -6,7 +6,7 @@ class Servers
 ################################################################################
 
   def initialize
-    @servers = Hash.new  # Concurrent::Map.new
+    @servers = Concurrent::Map.new
     Config.servers.each_pair do |server_name, server_details|
       server = Server.new(server_name, server_details)
       @servers[server_name] = server
@@ -14,37 +14,37 @@ class Servers
     end
   end
 
+################################################################################
+
+  def each(&block)
+    if block_given?
+      # @servers.values.sort_by { |server| server.name }.each(&block)
+      @servers.values.each(&block)
+    else
+      to_enum(:each)
+    end
+  end
+
+################################################################################
+
   def find_by_name(name)
-    self.find { |s| s.name == name }
+    find { |s| s.name.to_s == name.to_s }
   end
 
   def find_by_id(id)
-    self.find { |s| s.id == id.to_i }
+    find { |s| s.id.to_i == id.to_i }
   end
 
-  def find(what, except: [])
-    what = what.to_sym
-    servers = case what
-    when :commands, :chat, :ping, :command_whitelist, :logistics, :fulfillments, :providables, :signals, :id
-      select { |s| !!Config.server(s.name, what) }
+  def find_by_task(task, except=[])
+    servers = case task.to_sym
     when :research, :research_current
       select { |s| s.research }
     when :non_research
       select { |s| !s.research }
     else
-      []
+      select { |s| !!Config.server(s.name.to_s, task.to_s) }
     end
-    servers.delete_if { |s| except.include?(s.name) }
-  end
-
-################################################################################
-
-  def each(&block)
-    if block_given?
-      @servers.values.sort_by { |server| server.name }.each(&block)
-    else
-      to_enum(:each)
-    end
+    servers.delete_if { |s| except.map(&:to_s).include?(s.name.to_s) }
   end
 
 ################################################################################
@@ -85,8 +85,8 @@ class Servers
 
 ################################################################################
 
-  def rcon_command(what, command, except: [])
-    self.find(what, except: except).each do |server|
+  def rcon_command(task, command, except=[])
+    find_by_task(task, except).each do |server|
       unless server.unavailable?
         server.rcon_command(command)
       end
@@ -95,8 +95,8 @@ class Servers
     true
   end
 
-  def rcon_command_nonblock(what, command, except: [])
-    self.find(what, except: except).each do |server|
+  def rcon_command_nonblock(task, command, except=[])
+    find_by_task(task, except).each do |server|
       unless server.unavailable?
         server.rcon_command_nonblock(command)
       end
@@ -109,7 +109,7 @@ class Servers
 
   def backup
     LinkLogger.debug(:servers) { "Backing Up Servers" }
-    self.all.each do |server|
+    each do |server|
       if server.available?
         server.backup(timestamp: true)
         sleep 3
@@ -346,17 +346,26 @@ class Servers
 ################################################################################
 
   def random
-    available_servers = self.available
-    random_index = SecureRandom.random_number(available_servers.count)
-    available_servers[random_index]
+    if (available_servers = available)
+      random_index = SecureRandom.random_number(available_servers.count)
+      return available_servers[random_index]
+    else
+      LinkLogger.fatal(:servers) { "No servers available!" }
+    end
+
+    nil
   end
 
   def available
-    self.all.select { |s| s.available? }
+    select { |s| s.available? }
+  end
+
+  def unavailable
+    select { |s| s.unavailable? }
   end
 
   def available?
-    self.all.map(&:available?).any?(true)
+    map(&:available?).any?(true)
   end
 
   def unavailable?

@@ -7,7 +7,7 @@ def get_commands(host, packet_fields, data)
     unless command_events.empty?
       LinkLogger.debug(:commands) { command_events.ai }
       origin_server = Servers.find_by_name(host)
-      (Servers.find(:commands) - [origin_server]).each do |server|
+      (Servers.find_by_task(:commands) - [origin_server]).each do |server|
         command_events.each do |command_event|
           # message = %(#{command_event["player_name"]}@#{host}: #{command_event["message"]})
           player_index = command_event["player_index"]
