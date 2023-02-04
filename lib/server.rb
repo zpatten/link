@@ -40,7 +40,7 @@ class Server
   attr_reader :pool
   attr_reader :watch
 
-  RECV_MAX_LEN = 64 * 1024
+  RECV_MAX_LEN = (2 ** 16) - 1
 
 ################################################################################
 
