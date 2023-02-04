@@ -177,7 +177,7 @@ end
 
 def start_thread_watchdog(**options)
   Tasks.schedule(what: :watchdog) do
-    Servers.all.select(&:watch).each do |server|
+    Servers.select(&:watch).each do |server|
       if server.unresponsive?
         LinkLogger.warn(server.log_tag(:watchdog)) { "Detected Unresponsive Server" }
         Runner.pool.post { server.restart!(container: true) }

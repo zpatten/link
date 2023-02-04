@@ -158,7 +158,7 @@ class Server
       backup_save_file = File.join(Servers.factorio_saves, filename)
       latest_save_file = self.latest_save_file
       FileUtils.cp_r(latest_save_file, backup_save_file)
-      LinkLogger.info(log_tag(:backup)) { "Backed up #{latest_save_file.inspect} to #{backup_save_file.inspect}" }
+      LinkLogger.info(log_tag(:backup)) { "Backed up #{latest_save_file.ai} to #{backup_save_file.ai}" }
     end
 
     rcon_command %(/server-save)

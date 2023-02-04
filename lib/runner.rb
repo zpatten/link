@@ -149,7 +149,7 @@ class Runner
     # Servers.select(&:container_alive?).each { |s| Runner.pool.post { s.start!(container: false) } }
     # Servers.select(&:container_alive?).each { |s| s.start!(container: false) }
     # Servers.select { |s| s.name == 'science' }.each { |s| s.start!(container: true) }
-    Servers.all.each { |s| s.start!(container: true) }
+    Servers.each { |s| s.start!(container: true) }
     start_thread_watchdog
   end
 
