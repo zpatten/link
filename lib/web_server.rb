@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
 require 'sinatra'
-# require 'sinatra-websocket'
 require 'sinatra/json'
 require 'sinatra/respond_with'
-# require 'sinatra/custom_logger'
 require 'puma'
 require 'haml'
 
