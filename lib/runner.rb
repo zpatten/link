@@ -182,17 +182,20 @@ class Runner
     @pool.shutdown
 
     puts "@pool.running?=#{@pool.running?.ai}"
-    threads = Thread.list
+    puts ("-" * 80)
+    threads = Thread.list.sort_by { |t| t.name || '-' }
     puts "Threads Running: #{threads.count}"
-    threads.each { |t| puts "Thread #{t.name}" }
+    threads.each { |t| puts "thread:#{t.name || '-'}" }
     while @pool.running? do
-      threads = Thread.list
+      puts ("-" * 80)
+      threads = Thread.list.sort_by { |t| t.name || '-' }
       puts "Threads Running: #{threads.count}"
-      threads.each { |t| puts "Thread #{t.name}" }
+      threads.each { |t| puts "thread:#{t.name || '-'}" }
       sleep 1
     end
 
     @pool.wait_for_termination(30)
+    puts Thread.list.count.ai
   end
 
 ################################################################################
