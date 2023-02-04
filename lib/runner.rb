@@ -3,13 +3,6 @@ require 'optparse'
 
 ################################################################################
 
-at_exit do
-  LinkLogger.fatal(:at_exit) { 'Shutting down!' }
-
-  Runner.stop!
-end
-
-################################################################################
 
 class Runner
 
@@ -28,7 +21,7 @@ class Runner
 
       op.on("-h", "--help", "Print this help") do
         puts op
-        exit
+        exit!
       end
 
       op.on("--start", "Start the Link") do
@@ -80,6 +73,8 @@ class Runner
     end
   end
 
+################################################################################
+
   def run!
     @parser.parse!(ARGV.dup)
 
@@ -88,6 +83,7 @@ class Runner
     end
 
     if @options[:start]
+
       if @options[:foreground]
         LinkLogger.info(:runner) { "Starting in foreground" }
         start!
@@ -101,7 +97,14 @@ class Runner
     end
   end
 
+################################################################################
+
   def trap_signals
+    at_exit do
+      LinkLogger.fatal(:at_exit) { 'Shutting down!' }
+      Runner.stop!
+    end
+
     TRAP_SIGNALS.each do |signal|
       Signal.trap(signal, 'EXIT')
     end
@@ -116,6 +119,7 @@ class Runner
     Metrics::Prometheus.configure!
 
     LinkLogger.info(:runner) { "Starting" }
+
     start_pool!
     start_threads!
 
@@ -129,10 +133,11 @@ class Runner
   end
 
   def stop!
+    LinkLogger.info(:runner) { "Stopping" }
+
     stop_threads!
     stop_pool!
 
-    LinkLogger.info(:runner) { "Stopping" }
     ItemTypes.save
     Storage.save
   end

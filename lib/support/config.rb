@@ -39,12 +39,11 @@ class Config
 ################################################################################
 
   def value(*keys)
-    config    = to_h
     cache_key = keys.flatten.compact.join('-')
     keys      = keys.map(&:to_s)
 
     value = Cache.fetch(cache_key) do
-      (config.dig(*keys) rescue nil)
+      (to_h.dig(*keys) rescue nil)
     end
 
     LinkLogger.debug(:config) { "keys=#{keys.ai}, value=#{value.ai}" }
@@ -53,13 +52,13 @@ class Config
   end
 
   def server(server, *keys)
-    config    = to_h
     cache_key = [server, *keys].flatten.compact.join('-')
     keys      = keys.map(&:to_s)
 
     value = Cache.fetch(cache_key) do
-      sv = (config.dig('servers', server.to_s, *keys) rescue nil)
-      mv = (config.dig(*keys) rescue nil)
+      config = to_h
+      sv     = (config.dig('servers', server.to_s, *keys) rescue nil)
+      mv     = (config.dig(*keys) rescue nil)
       (sv || mv)
     end
 
