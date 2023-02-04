@@ -11,3 +11,4 @@ gem 'pry', require: false
 gem 'puma', require: false
 gem 'sinatra', require: false
 gem 'sinatra-contrib', require: false
+gem 'httparty', require: false

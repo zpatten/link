@@ -92,6 +92,7 @@ class Runner
 
     start_pool!
     start_threads!
+    start_servers!
 
     LinkLogger.info(:runner) { "Link Started" }
     if defined?(WebServer)
@@ -105,6 +106,7 @@ class Runner
   def stop!
     LinkLogger.info(:runner) { "Stopping" }
 
+    stop_servers!
     stop_threads!
     stop_pool!
 
@@ -114,25 +116,32 @@ class Runner
 
 ################################################################################
 
+  def start_servers!
+    LinkLogger.info(:runner) { "Starting Servers" }
+    Servers.select(&:container_alive?).each { |s| s.start!(container: true) }
+  end
+
+  def stop_servers!
+    LinkLogger.info(:runner) { "Stopping Servers" }
+    Servers.stop!(container: false)
+  end
+
+################################################################################
+
   def start_threads!
     LinkLogger.info(:runner) { "Starting Threads" }
     schedule_task_mark
     schedule_task_prometheus
-    schedule_task_signals
     schedule_task_autosave
     schedule_task_backup
-    # Servers.select(&:container_alive?).each { |s| Runner.pool.post { s.start!(container: false) } }
-    # Servers.select(&:container_alive?).each { |s| s.start!(container: false) }
-    # Servers.select { |s| s.name == 'science' }.each { |s| s.start!(container: true) }
-    Servers.each { |s| s.start!(container: true) }
     schedule_task_watchdog
+    schedule_task_signals
   end
 
   def stop_threads!
     LinkLogger.info(:runner) { "Stopping Threads" }
     @origin and (@origin.resolved? or @origin.resolve)
-    sleep 3
-    Servers.stop!(container: false)
+    sleep (Config.value(:timeout, :thread) + 1)
   end
 
 ################################################################################
@@ -150,7 +159,7 @@ class Runner
   end
 
   def stop_pool!
-    @pool.kill
+    @pool.shutdown
 
     # puts "@pool.running?=#{@pool.running?.ai}"
     # puts ("-" * 80)

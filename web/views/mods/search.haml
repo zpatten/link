@@ -1,0 +1,36 @@
+%h1 Search Results
+
+%table.wide
+  %tr
+    %th &nbsp;
+    %th Title
+    %th Owner
+    %th Summary
+    %th Downloads
+  - result = @parsed_response['results']
+  - @parsed_response['results'].each do |result|
+    %tr
+      %td.one
+        %form{ method: :post, action: '/mods/search' }
+          %input{ type: 'hidden', name: 'name', value: result['name'] }
+          %input{ type: 'submit', value: 'Download' }
+      %td.align-left.one= result['title']
+      %td.align-left.one= result['owner']
+      %td.align-left.wrap= result['summary']
+      %td.one= result['downloads_count']
+- if @parsed_response['pagination']['count'] > 0
+  %table.wide
+  - unless @parsed_response['pagination']['links']['prev'].nil?
+    %tr
+      %td.align-left
+        %form{ method: :post, action: '/mods/search' }
+          %input{ type: 'hidden', name: 'name', value: @name }
+          %input{ type: 'hidden', name: 'page', value: @parsed_response['pagination']['page'] - 1 }
+          %input{ type: 'submit', value: 'Previous'}
+  - unless @parsed_response['pagination']['links']['next'].nil?
+    %tr
+      %td.align-right
+        %form{ method: :post, action: '/mods/search' }
+          %input{ type: 'hidden', name: 'name', value: @name }
+          %input{ type: 'hidden', name: 'page', value: @parsed_response['pagination']['page'] + 1 }
+          %input{ type: 'submit', value: 'Next'}

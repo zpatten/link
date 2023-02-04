@@ -21,6 +21,7 @@ require 'zlib'
 
 require 'awesome_print'
 require 'concurrent-edge'
+require 'httparty'
 
 ################################################################################
 

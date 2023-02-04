@@ -28,14 +28,14 @@ class WebServer < Sinatra::Application
 
   respond_to :html, :json
 
-  get "/" do
+  get '/' do
     respond_to do |f|
       f.json { :index }
       f.html { haml :index }
     end
   end
 
-  get "/storage" do
+  get '/storage' do
     # if !request.websocket?
       @storage = Storage.to_h
       @total_count = @storage.values.sum
@@ -53,11 +53,11 @@ class WebServer < Sinatra::Application
     # end
   end
 
-  get "/signals" do
+  get '/signals' do
     haml :signals, locals: { signals: Signals }
   end
 
-  get "/threads" do
+  get '/threads' do
     @threads = Thread.list.collect do |t|
       OpenStruct.new(
         pid: Process.pid,
@@ -72,20 +72,8 @@ class WebServer < Sinatra::Application
     haml :threads
   end
 
-  get "/servers" do
-    # if !request.websocket?
-      haml :servers
-    # else
-    #   request.websocket do |ws|
-    #     ws.onopen do
-    #       settings.server_sockets << ws
-    #     end
-
-    #     ws.onclose do
-    #       settings.server_sockets.delete(ws)
-    #     end
-    #   end
-    # end
+  get '/servers' do
+    haml :servers
   end
 
   get '/servers/start/:name' do
@@ -118,42 +106,54 @@ class WebServer < Sinatra::Application
     redirect '/servers'
   end
 
-  get "/servers/create" do
-    haml :"servers/create"
+  get '/servers/create' do
+    haml 'servers/create'.to_sym
   end
 
-  post "/servers/create" do
+  post '/servers/create' do
     Servers.create!(params)
-    redirect "/servers/start/#{params[:name]}"
+    redirect 'servers/start/#{params[:name]}'
   end
 
-  get "/servers/delete/:name" do
+  get '/servers/delete/:name' do
     Servers.delete!(params)
     redirect '/servers'
   end
 
-  get "/config" do
+  get '/config' do
     haml :config
   end
 
-  get "/log" do
-    stream(:keep_open) do |out|
-      settings.sockets << out
-      settings.sockets.reject!(&:closed?)
-    end
-    # if !request.websocket?
-    #   haml :log
-    # else
-    #   request.websocket do |ws|
-    #     ws.onopen do
-    #       settings.sockets << ws
-    #     end
-
-    #     ws.onclose do
-    #       settings.sockets.delete(ws)
-    #     end
-    #   end
-    # end
+  get '/mods' do
+    haml :mods
   end
+
+  post '/mods/search' do
+    query = {
+      query: {
+        hide_deprecated: false,
+        namelist: params[:name].strip,
+        sort_order: 'title',
+        sort: 'asc',
+        page: params[:page]
+      }.delete_if { |k,v| v.nil? || v == '' }
+    }
+    LinkLogger.info(:http) { "query=#{query.ai}" }
+    response         = HTTParty.get(Config.factorio_mod_url, query)
+    @name            = params[:name]
+    @parsed_response = response.parsed_response
+    haml 'mods/search'.to_sym
+  end
+
+  post '/mods/download' do
+    redirect '/mods'
+  end
+
+  # get 'log' do
+  #   stream(:keep_open) do |out|
+  #     settings.sockets << out
+  #     settings.sockets.reject!(&:closed?)
+  #   end
+  # end
 
 end
