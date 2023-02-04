@@ -180,6 +180,15 @@ class Runner
 
   def stop_pool!
     @pool.shutdown
+
+    puts "@pool.running?=#{@pool.running?.ai}"
+    while @pool.running? do
+      threads = Thread.list
+      puts "Threads Running: #{threads.count}"
+      threads.each { |t| puts "Thread #{t.name}" }
+      sleep 1
+    end
+
     @pool.wait_for_termination(30)
   end
 

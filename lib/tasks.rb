@@ -92,7 +92,10 @@ class Tasks
 ################################################################################
 
     def schedule(what:, pool: Runner.pool, cancellation: Runner.cancellation, server: nil, **options, &block)
-      return false unless !!Config.value(:scheduler, what)
+      unless !!Config.value(:tasks, what)
+        LinkLogger.warn(:tasks) { "Task #{what.ai} not configured!" }
+        return false
+      end
 
       server_tag, tag = tags(what: what, server: server)
 
