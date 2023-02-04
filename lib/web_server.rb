@@ -8,19 +8,14 @@ require 'puma'
 require 'haml'
 
 class WebServer < Sinatra::Application
-  # helpers Sinatra::CustomLogger
-
-  set :server, :puma
-  set :port, 4242
-  set :bind, "0.0.0.0"
-  set :threaded, true
-
-  set :server_settings, :timeout => (10 * 60)
-
-  set :views, File.join(LINK_ROOT, "web", "views")
-  set :public_folder, File.join(LINK_ROOT, "web", "static")
-
+  set :bind, '0.0.0.0'
   set :haml, :format => :html5
+  set :port, 4242
+  set :public_folder, File.join(LINK_ROOT, 'web', 'static')
+  set :server, :puma
+  set :server_settings, :timeout => (10 * 60)
+  set :threaded, true
+  set :views, File.join(LINK_ROOT, 'web', 'views')
 
   respond_to :html, :json
 
