@@ -80,7 +80,6 @@ module Metrics
         job: PROGRAM_NAME,
         gateway: 'http://tatooine.lan:9091',
         grouping_key: { hostname: 'zara' }
-          #Socket.gethostname }
      ).replace(@prometheus)
     end
 
