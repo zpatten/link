@@ -70,24 +70,9 @@ class Server
 
 ################################################################################
 
-  def update_websocket
-    WebServer.settings.server_sockets.each do |s|
-      s.send({
-        name: @name,
-        authenticated: authenticated?,
-        available: available?,
-        connected: connected?,
-        container: container_alive?,
-        responsive: responsive?,
-        rtt: @rtt.nil? ? '-' : "#{@rtt} ms"
-      }.to_json)
-    end
-  end
-
   def update_rtt(value)
     @pinged_at = Time.now.to_f
     @rtt       = value
-    update_websocket if defined?(WebServer)
     @rtt
   end
 

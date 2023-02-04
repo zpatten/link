@@ -50,14 +50,7 @@ class LinkLogger < Logger
       message = if self.level == Logger::DEBUG
         DebugFormat % [severity[0..0], datetime, progname, msg, caller_name]
       else
-        DebugFormat % [severity[0..0], datetime, progname, msg, caller_name]
-        # InfoFormat % [severity[0..0], datetime, progname, msg]
-      end
-
-      if defined?(WebServer)
-        WebServer.settings.sockets.each do |s|
-          s.write(message) unless s.closed?
-        end
+        InfoFormat % [severity[0..0], datetime, progname, msg]
       end
 
       message

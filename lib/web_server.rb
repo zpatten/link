@@ -13,11 +13,7 @@ class WebServer < Sinatra::Application
   set :server, :puma
   set :port, 4242
   set :bind, "0.0.0.0"
-  set :sockets, []
   set :threaded, true
-
-  set :storage_sockets, []
-  set :server_sockets, []
 
   set :server_settings, :timeout => (10 * 60)
 
@@ -36,21 +32,9 @@ class WebServer < Sinatra::Application
   end
 
   get '/storage' do
-    # if !request.websocket?
-      @storage = Storage.to_h
-      @total_count = @storage.values.sum
-      haml :storage
-    # else
-    #   request.websocket do |ws|
-    #     ws.onopen do
-    #       settings.storage_sockets << ws
-    #     end
-
-    #     ws.onclose do
-    #       settings.storage_sockets.delete(ws)
-    #     end
-    #   end
-    # end
+    @storage = Storage.to_h
+    @total_count = @storage.values.sum
+    haml :storage
   end
 
   get '/signals' do
@@ -164,12 +148,5 @@ class WebServer < Sinatra::Application
     LinkLogger.info(:http) { "Downloaded #{filename.ai} (#{countsize(File.size(filename)).ai})" }
     redirect '/mods'
   end
-
-  # get 'log' do
-  #   stream(:keep_open) do |out|
-  #     settings.sockets << out
-  #     settings.sockets.reject!(&:closed?)
-  #   end
-  # end
 
 end
