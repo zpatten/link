@@ -13,7 +13,7 @@ class Config
       @config[key] = value
     end
 
-    LinkLogger.info(:config) { "Loaded Config" }
+    LinkLogger.info(:config) { "Loaded Config: #{filename.ai}" }
     LinkLogger.debug(:config) { to_h.ai }
   end
 

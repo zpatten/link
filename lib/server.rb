@@ -212,7 +212,7 @@ class Server
     LinkLogger.info(log_tag(:pool)) { "Thread Pool Shutting Down" }
     @pool.shutdown
     LinkLogger.info(log_tag(:pool)) { "Waiting for Thread Pool Termination" }
-    @pool.wait_for_termination
+    @pool.wait_for_termination(Config.value(:timeout, :pool))
     LinkLogger.info(log_tag(:pool)) { "Thread Pool Shutdown Complete" }
 
     true

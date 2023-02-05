@@ -13,7 +13,7 @@ class ItemTypes
       @item_types[item_name] = item_type
     end
 
-    LinkLogger.info(:item_types) { "Loaded Item Types" }
+    LinkLogger.info(:item_types) { "Loaded Item Types: #{filename.ai}" }
     LinkLogger.debug(:item_types) { @item_types.ai }
   end
 

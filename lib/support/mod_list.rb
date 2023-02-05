@@ -7,13 +7,9 @@ class ModList
 ################################################################################
 
   def initialize
-    @mod_list = Concurrent::Map.new
-    @mod_list = (JSON.parse(IO.read(filename).strip) rescue Concurrent::Map.new)
-    # mod_list.each do |key, mod|
-    #   @mod_list[key] = mod
-    # end
+    @mod_list = (JSON.parse(IO.read(filename).strip) rescue Hash.new)
 
-    LinkLogger.info(:mod_list) { "Loaded Mod List" }
+    LinkLogger.info(:mod_list) { "Loaded Mod List: #{filename.ai}" }
     LinkLogger.debug(:mod_list) { @mod_list.ai }
   end
 
@@ -24,8 +20,8 @@ class ModList
   end
 
   def save
-    IO.write(filename, JSON.pretty_generate(to_h.sort.to_h))
-    LinkLogger.info(:mod_list) { "Saved Mod List" }
+    IO.write(filename, "\n"+JSON.pretty_generate(to_h.sort.to_h)+"\n")
+    LinkLogger.info(:mod_list) { "Saved Mod List: #{filename.ai}" }
 
     true
   end

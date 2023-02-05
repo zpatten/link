@@ -150,7 +150,7 @@ class WebServer < Sinatra::Application
     filename = File.join(Servers.factorio_mods, params[:file_name])
     LinkLogger.info(:http) { "Downloading #{filename.ai}" }
     File.open(filename, 'wb') do |file|
-      HTTParty.get(Config.factorio_mod_url+params[:download_url], stream_body: true) do |data|
+      HTTParty.get(Config.factorio_mod_url+params[:download_url], stream_body: true, follow_redirects: true) do |data|
         file.write(data)
       end
     end

@@ -13,7 +13,7 @@ class Storage
       @storage[item_name] = item_count
     end
 
-    LinkLogger.info(:storage) { "Loaded Storage" }
+    LinkLogger.info(:storage) { "Loaded Storage: #{filename.ai}" }
     LinkLogger.debug(:storage) { @storage.ai }
   end
 

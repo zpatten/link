@@ -176,7 +176,7 @@ class Runner
     #   sleep 1
     # end
 
-    @pool.wait_for_termination(30)
+    @pool.wait_for_termination(Config.value(:timeout, :pool))
     puts Thread.list.count.ai
   end
 

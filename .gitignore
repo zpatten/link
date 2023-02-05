@@ -1,6 +1,7 @@
 config.json*
 item_types.json*
 storage.json*
+credentials.json*
 *.log
 *.pid
 

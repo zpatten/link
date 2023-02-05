@@ -75,9 +75,12 @@ class LinkLogger < Logger
     # end
 
     @@logger ||= LinkLogger.new(LOGFILE)
+    @@mutex ||= Mutex.new
 
     def method_missing(method_name, *method_args, &block)
-      @@logger.send(method_name, *method_args, &block)
+      @@mutex.synchronize do
+        @@logger.send(method_name, *method_args, &block)
+      end
     end
   end
 
