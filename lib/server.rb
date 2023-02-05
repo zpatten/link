@@ -156,14 +156,13 @@ class Server
   def start!(container: true)
     LinkLogger.info(log_tag) { "Start Server (container: #{container.ai})" }
 
-    # return if @pool && @pool.running?
-
     start_container! if container
+    sleep 0.25 while container_dead?
     start_pool!
     start_rcon!
-    # sleep 1 while unavailable?
+    sleep 0.25 while unauthenticated?
     start_threads!
-
+    sleep 0.25 while unavailable?
     @watch = true
 
     true
@@ -173,11 +172,13 @@ class Server
     LinkLogger.info(log_tag) { "Stop Server (container: #{container.ai})" }
 
     @watch = false
-
     stop_threads!
     stop_rcon!
     stop_pool!
-    stop_container! if container
+    if container
+      stop_container!
+      sleep 0.25 while container_alive?
+    end
 
     true
   end
@@ -256,6 +257,13 @@ class Server
   def start_container!
     return false if container_alive?
 
+    LinkLogger.info(log_tag(:container)) { "Syncing Factorio Mods for Server" }
+
+    filepath  = File.expand_path(File.join(self.mods_path, '*.zip'))
+    mod_files = Dir.glob(filepath, File::FNM_CASEFOLD)
+    mod_files.each do |mod_file|
+      FileUtils.rm_f(mod_file)
+    end
     FileUtils.cp_r(Servers.factorio_mods, self.path)
 
     run_command(@name,
@@ -337,7 +345,7 @@ class Server
 ################################################################################
 
   def unresponsive?
-    container_dead? || ((@pinged_at + @ping_timeout) < Time.now.to_f)
+    ((@pinged_at + @ping_timeout) < Time.now.to_f)
   end
 
   def responsive?
@@ -347,7 +355,7 @@ class Server
 ################################################################################
 
   def connected?
-    container_alive? && (@rcon && @rcon.connected?)
+    (@rcon && @rcon.connected?)
   end
 
   def disconnected?
@@ -357,7 +365,7 @@ class Server
 ################################################################################
 
   def authenticated?
-    container_alive? && (@rcon && @rcon.authenticated?)
+    (@rcon && @rcon.authenticated?)
   end
 
   def unauthenticated?
@@ -367,7 +375,7 @@ class Server
 ################################################################################
 
   def available?
-    container_alive? && (@rcon && @rcon.available?)
+    (@rcon && @rcon.available?)
   end
 
   def unavailable?

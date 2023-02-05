@@ -62,10 +62,11 @@ class LinkLogger < Logger
 ################################################################################
 
   module ClassMethods
-    LOGFILE = File.join(LINK_ROOT, 'link.log')
+    LOGFILE = STDOUT
 
-    FileUtils.touch(LOGFILE)
-    File.truncate(LOGFILE, 0)
+    # LOGFILE = File.join(LINK_ROOT, 'link.log')
+    # FileUtils.touch(LOGFILE)
+    # File.truncate(LOGFILE, 0)
 
     # @@logger ||= begin
     #   multi_logger = MultiLogger.new

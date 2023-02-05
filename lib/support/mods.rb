@@ -146,7 +146,7 @@ class Mods
       filesize = File.size(filename)
 
       LinkLogger.warn(:mods) { "Deleting Mod #{filename.ai} (#{countsize(filesize).ai})" }
-      FileUtils.rm(filename, force: true)
+      FileUtils.rm_f(filename)
       LinkLogger.warn(:mods) { "Deleted Mod #{filename.ai} (#{countsize(filesize).ai})" }
 
       true

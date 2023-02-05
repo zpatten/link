@@ -187,7 +187,7 @@ class Servers
       delete_save_files.each do |delete_save_file|
         LinkLogger.warn(:servers) { "Trimming save file #{File.basename(delete_save_file).ai}" }
       end
-      FileUtils.rm(delete_save_files, force: true)
+      FileUtils.rm_f(delete_save_files)
     end
 
     true
@@ -327,9 +327,6 @@ class Servers
 
     server_adminlist_path = File.join(server.config_path, 'server-adminlist.json')
     IO.write(server_adminlist_path, JSON.pretty_generate(Config.server(server.name, :admins)))
-
-    FileUtils.rm_r(server.mods_path)
-    FileUtils.cp_r(factorio_mods, server.path)
 
     Config['servers'] ||= Hash.new
     Config['servers'].merge!(server.to_h)
