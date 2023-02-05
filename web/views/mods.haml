@@ -16,26 +16,26 @@
     %th Search
     %th View
     %th Files
-  - Mods.names.each do |mod_name|
+  - Factorio::Mods.names.each do |mod_name|
     %tr
       %td.align-right
         = mod_name
       %td
-        - if Mods.enabled?(mod_name)
+        - if Factorio::Mods.enabled?(mod_name)
           ENABLED
       %td
-        %form{ method: :post, action: "/mods/#{Mods.enabled?(mod_name) ? 'disable' : 'enable'}" }
+        %form{ method: :post, action: "/mods/#{Factorio::Mods.enabled?(mod_name) ? 'disable' : 'enable'}" }
           %input{ type: 'hidden', name: 'name', value: mod_name }
-          %input{ type: 'submit', value: Mods.enabled?(mod_name) ? 'Disable' : 'Enable' }
+          %input{ type: 'submit', value: Factorio::Mods.enabled?(mod_name) ? 'Disable' : 'Enable' }
       %td
         %form{ method: :post, action: '/mods/search' }
           %input{ type: 'hidden', name: 'name', value: mod_name }
           %input{ type: 'submit', value: 'Search' }
       %td
-        %a{ href: Mods.mod_portal_uri(mod_name), target: '_blank' } View
+        %a{ href: Factorio::Mods.mod_portal_uri(mod_name), target: '_blank' } View
       %td
         %table
-          - Mods.files.select { |f| f[:name] == mod_name }.each do |mod|
+          - Factorio::Mods.files.select { |f| f[:name] == mod_name }.each do |mod|
             %tr
               %td
                 %form{ method: :post, action: '/mods/delete' }
@@ -53,7 +53,7 @@
     %th.align-left Filename
     %th.align-left File Size
     %th.align-left Timestamp
-  - Mods.files.each do |mod|
+  - Factorio::Mods.files.each do |mod|
     %tr
       %td
         %form{ method: :post, action: '/mods/delete' }

@@ -113,7 +113,7 @@ class Runner
     stop_pool!
 
     ItemTypes.save
-    Storage.save
+    Factorio::Storage.save
   end
 
 ################################################################################

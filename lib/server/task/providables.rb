@@ -9,7 +9,7 @@ class Server
           command = %(remote.call('link', 'get_providables'))
           rcon_handler(what: :get_providables, command: command) do |providables|
             # LinkLogger.debug(@name) { "[LOGISTICS] providables: #{providables.ai}" }
-            Storage.bulk_add(providables)
+            Factorio::Storage.bulk_add(providables)
             providables.each do |item_name, item_count|
               Metrics::Prometheus[:providable_items_total].observe(item_count,
                 labels: { server: self.name, item_name: item_name, item_type: ItemTypes[item_name] })

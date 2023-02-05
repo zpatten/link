@@ -11,7 +11,7 @@ class Server
           network_ids = unit_network_list.values.map(&:keys).flatten.uniq.sort
           LinkLogger.debug(:combinator_tx) { "[#{self.name}] Received signals for circuit networks: #{network_ids.ai}" }
           # signals received from transmitters
-          ::Signals.rx(unit_network_list, server_id: self.network_id)
+          Factorio::Signals.rx(unit_network_list, server_id: self.network_id)
           @tx_signals_initalized = true
         else
           LinkLogger.debug(:combinator_tx) { "[#{self.name}] NOOP" }
@@ -25,7 +25,7 @@ class Server
         networks = Hash.new
         network_ids.each do |network_id|
           # signals to transmit to receivers
-          network_signals = ::Signals.tx(network_id, server_id: self.network_id, force: force)
+          network_signals = Factorio::Signals.tx(network_id, server_id: self.network_id, force: force)
           unless network_signals.nil? || network_signals.empty?
             networks[network_id] = network_signals
           end

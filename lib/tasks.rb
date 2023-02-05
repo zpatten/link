@@ -166,19 +166,19 @@ end
 def schedule_task_backup
   Tasks.schedule(what: :backup) do
     ItemTypes.save
-    Storage.save
+    Factorio::Storage.save
   end
 end
 
 def schedule_task_signals
   Tasks.schedule(what: :signals) do
-    Signals.update_inventory_signals
+    Factorio::Signals.update_inventory_signals
   end
 end
 
 def schedule_task_prometheus
   Tasks.schedule(what: :prometheus) do
-    Storage.metrics_handler
+    Factorio::Storage.metrics_handler
 
     Metrics::Prometheus.push
   end

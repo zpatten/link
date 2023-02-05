@@ -20,7 +20,7 @@ class Logistics
       @item_totals.merge!(item_counts) { |k,o,n| o + n }
     end
 
-    removed_items = Storage.bulk_remove(@item_totals)
+    removed_items = Factorio::Storage.bulk_remove(@item_totals)
     @removed_item_totals = removed_items
 
     @obtained_all_requested_items ||= @item_totals.all? do |k,v|
@@ -126,7 +126,7 @@ class Logistics
     end
 
     if !can_fulfill_all? && @removed_item_totals.values.any? { |v| v > 0 }
-      Storage.bulk_add(@removed_item_totals)
+      Factorio::Storage.bulk_add(@removed_item_totals)
 
       LinkLogger.debug(@server.name) { "[LOGISTICS] Overflow Items: #{@removed_item_totals.ai}" }
 

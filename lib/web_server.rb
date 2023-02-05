@@ -27,13 +27,13 @@ class WebServer < Sinatra::Application
   end
 
   get '/storage' do
-    @storage = Storage.to_h
+    @storage = Factorio::Storage.to_h
     @total_count = @storage.values.sum
     haml :storage
   end
 
   get '/signals' do
-    haml :signals, locals: { signals: Signals }
+    haml :signals, locals: { signals: Factorio::Signals }
   end
 
   get '/threads' do
@@ -108,36 +108,36 @@ class WebServer < Sinatra::Application
   end
 
   post '/mods/enable' do
-    Mods.enable(params[:name])
-    Mods.save
+    Factorio::Mods.enable(params[:name])
+    Factorio::Mods.save
     redirect '/mods'
   end
 
   post '/mods/disable' do
-    Mods.disable(params[:name])
-    Mods.save
+    Factorio::Mods.disable(params[:name])
+    Factorio::Mods.save
     redirect '/mods'
   end
 
   post '/mods/search' do
     @name            = params[:name]
-    @parsed_response = Mods.search(name: params[:name], page: params[:page])
+    @parsed_response = Factorio::Mods.search(name: params[:name], page: params[:page])
     haml 'mods/search'.to_sym
   end
 
   post '/mods/download' do
-    Mods.download(
+    Factorio::Mods.download(
       file_name: params[:file_name],
       download_url: params[:download_url],
       released_at: params[:released_at]
     )
-    Mods.save
+    Factorio::Mods.save
     redirect '/mods'
   end
 
   post '/mods/delete' do
-    Mods.delete(params[:filename])
-    Mods.save
+    Factorio::Mods.delete(params[:filename])
+    Factorio::Mods.save
     redirect '/mods'
   end
 
