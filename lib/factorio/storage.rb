@@ -96,7 +96,7 @@ module Factorio
     def metrics_handler
       @storage.each do |item_name, item_count|
         Metrics::Prometheus[:storage_items_total].set(item_count,
-          labels: { item_name: item_name, item_type: ItemTypes[item_name] })
+          labels: { item_name: item_name, item_type: Factorio::ItemTypes[item_name] })
       end
 
       true
