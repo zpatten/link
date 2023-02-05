@@ -44,6 +44,8 @@ TRAP_SIGNALS = (RUBY_ENGINE == 'ruby' ? %w( INT TERM QUIT ) : %w( INT TERM ))
 ################################################################################
 
 require_relative 'lib/support'
+
+require_relative 'lib/factorio'
 require_relative 'lib/metrics'
 require_relative 'lib/runner'
 require_relative 'lib/server'
