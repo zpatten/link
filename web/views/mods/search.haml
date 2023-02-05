@@ -42,6 +42,7 @@
               %input{ type: 'hidden', name: 'name', value: result['name'] }
               %input{ type: 'hidden', name: 'download_url', value: release['download_url'] }
               %input{ type: 'hidden', name: 'file_name', value: release['file_name'] }
+              %input{ type: 'hidden', name: 'released_at', value: release['released_at'] }
               %input{ type: 'submit', value: 'Download' }
           %td.align-left.one= release['file_name']
           %td.align-left.one= release['info_json']

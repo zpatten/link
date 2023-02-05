@@ -104,8 +104,6 @@ class WebServer < Sinatra::Application
   end
 
   get '/mods' do
-    @mods = Mods.files
-    @mod_names = Mods.names
     haml :mods
   end
 
@@ -128,12 +126,18 @@ class WebServer < Sinatra::Application
   end
 
   post '/mods/download' do
-    Mods.download(file_name: params[:file_name], download_url: params[:download_url])
+    Mods.download(
+      file_name: params[:file_name],
+      download_url: params[:download_url],
+      released_at: params[:released_at]
+    )
+    Mods.save
     redirect '/mods'
   end
 
   post '/mods/delete' do
     Mods.delete(params[:filename])
+    Mods.save
     redirect '/mods'
   end
 

@@ -21,8 +21,20 @@ class Mods
   end
 
   def save
+    @mod_entries.keep_if do |mod_entry|
+      if mod_entry['name'] == 'base'
+        true
+      elsif !(file = files.find { |f| f[:file].include?(mod_entry['name']) }).nil?
+        filename = File.expand_path(File.join(Servers.factorio_mods, file[:file]))
+        result = File.exist?(filename)
+      else
+        false
+      end
+    end
     @mod_entries.sort_by! { |mod_entry| mod_entry['name'].downcase }
+
     IO.write(filename, JSON.pretty_generate(@mod_list)+"\n")
+
     LinkLogger.info(:mods) { "Saved Mod List: #{filename.ai}" }
 
     true
@@ -101,7 +113,7 @@ class Mods
     response.parsed_response
   end
 
-  def download(file_name:, download_url:)
+  def download(file_name:, download_url:, released_at:)
     options = {
       stream_body: true,
       follow_redirects: true
@@ -117,6 +129,8 @@ class Mods
         file.write(fragment) if fragment.code == 200
       end
     end
+    timestamp = DateTime.parse(released_at)
+    File.utime(timestamp, timestamp, filename)
 
     LinkLogger.info(:mods) { "Downloaded Mod #{filename.ai} (#{countsize(File.size(filename)).ai})" }
 
@@ -124,7 +138,7 @@ class Mods
   end
 
   def delete(filename)
-    filename = File.expand_path(File.join(Config.factorio_mods, filename))
+    filename = File.expand_path(File.join(Servers.factorio_mods, filename))
 
     if File.exist?(filename)
       filesize = File.size(filename)
@@ -155,7 +169,7 @@ class Mods
   end
 
   def mod_portal_uri(name)
-    URI::HTTPS.build(host: Config.factorio_mod_host, path: "/mods/#{URI.escape(name)}")
+    URI::HTTPS.build(host: Config.factorio_mod_host, path: "/mod/#{URI.escape(name)}")
   end
 
 ################################################################################
