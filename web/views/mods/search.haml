@@ -1,5 +1,9 @@
-%h1 Search Results
+%h1 Factorio Mod Portal Search Results
 
+/ %pre.wrap
+/   = @parsed_response['results']
+/ %pre
+/   != haml :config_kv, locals: { config: @parsed_response, ident: 0 }
 %table.wide
   %tr
     %th &nbsp;
@@ -8,23 +12,42 @@
     %th Owner
     %th Summary
     %th Downloads
-  - result = @parsed_response['results']
-  - @parsed_response['results'].each do |result|
+    %th Category
+    %th Score
+  - results = @parsed_response['results']
+  - results.each do |result|
     - latest_release = result['releases'].sort_by { |r| r['released_at'] }.reverse.first
     %tr
       %td.one
-        %form{ method: :post, action: '/mods/download' }
-          %input{ type: 'hidden', name: 'name', value: result['name'] }
-          %input{ type: 'hidden', name: 'download_url', value: latest_release['download_url'] }
-          %input{ type: 'hidden', name: 'file_name', value: latest_release['file_name'] }
-          %input{ type: 'submit', value: 'Download' }
-          |
-          %a{ href: Config.factorio_mod_url+'/mod/'+result['name'], target: '_blank' } View
+        %a{ href: Config.factorio_mod_url+'/mod/'+result['name'], target: '_blank' } View
       %td.align-left.one= result['name']
       %td.align-left.one= result['title']
       %td.align-left.one= result['owner']
       %td.align-left.wrap= result['summary']
       %td.one= result['downloads_count']
+      %td.one= result['category']
+      %td.one= result['score'].to_f.round(1)
+    %table.wide
+      %tr
+        %th &nbsp;
+        %th File Name
+        %th Info JSON
+        %th Released At
+        %th Version
+        %th SHA1
+      - result['releases'].sort_by { |r| r['released_at'] }.reverse.each do |release|
+        %tr
+          %td.one
+            %form{ method: :post, action: '/mods/download' }
+              %input{ type: 'hidden', name: 'name', value: result['name'] }
+              %input{ type: 'hidden', name: 'download_url', value: release['download_url'] }
+              %input{ type: 'hidden', name: 'file_name', value: release['file_name'] }
+              %input{ type: 'submit', value: 'Download' }
+          %td.align-left.one= release['file_name']
+          %td.align-left.one= release['info_json']
+          %td.align-left.wrap= release['released_at']
+          %td.one= release['version']
+          %td.one= release['sha1']
 - if @parsed_response['pagination']['count'] > 0
   %table.wide
   - unless @parsed_response['pagination']['links']['prev'].nil?
