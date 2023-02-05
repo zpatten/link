@@ -164,8 +164,8 @@ module Factorio
 
     def mod_portal_download_uri(download_url)
       query = Array.new
-      query << "username=#{Credentials.username}"
-      query << "token=#{Credentials.token}"
+      query << "username=#{Factorio::Credentials.username}"
+      query << "token=#{Factorio::Credentials.token}"
       query = query.join('&')
 
       URI::HTTPS.build(host: Config.factorio_mod_host, path: download_url, query: URI.escape(query))

@@ -112,7 +112,7 @@ class Runner
     stop_tasks!
     stop_pool!
 
-    ItemTypes.save
+    Factorio::ItemTypes.save
     Factorio::Storage.save
   end
 

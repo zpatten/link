@@ -165,7 +165,7 @@ end
 
 def schedule_task_backup
   Tasks.schedule(what: :backup) do
-    ItemTypes.save
+    Factorio::ItemTypes.save
     Factorio::Storage.save
   end
 end
