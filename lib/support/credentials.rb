@@ -20,7 +20,7 @@ class Credentials
   end
 
   def save
-    IO.write(filename, JSON.pretty_generate(to_h.sort.to_h))
+    IO.write(filename, JSON.pretty_generate(to_h.sort.to_h)+"\n")
     LinkLogger.info(:credentials) { "Saved Credentials: #{filename.ai}" }
 
     true

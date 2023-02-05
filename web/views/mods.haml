@@ -1,37 +1,41 @@
 %h1 Mods
-%form{ method: :post, action: '/mods/search' }
-  %p
-    %label Search for Factorio Mod Name:
-    %input{ type: 'text', name: 'name' }
-  %input{ type: 'submit'}
 %table.fleft
   %tr
-    %th Toggle
+    %td
+      %form{ method: :post, action: '/mods/search' }
+        %p
+          %label Search Factorio Mod Portal:
+          %input{ type: 'text', name: 'name' }
+        %input{ type: 'submit'}
+%table.fleft
+  %tr
+    %th.align-right Name
     %th Enabled?
+    %th Toggle
     %th Search
-    %th.align-left Name
-  - ModList.names.each do |mod_name|
+    %th View
+  - Mods.names.each do |mod_name|
     %tr
+      %td.align-right
+        = mod_name
       %td
-        %form{ method: :post, action: "/mods/#{ModList.enabled?(mod_name) ? 'disable' : 'enable'}" }
-          %input{ type: 'hidden', name: 'name', value: mod_name }
-          %input{ type: 'submit', value: ModList.enabled?(mod_name) ? 'Disable' : 'Enable' }
-      %td
-        - if ModList.enabled?(mod_name)
+        - if Mods.enabled?(mod_name)
           ENABLED
+      %td
+        %form{ method: :post, action: "/mods/#{Mods.enabled?(mod_name) ? 'disable' : 'enable'}" }
+          %input{ type: 'hidden', name: 'name', value: mod_name }
+          %input{ type: 'submit', value: Mods.enabled?(mod_name) ? 'Disable' : 'Enable' }
       %td
         %form{ method: :post, action: '/mods/search' }
           %input{ type: 'hidden', name: 'name', value: mod_name }
           %input{ type: 'submit', value: 'Search' }
-      %td.align-left
-        = mod_name
-        |
+      %td
         %a{ href: Config.factorio_mod_url+'/mod/'+mod_name, target: '_blank' } View
 %table.fleft
   %tr
     %th.align-left Filename
     %th.align-left File Timestamp
-  - ModList.files.each do |mod|
+  - Mods.files.each do |mod|
     %tr
       %td.align-left
         = mod[:file]

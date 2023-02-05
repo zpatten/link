@@ -91,7 +91,7 @@ class WebServer < Sinatra::Application
 
   post '/servers/create' do
     Servers.create!(params)
-    redirect 'servers/start/#{params[:name]}'
+    redirect "servers/start/#{params[:name]}"
   end
 
   get '/servers/delete/:name' do
@@ -104,28 +104,20 @@ class WebServer < Sinatra::Application
   end
 
   get '/mods' do
-    mod_files = Dir.glob(File.join(Servers.factorio_mods, '*.zip'), File::FNM_CASEFOLD)
-    @mods = mod_files.collect do |mod_file|
-      {
-        name: File.basename(mod_file).split('_')[0..-2].join('_'),
-        file: File.basename(mod_file),
-        size: File.size(mod_file),
-        time: File.mtime(mod_file)
-      }
-    end.sort_by { |mod_file| mod_file[:file] }
-    @mod_names = (%w( base ) + @mods.collect { |m| m[:name] }.uniq).sort_by { |m| m.downcase }
+    @mods = Mods.files
+    @mod_names = Mods.names
     haml :mods
   end
 
   post '/mods/enable' do
-    ModList.enable(params[:name])
-    ModList.save
+    Mods.enable(params[:name])
+    Mods.save
     redirect '/mods'
   end
 
   post '/mods/disable' do
-    ModList.disable(params[:name])
-    ModList.save
+    Mods.disable(params[:name])
+    Mods.save
     redirect '/mods'
   end
 
@@ -161,8 +153,8 @@ class WebServer < Sinatra::Application
       LinkLogger.info(:http) { "options=#{options.ai}" }
       url = Config.factorio_mod_url+params[:download_url]+"?username=#{Credentials.username}&token=#{Credentials.token}"
       LinkLogger.info(:http) { "url=#{url.ai}" }
-      HTTParty.get(url, stream_body: true, follow_redirects: true, verify: false) do |data|
-        file.write(data)
+      HTTParty.get(url, stream_body: true, follow_redirects: true, verify: false) do |fragment|
+        file.write(fragment) if fragment.code == 200
       end
     end
     LinkLogger.info(:http) { "Downloaded #{filename.ai} (#{countsize(File.size(filename)).ai})" }

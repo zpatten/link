@@ -7,7 +7,7 @@ require_relative 'support/config'
 require_relative 'support/credentials'
 require_relative 'support/item_type'
 require_relative 'support/logistics'
-require_relative 'support/mod_list'
+require_relative 'support/mods'
 require_relative 'support/signals'
 require_relative 'support/storage'
 

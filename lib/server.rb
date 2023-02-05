@@ -156,9 +156,12 @@ class Server
   def start!(container: true)
     LinkLogger.info(log_tag) { "Start Server (container: #{container.ai})" }
 
+    return if available?
+
     start_container! if container
-    start_pool! unless @pool and @pool.running?
+    start_pool!
     start_rcon!
+    sleep 1 while unavailable?
     start_threads!
 
     @watch = true
@@ -168,6 +171,8 @@ class Server
 
   def stop!(container: true)
     LinkLogger.info(log_tag) { "Stop Server (container: #{container.ai})" }
+
+    return if unavailable?
 
     @watch = false
 
@@ -192,7 +197,8 @@ class Server
 ################################################################################
 
   def start_pool!
-    raise "Existing thread pool is still running!" if @pool && @pool.running?
+    return false if @pool && @pool.running?
+
     LinkLogger.info(log_tag(:pool)) { "Starting Thread Pool" }
     @pool = THREAD_EXECUTOR.new(
       name: @name.downcase,
@@ -209,6 +215,8 @@ class Server
   end
 
   def stop_pool!
+    return false if @pool && @pool.shutdown?
+
     LinkLogger.info(log_tag(:pool)) { "Thread Pool Shutting Down" }
     @pool.shutdown
     LinkLogger.info(log_tag(:pool)) { "Waiting for Thread Pool Termination" }
@@ -221,6 +229,8 @@ class Server
 ################################################################################
 
   def start_threads!
+    return false if @origin.resolved?
+
     schedule_task_ping
     schedule_task_id
     schedule_task_research_current
@@ -235,6 +245,8 @@ class Server
   end
 
   def stop_threads!
+    return false if @origin.resolved?
+
     @origin and (@origin.resolved? or @origin.resolve)
     sleep (Config.value(:timeout, :thread) + 1)
 
@@ -244,7 +256,7 @@ class Server
 ################################################################################
 
   def start_container!
-    return true if container_alive?
+    return false if container_alive?
 
     FileUtils.cp_r(Servers.factorio_mods, self.path)
 
@@ -276,7 +288,7 @@ class Server
   end
 
   def stop_container!
-    return true if container_dead?
+    return false if container_dead?
 
     run_command(@name,
       %(docker stop),
@@ -306,6 +318,7 @@ class Server
 
   def start_rcon!
     sleep 1 until container_alive?
+
     @pinged_at = Time.now.to_f
 
     @rcon = RConPool.new(server: self)
@@ -326,7 +339,7 @@ class Server
 ################################################################################
 
   def unresponsive?
-    ((@pinged_at + @ping_timeout) < Time.now.to_f)
+    container_dead? || ((@pinged_at + @ping_timeout) < Time.now.to_f)
   end
 
   def responsive?
@@ -336,7 +349,7 @@ class Server
 ################################################################################
 
   def connected?
-    @rcon && @rcon.connected?
+    container_alive? && (@rcon && @rcon.connected?)
   end
 
   def disconnected?
@@ -346,7 +359,7 @@ class Server
 ################################################################################
 
   def authenticated?
-    @rcon && @rcon.authenticated?
+    container_alive? && (@rcon && @rcon.authenticated?)
   end
 
   def unauthenticated?
@@ -356,7 +369,7 @@ class Server
 ################################################################################
 
   def available?
-    @rcon && @rcon.available?
+    container_alive? && (@rcon && @rcon.available?) && responsive?
   end
 
   def unavailable?

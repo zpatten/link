@@ -1,4 +1,7 @@
 %h1 Config
 
-%pre
-  != haml :config_kv, locals: { config: Config.to_h.sort.to_h, ident: 0 }
+%table.fleft
+  %tr
+    %td.align-left
+      %pre
+        != haml :config_kv, locals: { config: Config.to_h.sort.to_h, ident: 0 }

@@ -24,7 +24,7 @@ class ItemTypes
   end
 
   def save
-    IO.write(filename, JSON.pretty_generate(to_h.sort.to_h))
+    IO.write(filename, JSON.pretty_generate(to_h.sort.to_h)+"\n")
     LinkLogger.info(:item_types) { "Saved Item Types" }
 
     true
