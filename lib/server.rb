@@ -161,7 +161,7 @@ class Server
     start_container! if container
     start_pool!
     start_rcon!
-    sleep 1 while unavailable?
+    # sleep 1 while unavailable?
     start_threads!
 
     @watch = true
@@ -369,7 +369,7 @@ class Server
 ################################################################################
 
   def available?
-    container_alive? && (@rcon && @rcon.available?) && responsive?
+    container_alive? && (@rcon && @rcon.available?)
   end
 
   def unavailable?

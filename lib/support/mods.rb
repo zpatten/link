@@ -36,7 +36,7 @@ class Mods
       }
       @mod_entries << mod_entry
     end
-    LinkLogger.info(:mods) { "mod_entry(#{key.ai}): #{mod_entry.ai}" }
+    LinkLogger.debug(:mods) { "mod_entry(#{key.ai}): #{mod_entry.ai}" }
     mod_entry
   end
 
@@ -63,7 +63,8 @@ class Mods
   end
 
   def files
-    mod_files = Dir.glob(File.join(Servers.factorio_mods, '*.zip'), File::FNM_CASEFOLD)
+    filepath  = File.expand_path(File.join(Servers.factorio_mods, '*.zip'))
+    mod_files = Dir.glob(filepath, File::FNM_CASEFOLD)
     mod_files = mod_files.collect do |mod_file|
       {
         name: File.basename(mod_file).split('_')[0..-2].join('_'),
@@ -72,26 +73,89 @@ class Mods
         time: File.mtime(mod_file)
       }
     end.sort_by { |mod_file| mod_file[:file] }
+
     mod_files.each do |mod_file|
       mod_entry(mod_file[:name])
     end
+
     mod_files
   end
 
-  def search(name)
+################################################################################
+
+  def search(name:, page: nil)
+    uri = mod_portal_api_uri
     options = {
       query: {
         hide_deprecated: false,
-        namelist: params[:name].strip,
+        namelist: name.strip,
         sort_order: 'title',
         sort: 'asc',
-        page: params[:page]
+        page: page
       }.delete_if { |k,v| v.nil? || v == '' }
     }
-    LinkLogger.info(:mods) { "options=#{options.ai}" }
-    response         = HTTParty.get("#{Config.factorio_mod_url}/api/mods", options)
-    @name            = params[:name]
-    @parsed_response = response.parsed_response
+    LinkLogger.debug(:mods) { "uri=#{uri.ai}, options=#{options.ai}" }
+    LinkLogger.info(:mods) { "Searching Factorio Mod Portal: name=#{name.ai}, page=#{page.ai}" }
+
+    response = HTTParty.get(uri, options)
+    response.parsed_response
+  end
+
+  def download(file_name:, download_url:)
+    options = {
+      stream_body: true,
+      follow_redirects: true
+    }
+    uri      = mod_portal_download_uri(download_url)
+    filename = File.expand_path(File.join(Servers.factorio_mods, file_name))
+
+    LinkLogger.debug(:mods) { "uri=#{uri.ai}, options=#{options.ai}" }
+    LinkLogger.info(:mods) { "Downloading Mod #{filename.ai}" }
+
+    File.open(filename, 'wb') do |file|
+      HTTParty.get(uri, stream_body: true, follow_redirects: true, verify: false) do |fragment|
+        file.write(fragment) if fragment.code == 200
+      end
+    end
+
+    LinkLogger.info(:mods) { "Downloaded Mod #{filename.ai} (#{countsize(File.size(filename)).ai})" }
+
+    filename
+  end
+
+  def delete(filename)
+    filename = File.expand_path(File.join(Config.factorio_mods, filename))
+
+    if File.exist?(filename)
+      filesize = File.size(filename)
+
+      LinkLogger.warn(:mods) { "Deleting Mod #{filename.ai} (#{countsize(filesize).ai})" }
+      FileUtils.rm(filename, force: true)
+      LinkLogger.warn(:mods) { "Deleted Mod #{filename.ai} (#{countsize(filesize).ai})" }
+
+      true
+    else
+      false
+    end
+  end
+
+################################################################################
+
+  def mod_portal_api_uri
+    URI::HTTPS.build(host: Config.factorio_mod_host, path: '/api/mods')
+  end
+
+  def mod_portal_download_uri(download_url)
+    query = Array.new
+    query << "username=#{Credentials.username}"
+    query << "token=#{Credentials.token}"
+    query = query.join('&')
+
+    URI::HTTPS.build(host: Config.factorio_mod_host, path: download_url, query: URI.escape(query))
+  end
+
+  def mod_portal_uri(name)
+    URI::HTTPS.build(host: Config.factorio_mod_host, path: "/mods/#{URI.escape(name)}")
   end
 
 ################################################################################
@@ -100,7 +164,11 @@ class Mods
     @@mods ||= Mods.new
 
     def method_missing(method_name, *args, **options, &block)
-      @@mods.send(method_name, *args, &block)
+      if options.count == 0
+        @@mods.send(method_name, *args, &block)
+      else
+        @@mods.send(method_name, *args, **options, &block)
+      end
     end
   end
 

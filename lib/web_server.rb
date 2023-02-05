@@ -122,42 +122,18 @@ class WebServer < Sinatra::Application
   end
 
   post '/mods/search' do
-    options = {
-      query: {
-        hide_deprecated: false,
-        namelist: params[:name].strip,
-        sort_order: 'title',
-        sort: 'asc',
-        page: params[:page]
-      }.delete_if { |k,v| v.nil? || v == '' }
-    }
-    LinkLogger.info(:http) { "options=#{options.ai}" }
-    response         = HTTParty.get("#{Config.factorio_mod_url}/api/mods", options)
     @name            = params[:name]
-    @parsed_response = response.parsed_response
+    @parsed_response = Mods.search(name: params[:name], page: params[:page])
     haml 'mods/search'.to_sym
   end
 
   post '/mods/download' do
-    filename = File.join(Servers.factorio_mods, params[:file_name])
-    LinkLogger.info(:http) { "Downloading #{filename.ai}" }
-    File.open(filename, 'wb') do |file|
-      options = {
-        # query: {
-        #   username: Credentials.username,
-        #   token: Credentials.token
-        # },
-        stream_body: true,
-        follow_redirects: true
-      }
-      LinkLogger.info(:http) { "options=#{options.ai}" }
-      url = Config.factorio_mod_url+params[:download_url]+"?username=#{Credentials.username}&token=#{Credentials.token}"
-      LinkLogger.info(:http) { "url=#{url.ai}" }
-      HTTParty.get(url, stream_body: true, follow_redirects: true, verify: false) do |fragment|
-        file.write(fragment) if fragment.code == 200
-      end
-    end
-    LinkLogger.info(:http) { "Downloaded #{filename.ai} (#{countsize(File.size(filename)).ai})" }
+    Mods.download(file_name: params[:file_name], download_url: params[:download_url])
+    redirect '/mods'
+  end
+
+  post '/mods/delete' do
+    Mods.delete(params[:filename])
     redirect '/mods'
   end
 
