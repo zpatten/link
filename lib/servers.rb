@@ -336,8 +336,6 @@ class Servers
 
     LinkLogger.info(:servers) { "Created server #{server_name}" }
 
-    server.start!
-
     true
   end
 

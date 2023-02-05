@@ -1,21 +1,26 @@
 %h1 Signals
-
-Known Network IDs: #{signals.get_network_ids}
-%br
-- signals.get_network_ids.each do |nid|
-  - s = signals.tx(nid, force: true)
-  Network ID #{nid} - #{s.count} Signals
-  %br
 %hr
-- signals.get_network_ids.each do |nid|
-  - s = signals.tx(nid, force: true)
-  %h2 Network ID #{nid}
-  %hr
-  - if s.nil?
-    No Signals!
-  - else
-    %table
-      %tr
+%h2 Network IDs: #{signals.get_network_ids.map(&:to_s).sort.join(', ')}
+%hr
+%table.fleft
+  %tr
+    %th Network ID
+    %th Signals
+  - signals.get_network_ids.map(&:to_s).sort.each do |nid|
+    - s = signals.tx(nid, force: true)
+    %tr
+      %td.align-right= nid
+      %td.align-right #{s.count} Signals
+
+- signals.get_network_ids.map(&:to_s).sort.each do |nid|
+  %table.fleft
+    %tr
+      %th{ colspan: 3 } NID: #{nid}
+    %tr
+      - s = signals.tx(nid, force: true)
+      - if s.nil?
+        %th No Signals!
+      - else
         %th.align-right Signal Name
         %th.one Signal Type
         %th.one Signal Count

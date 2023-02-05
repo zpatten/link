@@ -45,13 +45,14 @@ class Server
 ################################################################################
 
   def initialize(name, details)
-    @name              = name.dup
-    @id                = Zlib::crc32(@name.to_s)
-    @network_id        = [@id].pack("L").unpack("l").first
-    @pinged_at         = Time.now.to_f
-    @ping_timeout      = Config.value(:timeout, :ping)
-    @rtt               = 0
-    @watch             = false
+    @name         = name.dup
+    @id           = Zlib::crc32(@name.to_s)
+    @network_id   = [@id].pack("L").unpack("l").first
+    @pinged_at    = Time.now.to_f
+    @ping_timeout = Config.value(:timeout, :ping)
+    @rtt          = 0
+    @watch        = false
+    @mutex        = Mutex.new
 
     @details           = details
     @active            = details['active']
@@ -154,33 +155,38 @@ class Server
 ################################################################################
 
   def start!(container: true)
-    LinkLogger.info(log_tag) { "Start Server (container: #{container.ai})" }
+    @mutex.synchronize do
+      LinkLogger.info(log_tag) { "Start Server (container: #{container.ai})" }
 
-    start_container! if container
-    sleep 0.25 while container_dead?
-    start_pool!
-    start_rcon!
-    sleep 0.25 while unauthenticated?
-    start_threads!
-    sleep 0.25 while unavailable?
-    @watch = true
+      start_container! if container
+      sleep 1 while container_dead?
+      start_pool!
+      sleep 0.25 while !pool_running?
+      start_rcon!
+      sleep 0.25 while unauthenticated?
+      start_threads!
+      sleep 0.25 while unavailable?
+      @watch = true
 
-    true
+      true
+    end
   end
 
   def stop!(container: true)
-    LinkLogger.info(log_tag) { "Stop Server (container: #{container.ai})" }
+    @mutex.synchronize do
+      LinkLogger.info(log_tag) { "Stop Server (container: #{container.ai})" }
 
-    @watch = false
-    stop_threads!
-    stop_rcon!
-    stop_pool!
-    if container
-      stop_container!
-      sleep 0.25 while container_alive?
+      @watch = false
+      stop_threads!
+      stop_rcon!
+      stop_pool!
+      if container
+        stop_container!
+        sleep 1 while container_alive?
+      end
+
+      true
     end
-
-    true
   end
 
   def restart!(container: true)
@@ -196,7 +202,7 @@ class Server
 ################################################################################
 
   def start_pool!
-    return false if @pool && @pool.running?
+    return false if pool_running?
 
     LinkLogger.info(log_tag(:pool)) { "Starting Thread Pool" }
     @pool = THREAD_EXECUTOR.new(
@@ -214,7 +220,7 @@ class Server
   end
 
   def stop_pool!
-    return false if @pool && @pool.shutdown?
+    return false if pool_shutdown?
 
     LinkLogger.info(log_tag(:pool)) { "Thread Pool Shutting Down" }
     @pool.shutdown
@@ -223,6 +229,14 @@ class Server
     LinkLogger.info(log_tag(:pool)) { "Thread Pool Shutdown Complete" }
 
     true
+  end
+
+  def pool_running?
+    @pool && @pool.running?
+  end
+
+  def pool_shutdown?
+    @pool && @pool.shutdown?
   end
 
 ################################################################################
