@@ -1,29 +1,30 @@
 # frozen_string_literal: true
 
-require_relative 'server/chat'
-require_relative 'server/id'
-require_relative 'server/list'
-require_relative 'server/logistics'
 require_relative 'server/rcon'
-require_relative 'server/signals'
 
+require_relative 'server/task/chat'
+require_relative 'server/task/fulfillments'
+require_relative 'server/task/id'
 require_relative 'server/task/ping'
+require_relative 'server/task/providables'
 require_relative 'server/task/research'
 require_relative 'server/task/save'
+require_relative 'server/task/server_list'
+require_relative 'server/task/signals'
 
 class Server
 
 ################################################################################
 
-  include Server::Chat
-  include Server::ID
-  include Server::List
-  include Server::Logistics
-  include Server::Signals
-
+  include Server::Task::Chat
+  include Server::Task::Fulfillments
+  include Server::Task::ID
   include Server::Task::Ping
+  include Server::Task::Providables
   include Server::Task::Research
   include Server::Task::Save
+  include Server::Task::ServerList
+  include Server::Task::Signals
 
 ################################################################################
 
