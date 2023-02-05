@@ -15,7 +15,7 @@ module Factorio
       def build_packet(payload, type=PACKET_TYPE_COMMAND)
         packet_fields = OpenStruct.new(
           length: (BASE_PACKET_LENGTH + payload.bytesize),
-          id: SecureRandom.random_number((2**32) - 1),
+          id: SecureRandom.random_number(2**32),
           type: type,
           payload: payload
         )

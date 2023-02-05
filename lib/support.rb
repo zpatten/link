@@ -69,7 +69,9 @@ def generate_port_number
   port_number = nil
   existing_port_numbers = Servers.collect { |s| [s['factorio_port'], s['client_port']] }.flatten.compact
   loop do
-    port_number = SecureRandom.random_number(65_535 - 1_024) + 1_024
+    max_ports      = 2**16
+    reserved_ports = 2**10
+    port_number    = SecureRandom.random_number(max_ports - reserved_ports) + reserved_ports + 1
     break unless existing_port_numbers.include?(port_number)
   end
   port_number

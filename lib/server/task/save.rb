@@ -9,6 +9,7 @@ class Server
       def schedule_task_save
         Tasks.schedule(what: :save, pool: @pool, cancellation: @cancellation, server: self) do |server|
           server.backup(timestamp: true)
+          sleep (SecureRandom.random_number(60) + 1)
         end
       end
 

@@ -83,18 +83,6 @@ class Servers
 
 ################################################################################
 
-  # def backup
-  #   LinkLogger.debug(:servers) { "Backing Up Servers" }
-  #   each do |server|
-  #     if server.available?
-  #       server.backup(timestamp: true)
-  #       sleep 3
-  #     end
-  #   end
-  # end
-
-################################################################################
-
   def factorio_mods
     File.expand_path(File.join(LINK_ROOT, 'mods'))
   end
