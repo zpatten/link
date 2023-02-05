@@ -2,7 +2,9 @@
 
 require_relative 'servers/create'
 require_relative 'servers/delete'
+require_relative 'servers/rcon'
 require_relative 'servers/saves'
+require_relative 'servers/state'
 
 class Servers
   include Enumerable
@@ -11,7 +13,9 @@ class Servers
 
   include Servers::Create
   include Servers::Delete
+  include Servers::RCon
   include Servers::Saves
+  include Servers::State
 
 ################################################################################
 
@@ -94,28 +98,6 @@ class Servers
 
 ################################################################################
 
-  def rcon_command(task, command, except=[])
-    find_by_task(task, except).each do |server|
-      unless server.unavailable?
-        server.rcon_command(command)
-      end
-    end
-
-    true
-  end
-
-  def rcon_command_nonblock(task, command, except=[])
-    find_by_task(task, except).each do |server|
-      unless server.unavailable?
-        server.rcon_command_nonblock(command)
-      end
-    end
-
-    true
-  end
-
-################################################################################
-
   # def backup
   #   LinkLogger.debug(:servers) { "Backing Up Servers" }
   #   each do |server|
@@ -130,24 +112,6 @@ class Servers
 
   def factorio_mods
     File.expand_path(File.join(LINK_ROOT, 'mods'))
-  end
-
-################################################################################
-
-  def available
-    select { |s| s.available? }
-  end
-
-  def unavailable
-    select { |s| s.unavailable? }
-  end
-
-  def available?
-    map(&:available?).any?(true)
-  end
-
-  def unavailable?
-    !available?
   end
 
 ################################################################################
