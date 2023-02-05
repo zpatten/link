@@ -134,10 +134,10 @@ class Runner
     LinkLogger.info(:runner) { "Starting Threads" }
     schedule_task_mark
     schedule_task_prometheus
-    schedule_task_autosave
+    schedule_task_trim
     schedule_task_backup
-    schedule_task_watchdog
     schedule_task_signals
+    schedule_task_watchdog
   end
 
   def stop_threads!

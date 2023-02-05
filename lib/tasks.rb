@@ -156,15 +156,15 @@ def schedule_task_mark
   end
 end
 
-def schedule_task_backup
-  Tasks.schedule(what: :backup) do
-    Servers.backup
-    Servers.trim_save_files
+def schedule_task_trim
+  Tasks.schedule(what: :trim) do
+    # Servers.backup
+    Servers.trim_saves
   end
 end
 
-def schedule_task_autosave
-  Tasks.schedule(what: :autosave) do
+def schedule_task_backup
+  Tasks.schedule(what: :backup) do
     ItemTypes.save
     Storage.save
   end

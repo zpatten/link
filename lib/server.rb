@@ -9,6 +9,8 @@ require_relative 'server/rcon'
 require_relative 'server/research'
 require_relative 'server/signals'
 
+require_relative 'server/task/save'
+
 class Server
 
 ################################################################################
@@ -20,6 +22,8 @@ class Server
   include Server::Ping
   include Server::Research
   include Server::Signals
+
+  include Server::Task::Save
 
 ################################################################################
 
@@ -52,7 +56,6 @@ class Server
     @ping_timeout = Config.value(:timeout, :ping)
     @rtt          = 0
     @watch        = false
-    @mutex        = Mutex.new
 
     @details           = details
     @active            = details['active']
@@ -104,19 +107,19 @@ class Server
   end
 
   def config_path
-    File.join(self.path, 'config')
+    File.expand_path(File.join(self.path, 'config'))
   end
 
   def mods_path
-    File.join(self.path, 'mods')
+    File.expand_path(File.join(self.path, 'mods'))
   end
 
   def saves_path
-    File.join(self.path, 'saves')
+    File.expand_path(File.join(self.path, 'saves'))
   end
 
   def save_file
-    File.join(self.saves_path, "save.zip")
+    File.expand_path(File.join(self.saves_path, "save.zip"))
   end
 
   def latest_save_file
@@ -132,7 +135,7 @@ class Server
     return false if container_dead? || unresponsive?
     if File.exist?(self.save_file)
       begin
-        FileUtils.mkdir_p(Servers.factorio_saves)
+        FileUtils.mkdir_p(Servers.save_path)
       rescue Errno::ENOENT
       end
 
@@ -141,7 +144,7 @@ class Server
       else
         "#{@name}.zip"
       end
-      backup_save_file = File.join(Servers.factorio_saves, filename)
+      backup_save_file = File.join(Servers.save_path, filename)
       latest_save_file = self.latest_save_file
       FileUtils.cp_r(latest_save_file, backup_save_file)
       LinkLogger.info(log_tag(:backup)) { "Backed up #{latest_save_file.ai} to #{backup_save_file.ai}" }
@@ -155,38 +158,36 @@ class Server
 ################################################################################
 
   def start!(container: true)
-    @mutex.synchronize do
-      LinkLogger.info(log_tag) { "Start Server (container: #{container.ai})" }
+    LinkLogger.info(log_tag) { "Start Server (container: #{container.ai})" }
 
-      start_container! if container
+    if container
+      start_container!
       sleep 1 while container_dead?
-      start_pool!
-      sleep 0.25 while !pool_running?
-      start_rcon!
-      sleep 0.25 while unauthenticated?
-      start_threads!
-      sleep 0.25 while unavailable?
-      @watch = true
-
-      true
     end
+    start_pool!
+    sleep 0.25 while !pool_running? && container_alive?
+    start_rcon!
+    sleep 0.25 while unauthenticated? && container_alive?
+    start_threads!
+    sleep 0.25 while unavailable? && container_alive?
+    @watch = true
+
+    true
   end
 
   def stop!(container: true)
-    @mutex.synchronize do
-      LinkLogger.info(log_tag) { "Stop Server (container: #{container.ai})" }
+    LinkLogger.info(log_tag) { "Stop Server (container: #{container.ai})" }
 
-      @watch = false
-      stop_threads!
-      stop_rcon!
-      stop_pool!
-      if container
-        stop_container!
-        sleep 1 while container_alive?
-      end
-
-      true
+    @watch = false
+    stop_threads!
+    stop_rcon!
+    stop_pool!
+    if container
+      stop_container!
+      sleep 1 while container_alive?
     end
+
+    true
   end
 
   def restart!(container: true)
@@ -253,6 +254,7 @@ class Server
     schedule_task_providables
     schedule_task_server_list
     schedule_task_signals
+    schedule_task_save
 
     true
   end
@@ -319,15 +321,17 @@ class Server
   end
 
   def container_alive?
-    key = [@name, 'container-alive'].join('-')
-    Cache.fetch(key, expires_in: 10) do
-      output = run_command(@name,
+    # key = [@name, 'container-alive'].join('-')
+    states = Cache.fetch('container-alive', expires_in: 10) do
+      ids = run_command(@name, %(docker ps -aq)).split("\n").map(&:strip)
+      states = run_command(@name,
         %(docker inspect),
-        %(-f '{{.State.Running}}'),
-        @name
-      )
-      (output == 'true')
+        %(-f '{{.Name}} {{.State.Running}}'),
+        ids
+      ).split("\n").map(&:strip)
+      states.collect { |state| state.split(' ') }.to_h
     end
+    states["/#{@name}"] == 'true'
   end
 
   def container_dead?
