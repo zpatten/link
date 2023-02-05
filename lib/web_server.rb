@@ -130,7 +130,7 @@ class WebServer < Sinatra::Application
   end
 
   post '/mods/search' do
-    query = {
+    options = {
       query: {
         hide_deprecated: false,
         namelist: params[:name].strip,
@@ -139,8 +139,8 @@ class WebServer < Sinatra::Application
         page: params[:page]
       }.delete_if { |k,v| v.nil? || v == '' }
     }
-    LinkLogger.info(:http) { "query=#{query.ai}" }
-    response         = HTTParty.get("#{Config.factorio_mod_url}/api/mods", query)
+    LinkLogger.info(:http) { "options=#{options.ai}" }
+    response         = HTTParty.get("#{Config.factorio_mod_url}/api/mods", options)
     @name            = params[:name]
     @parsed_response = response.parsed_response
     haml 'mods/search'.to_sym
@@ -150,7 +150,18 @@ class WebServer < Sinatra::Application
     filename = File.join(Servers.factorio_mods, params[:file_name])
     LinkLogger.info(:http) { "Downloading #{filename.ai}" }
     File.open(filename, 'wb') do |file|
-      HTTParty.get(Config.factorio_mod_url+params[:download_url], stream_body: true, follow_redirects: true) do |data|
+      options = {
+        # query: {
+        #   username: Credentials.username,
+        #   token: Credentials.token
+        # },
+        stream_body: true,
+        follow_redirects: true
+      }
+      LinkLogger.info(:http) { "options=#{options.ai}" }
+      url = Config.factorio_mod_url+params[:download_url]+"?username=#{Credentials.username}&token=#{Credentials.token}"
+      LinkLogger.info(:http) { "url=#{url.ai}" }
+      HTTParty.get(url, stream_body: true, follow_redirects: true, verify: false) do |data|
         file.write(data)
       end
     end

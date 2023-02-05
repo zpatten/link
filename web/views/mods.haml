@@ -8,6 +8,7 @@
   %tr
     %th Toggle
     %th Enabled?
+    %th Search
     %th.align-left Name
   - ModList.names.each do |mod_name|
     %tr
@@ -18,6 +19,10 @@
       %td
         - if ModList.enabled?(mod_name)
           ENABLED
+      %td
+        %form{ method: :post, action: '/mods/search' }
+          %input{ type: 'hidden', name: 'name', value: mod_name }
+          %input{ type: 'submit', value: 'Search' }
       %td.align-left
         = mod_name
         |
