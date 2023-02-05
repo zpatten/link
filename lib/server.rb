@@ -156,7 +156,7 @@ class Server
   def start!(container: true)
     LinkLogger.info(log_tag) { "Start Server (container: #{container.ai})" }
 
-    return if available?
+    # return if @pool && @pool.running?
 
     start_container! if container
     start_pool!
@@ -171,8 +171,6 @@ class Server
 
   def stop!(container: true)
     LinkLogger.info(log_tag) { "Stop Server (container: #{container.ai})" }
-
-    return if unavailable?
 
     @watch = false
 

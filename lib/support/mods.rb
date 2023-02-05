@@ -48,7 +48,9 @@ class Mods
       }
       @mod_entries << mod_entry
     end
+
     LinkLogger.debug(:mods) { "mod_entry(#{key.ai}): #{mod_entry.ai}" }
+
     mod_entry
   end
 
