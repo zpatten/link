@@ -4,7 +4,7 @@ require_relative 'server/container'
 require_relative 'server/pool'
 require_relative 'server/rcon'
 require_relative 'server/state'
-require_relative 'server/tasks'
+require_relative 'server/task'
 
 require_relative 'server/task/chat'
 require_relative 'server/task/fulfillments'
@@ -24,8 +24,7 @@ class Server
   include Server::Pool
   include Server::RCon
   include Server::State
-  include Server::Tasks
-
+  include Server::Task
   include Server::Task::Chat
   include Server::Task::Fulfillments
   include Server::Task::ID
