@@ -4,10 +4,10 @@ require_relative 'server/chat'
 require_relative 'server/id'
 require_relative 'server/list'
 require_relative 'server/logistics'
-require_relative 'server/ping'
 require_relative 'server/rcon'
 require_relative 'server/signals'
 
+require_relative 'server/task/ping'
 require_relative 'server/task/research'
 require_relative 'server/task/save'
 
@@ -19,9 +19,9 @@ class Server
   include Server::ID
   include Server::List
   include Server::Logistics
-  include Server::Ping
   include Server::Signals
 
+  include Server::Task::Ping
   include Server::Task::Research
   include Server::Task::Save
 
