@@ -322,7 +322,7 @@ class Server
 
   def container_alive?
     # key = [@name, 'container-alive'].join('-')
-    states = Cache.fetch('container-alive', expires_in: 10) do
+    states = Cache.fetch('container-alive', expires_in: 1) do
       ids = run_command(@name, %(docker ps -aq)).split("\n").map(&:strip)
       states = run_command(@name,
         %(docker inspect),
