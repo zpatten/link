@@ -3,6 +3,8 @@
 require_relative 'server/container'
 require_relative 'server/pool'
 require_relative 'server/rcon'
+require_relative 'server/state'
+require_relative 'server/tasks'
 
 require_relative 'server/task/chat'
 require_relative 'server/task/fulfillments'
@@ -21,6 +23,8 @@ class Server
   include Server::Container
   include Server::Pool
   include Server::RCon
+  include Server::State
+  include Server::Tasks
 
   include Server::Task::Chat
   include Server::Task::Fulfillments
@@ -175,7 +179,7 @@ class Server
     sleep 0.25 while !pool_running? && container_alive?
     start_rcon!
     sleep 0.25 while unauthenticated? && container_alive?
-    start_threads!
+    start_tasks!
     sleep 0.25 while unavailable? && container_alive?
     @watch = true
 
@@ -186,7 +190,7 @@ class Server
     LinkLogger.info(log_tag) { "Stop Server (container: #{container.ai})" }
 
     @watch = false
-    stop_threads!
+    stop_tasks!
     stop_rcon!
     stop_pool!
     if container
@@ -208,103 +212,5 @@ class Server
   end
 
 ################################################################################
-
-  def start_threads!
-    return false if @origin.resolved?
-
-    schedule_task_ping
-    schedule_task_id
-    schedule_task_research_current
-    schedule_task_research
-    schedule_task_chat
-    schedule_task_fulfillments
-    schedule_task_providables
-    schedule_task_server_list
-    schedule_task_signals
-    schedule_task_save
-
-    true
-  end
-
-  def stop_threads!
-    return false if @origin.resolved?
-
-    @origin and (@origin.resolved? or @origin.resolve)
-    sleep (Config.value(:timeout, :thread) + 1)
-
-    true
-  end
-
-################################################################################
-
-  def unresponsive?
-    ((@pinged_at + @ping_timeout) < Time.now.to_f)
-  end
-
-  def responsive?
-    !unresponsive?
-  end
-
-################################################################################
-
-  def connected?
-    (@rcon && @rcon.connected?)
-  end
-
-  def disconnected?
-    !connected?
-  end
-
-################################################################################
-
-  def authenticated?
-    (@rcon && @rcon.authenticated?)
-  end
-
-  def unauthenticated?
-    !authenticated?
-  end
-
-################################################################################
-
-  def available?
-    (@rcon && @rcon.available?)
-  end
-
-  def unavailable?
-    !available?
-  end
-
-################################################################################
-
-  def rcon_command_nonblock(command)
-    return false if unavailable?
-
-    @rcon.command_nonblock(command)
-
-    true
-  end
-
-  def rcon_command(command)
-    return nil if unavailable?
-
-    @rcon.command(command)
-  end
-
-################################################################################
-
-  def rcon_handler(what:, command:, &block)
-    payload = self.rcon_command(command)
-    unless payload.nil? || payload.empty?
-      data = JSON.parse(payload)
-      unless data.nil? || data.empty?
-        block.call(data)
-      # else
-      #   LinkLogger.warn(log_tag(:rcon)) { "Missing Payload Data! #{command.ai}" }
-      end
-    else
-      LinkLogger.warn(log_tag(:rcon, what)) { "Missing Payload!" }
-    end
-  end
 
 end

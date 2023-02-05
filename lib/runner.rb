@@ -93,7 +93,7 @@ class Runner
     LinkLogger.info(:runner) { "Starting" }
 
     start_pool!
-    start_threads!
+    start_tasks!
     start_servers!
 
     LinkLogger.info(:runner) { "Link Started" }
@@ -109,7 +109,7 @@ class Runner
     LinkLogger.info(:runner) { "Stopping" }
 
     stop_servers!
-    stop_threads!
+    stop_tasks!
     stop_pool!
 
     ItemTypes.save
@@ -130,7 +130,7 @@ class Runner
 
 ################################################################################
 
-  def start_threads!
+  def start_tasks!
     LinkLogger.info(:runner) { "Starting Threads" }
     schedule_task_mark
     schedule_task_prometheus
@@ -140,7 +140,7 @@ class Runner
     schedule_task_watchdog
   end
 
-  def stop_threads!
+  def stop_tasks!
     LinkLogger.info(:runner) { "Stopping Threads" }
     @origin and (@origin.resolved? or @origin.resolve)
     sleep (Config.value(:timeout, :thread) + 1)

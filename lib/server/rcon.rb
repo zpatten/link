@@ -27,5 +27,37 @@ class Server
 
 ################################################################################
 
+    def rcon_command_nonblock(command)
+      return false if unavailable?
+
+      @rcon.command_nonblock(command)
+
+      true
+    end
+
+    def rcon_command(command)
+      return nil if unavailable?
+
+      @rcon.command(command)
+    end
+
+################################################################################
+
+    def rcon_handler(what:, command:, &block)
+      payload = self.rcon_command(command)
+      unless payload.nil? || payload.empty?
+        data = JSON.parse(payload)
+        unless data.nil? || data.empty?
+          block.call(data)
+        # else
+        #   LinkLogger.warn(log_tag(:rcon)) { "Missing Payload Data! #{command.ai}" }
+        end
+      else
+        LinkLogger.warn(log_tag(:rcon, what)) { "Missing Payload!" }
+      end
+    end
+
+################################################################################
+
   end
 end
