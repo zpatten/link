@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Server
+module Factorio
   class RCon
 
     module Connection

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'stringio'
 
-class Server
+module Factorio
   class RCon
 
     module Packet

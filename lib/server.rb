@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'server/container'
+require_relative 'server/pool'
 require_relative 'server/rcon'
 
 require_relative 'server/task/chat'
@@ -15,6 +17,10 @@ require_relative 'server/task/signals'
 class Server
 
 ################################################################################
+
+  include Server::Container
+  include Server::Pool
+  include Server::RCon
 
   include Server::Task::Chat
   include Server::Task::Fulfillments
@@ -203,46 +209,6 @@ class Server
 
 ################################################################################
 
-  def start_pool!
-    return false if pool_running?
-
-    LinkLogger.info(log_tag(:pool)) { "Starting Thread Pool" }
-    @pool = THREAD_EXECUTOR.new(
-      name: @name.downcase,
-      auto_terminate: false,
-      min_threads: 2,
-      max_threads: [2, Concurrent.processor_count].max,
-      max_queue: [2, Concurrent.processor_count * 5].max,
-      fallback_policy: :abort
-    )
-    @cancellation, @origin = Concurrent::Cancellation.new
-    @cancellation = @cancellation.join(Runner.cancellation)
-
-    true
-  end
-
-  def stop_pool!
-    return false if pool_shutdown?
-
-    LinkLogger.info(log_tag(:pool)) { "Thread Pool Shutting Down" }
-    @pool.shutdown
-    LinkLogger.info(log_tag(:pool)) { "Waiting for Thread Pool Termination" }
-    @pool.wait_for_termination(Config.value(:timeout, :pool))
-    LinkLogger.info(log_tag(:pool)) { "Thread Pool Shutdown Complete" }
-
-    true
-  end
-
-  def pool_running?
-    @pool && @pool.running?
-  end
-
-  def pool_shutdown?
-    @pool && @pool.shutdown?
-  end
-
-################################################################################
-
   def start_threads!
     return false if @origin.resolved?
 
@@ -265,98 +231,6 @@ class Server
 
     @origin and (@origin.resolved? or @origin.resolve)
     sleep (Config.value(:timeout, :thread) + 1)
-
-    true
-  end
-
-################################################################################
-
-  def start_container!
-    return false if container_alive?
-
-    LinkLogger.info(log_tag(:container)) { "Syncing Factorio Mods for Server" }
-
-    filepath  = File.expand_path(File.join(self.mods_path, '*.zip'))
-    mod_files = Dir.glob(filepath, File::FNM_CASEFOLD)
-    mod_files.each do |mod_file|
-      FileUtils.rm_f(mod_file)
-    end
-    FileUtils.cp_r(Servers.factorio_mods, self.path)
-
-    run_command(@name,
-      %(/usr/bin/env),
-      %(chcon),
-      %(-Rt),
-      %(svirt_sandbox_file_t),
-      self.path
-    )
-
-    run_command(@name,
-      %(docker run),
-      %(--rm),
-      %(--detach),
-      %(--name="#{@name}"),
-      %(--network=host),
-      %(-e FACTORIO_PORT="#{self.factorio_port}"),
-      %(-e FACTORIO_RCON_PASSWORD="#{self.client_password}"),
-      %(-e FACTORIO_RCON_PORT="#{self.client_port}"),
-      %(-e PUID="$(id -u)"),
-      %(-e PGID="$(id -g)"),
-      %(-e DEBUG=true),
-      %(--volume=#{self.path}:/factorio),
-      Config.factorio_docker_image
-    )
-
-    true
-  end
-
-  def stop_container!
-    return false if container_dead?
-
-    run_command(@name,
-      %(docker stop),
-      @name
-    )
-
-    true
-  end
-
-  def container_alive?
-    # key = [@name, 'container-alive'].join('-')
-    states = Cache.fetch('container-alive', expires_in: 1) do
-      ids = run_command(@name, %(docker ps -aq)).split("\n").map(&:strip)
-      states = run_command(@name,
-        %(docker inspect),
-        %(-f '{{.Name}} {{.State.Running}}'),
-        ids
-      ).split("\n").map(&:strip)
-      states.collect { |state| state.split(' ') }.to_h
-    end
-    states["/#{@name}"] == 'true'
-  end
-
-  def container_dead?
-    !container_alive?
-  end
-
-################################################################################
-
-  def start_rcon!
-    sleep 1 until container_alive?
-
-    @pinged_at = Time.now.to_f
-
-    @rcon = RConPool.new(server: self)
-    @rcon.start!
-
-    true
-  end
-
-  def stop_rcon!
-    @rcon and @rcon.stop!
-
-    @pinged_at = 0
-    @rtt       = 0
 
     true
   end
