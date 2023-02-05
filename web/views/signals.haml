@@ -21,9 +21,9 @@
       - if s.nil?
         %th No Signals!
       - else
-        %th.align-right Signal Name
-        %th.one Signal Type
-        %th.one Signal Count
+        %th.align-right Name
+        %th.one Type
+        %th.one Count
       - s.each do |signal|
         %tr
           %td.align-right= signal["signal"]["name"]
