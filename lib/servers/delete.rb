@@ -9,8 +9,7 @@ class Servers
       server_name = params[:name]
       if (server = find_by_name(server_name))
         server.stop!
-
-        server.backup
+        server.save
 
         @servers.delete(server_name)
         Config.servers.delete(server_name)
