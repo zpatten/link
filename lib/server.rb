@@ -6,9 +6,9 @@ require_relative 'server/list'
 require_relative 'server/logistics'
 require_relative 'server/ping'
 require_relative 'server/rcon'
-require_relative 'server/research'
 require_relative 'server/signals'
 
+require_relative 'server/task/research'
 require_relative 'server/task/save'
 
 class Server
@@ -20,9 +20,9 @@ class Server
   include Server::List
   include Server::Logistics
   include Server::Ping
-  include Server::Research
   include Server::Signals
 
+  include Server::Task::Research
   include Server::Task::Save
 
 ################################################################################
