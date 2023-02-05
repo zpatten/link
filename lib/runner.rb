@@ -120,7 +120,7 @@ class Runner
 
   def start_servers!
     LinkLogger.info(:runner) { "Starting Servers" }
-    Servers.select(&:container_alive?).each { |s| s.start! }
+    Servers.select(&:container_alive?).each { |s| @pool.post { s.start! } }
   end
 
   def stop_servers!

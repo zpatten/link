@@ -212,7 +212,7 @@ class Servers
 
       @servers.delete(server_name)
       Config.servers.delete(server_name)
-      Config.save!
+      Config.save
 
       FileUtils.rm_r(server.path)
 
@@ -328,9 +328,11 @@ class Servers
     server_adminlist_path = File.join(server.config_path, 'server-adminlist.json')
     IO.write(server_adminlist_path, JSON.pretty_generate(Config.server(server.name, :admins)))
 
-    Config['servers'] ||= Hash.new
-    Config['servers'].merge!(server.to_h)
-    Config.save!
+    Config.servers ||= Hash.new
+    Config.servers.merge!(server.to_h)
+    Config.save
+
+    @servers[server_name] = server
 
     LinkLogger.info(:servers) { "Created server #{server_name}" }
 
