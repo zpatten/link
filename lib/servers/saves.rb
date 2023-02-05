@@ -94,7 +94,7 @@ class Servers
 
         delete_save_files.flatten!.uniq!
         delete_save_files.each do |delete_save_file|
-          LinkLogger.warn(:servers) { "Trimming save file #{File.basename(delete_save_file).ai}" }
+          LinkLogger.warn(:servers) { "Trimming save file #{delete_save_file.ai}" }
         end
         FileUtils.rm_f(delete_save_files)
       end

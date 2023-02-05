@@ -19,7 +19,7 @@
     - latest_release = result['releases'].sort_by { |r| r['released_at'] }.reverse.first
     %tr
       %td.one
-        %a{ href: Mods.mod_portal_uri(result['name']), target: '_blank' } View
+        %a{ href: Factorio::Mods.mod_portal_uri(result['name']), target: '_blank' } View
       %td.align-left.one= result['name']
       %td.align-left.one= result['title']
       %td.align-left.one= result['owner']
