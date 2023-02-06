@@ -55,6 +55,7 @@ module Factorio
       item_name = sanitize_item_name(item_name)
 
       @storage.compute(item_name) do |current_value|
+        current_value ||= 0
         current_value + item_count
       end
 
@@ -66,6 +67,7 @@ module Factorio
       removed_count = 0
 
       @storage.compute(item_name) do |current_value|
+        current_value ||= 0
         removed_count = [current_value, item_count].min
         current_value - removed_count
       end

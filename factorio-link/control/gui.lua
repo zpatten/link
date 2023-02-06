@@ -4,9 +4,11 @@ function link_gui_create(player)
 --------------------------------------------------------------------------------
 
     global.link_gui = player.gui.screen.add{
-      type = 'frame',
-      name = 'link-frame',
-      caption = 'Link'
+      type        = 'frame',
+      name        = 'link-frame',
+      caption     = 'Link',
+      visible     = false,
+      auto_center = true
     }
 
     global.link_gui.add{
@@ -22,7 +24,7 @@ function link_gui_create(player)
     }
     local servers_flow = global.link_gui['tabbed-pane'].add{
       type = 'flow',
-      direction = 'vertical'
+      direction = 'vertical',
     }
     global.link_gui_servers_table = servers_flow.add{
       type = 'table',
@@ -32,31 +34,31 @@ function link_gui_create(player)
       draw_horizontal_lines_after_headers = true
     }
     global.link_gui['tabbed-pane'].add_tab(servers_tab, servers_flow)
+    global.link_gui['tabbed-pane'].selected_tab_index = 1
 
 --------------------------------------------------------------------------------
 
-    local storage_tab = global.link_gui['tabbed-pane'].add{
-      type = 'tab',
-      caption = 'Storage'
-    }
-    local storage_flow = global.link_gui['tabbed-pane'].add{
-      type = 'scroll-pane',
-      horizontal_scroll_policy = 'never',
-      vertical_scroll_policy = 'auto-and-reserve-space'
-    }
-    global.link_gui_storage_table = storage_flow.add{
-      type = 'table',
-      name = 'storage_table',
-      column_count = 3,
-      draw_horizontal_lines = true,
-      draw_horizontal_lines_after_headers = true
-    }
-    global.link_gui['tabbed-pane'].add_tab(storage_tab, storage_flow)
+    -- local storage_tab = global.link_gui['tabbed-pane'].add{
+    --   type = 'tab',
+    --   caption = 'Storage'
+    -- }
+    -- local storage_flow = global.link_gui['tabbed-pane'].add{
+    --   type = 'scroll-pane',
+    --   horizontal_scroll_policy = 'never',
+    --   vertical_scroll_policy = 'auto-and-reserve-space'
+    -- }
+    -- global.link_gui_storage_table = storage_flow.add{
+    --   type = 'table',
+    --   name = 'storage_table',
+    --   column_count = 3,
+    --   draw_horizontal_lines = true,
+    --   draw_horizontal_lines_after_headers = true
+    -- }
+    -- global.link_gui['tabbed-pane'].add_tab(storage_tab, storage_flow)
 
 --------------------------------------------------------------------------------
 
     global.link_gui.force_auto_center()
-    global.link_gui.visible = false
 
 --------------------------------------------------------------------------------
 
