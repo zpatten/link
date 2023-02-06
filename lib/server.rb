@@ -4,6 +4,7 @@ require_relative 'server/actions'
 require_relative 'server/container'
 require_relative 'server/pool'
 require_relative 'server/rcon'
+require_relative 'server/save'
 require_relative 'server/state'
 require_relative 'server/task'
 require_relative 'server/task/chat'
@@ -24,6 +25,7 @@ class Server
   include Server::Container
   include Server::Pool
   include Server::RCon
+  include Server::Save
   include Server::State
   include Server::Task
   include Server::Task::Chat
@@ -138,32 +140,6 @@ class Server
     save_files.reject! { |save_file| save_file =~ /tmp\.zip$/ }
     save_files.sort! { |a, b| File.mtime(a) <=> File.mtime(b) }
     save_files.last
-  end
-
-################################################################################
-
-  def save(timestamp: false)
-    return false if container_dead? || unresponsive?
-    if File.exist?(self.save_file)
-      begin
-        FileUtils.mkdir_p(Servers.save_path)
-      rescue Errno::ENOENT
-      end
-
-      filename = if timestamp
-        "#{@name}-#{Time.now.to_i}.zip"
-      else
-        "#{@name}.zip"
-      end
-      backup_save_file = File.join(Servers.save_path, filename)
-      latest_save_file = self.latest_save_file
-      FileUtils.cp_r(latest_save_file, backup_save_file)
-      LinkLogger.info(log_tag(:save)) { "Backed up #{latest_save_file.ai} to #{backup_save_file.ai}" }
-    end
-
-    rcon_command %(/server-save)
-
-    true
   end
 
 ################################################################################

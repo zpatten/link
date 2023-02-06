@@ -48,7 +48,7 @@ def run_command(tag, *args)
   args << %(2>/dev/null)
   command = args.flatten.compact.join(' ')
   output = %x(#{command}).strip
-  LinkLogger.info(tag) { "#{command.ai} -> #{output.ai}" } # unless command =~ /docker inspect/
+  LinkLogger.debug(tag) { "#{command.ai} -> #{output.ai}" }
   output
 end
 
@@ -60,10 +60,6 @@ def rcon_redirect(host, packet_fields, (player_index, command, origin_host))
   command = %(game.players[#{player_index}].print(#{message.dump}, {r = 1, g = 1, b = 1}))
   origin.rcon_command_nonblock(command, method(:rcon_print))
 end
-
-# def debug?
-#   !!ENV['DEBUG']
-# end
 
 def generate_port_number
   port_number = nil

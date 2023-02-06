@@ -1,0 +1,24 @@
+- if data.is_a?(Hash)
+  - data.each_pair do |key, value|
+    - unless value.is_a?(String)
+      %tr
+        %td.align-left
+          != ('&nbsp;' * depth)
+          %label= key
+    != haml :_config, locals: { key: key, data: value, depth: depth+2 }
+- elsif data.is_a?(Array)
+  - if data.all? { |value| value.is_a?(String) }
+    != haml :_config, locals: { key: key, data: data.join(','), depth: depth+2 }
+  - else
+    - data.each do |value|
+      != haml :_config, locals: { key: key, data: value, depth: depth+2 }
+- else
+  %tr
+    %form{ method: :post, action: "/config/#{key}" }
+      %td.align-left
+        != ('&nbsp;' * depth)
+        %label= key
+      %td.align-left
+        %input{ type: 'text', name: 'value', value: data }
+      %td.align-left
+        %input{ type: 'submit', value: 'Update' }

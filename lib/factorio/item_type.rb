@@ -45,10 +45,9 @@ module Factorio
       type = (item_name == 'electricity' ? 'electricity' : @item_types[item_name])
       if type.nil?
         command = %(remote.call('link', 'lookup_item_type', '#{item_name}'))
-        while type.nil? do
-          type = Servers.random.rcon_command(command)
-        end
+        type = Servers.random.rcon_command(command) while type.nil?
         type.strip!
+        type = 'item' if type.empty?
         @item_types[item_name] = type
 
         LinkLogger.debug(:item_types) { "#{item_name} == #{@item_types[item_name]}" }

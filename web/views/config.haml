@@ -2,6 +2,7 @@
 %hr
 %table.fleft
   %tr
-    %td.align-left
-      %pre
-        != haml :config_kv, locals: { config: Config.to_h.sort.to_h, ident: 0 }
+    %th Key
+    %th Value
+    %th Actions
+  != haml :_config, locals: { data: Config.to_h.sort.to_h, depth: 0 }
