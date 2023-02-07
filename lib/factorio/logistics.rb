@@ -103,12 +103,13 @@ module Factorio
     def finalize_fulfillment
       @items_to_fulfill = Hash.new
 
-      @fulfilled_item_counts = Hash.new(0)
+      @fulfilled_item_counts   = Hash.new(0)
       @unfulfilled_item_counts = Hash.new(0)
 
       if can_fulfill_all?
-        @items_to_fulfill = @item_requests
+        @items_to_fulfill      = @item_requests
         @fulfilled_item_counts = @requested_item_counts
+        @removed_item_totals   = Hash.new(0)
       else
         @item_requests.each do |unit_number, requested_items|
           requested_items.each do |requested_item_name, requested_item_count|

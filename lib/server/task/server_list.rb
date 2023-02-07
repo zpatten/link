@@ -17,13 +17,9 @@ class Server
           rcon_command_nonblock(command)
 
           def hash_sort(hash)
-            puts "hash: #{hash.ai}"
-            hash.each do |key,value|
-              puts "value: #{countsize(value).ai}"
-            end
-            h = Hash[hash.delete_if { |key,value| value.nil? || value == 0 }.transform_values { |key,value| puts value.ai; countsize(value) }.sort_by { |key,value| key }]
-            puts "h:#{h.ai}"
-            h
+            hash.delete_if { |key,value| value.nil? || value == 0 }
+            hash.transform_values! { |value| countvalue(value) }
+            Hash[hash.sort_by { |key,value| key }]
           end
 
           @metrics.keys.each do |key|

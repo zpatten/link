@@ -28,7 +28,6 @@ def filesize(size)
 end
 
 def countvalue(value)
-  puts value.ai
   units = [''] + %w( k M G T P E Z Y R Q )
   decimal = [0, 1, 1, 2, 2, 3, 3, 3, 3, 3]
   value = value.to_i
