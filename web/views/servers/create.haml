@@ -9,7 +9,24 @@
     %input{ type: 'radio', name: 'biters', value: 'false' } No
   %p
     %label Server Type:
-    %table
+    %table.fleft
+      %tr
+        %th &nbsp;
+        %th Type
+        %th Name/Filename
+        %th File Timestamp
+      - Servers.server_create_types.each do |server_type|
+        %tr
+          - unless server_type.is_a?(Hash)
+            %td
+              %input{ type: 'radio', name: 'type', value: server_type }
+            %td
+              preset
+            %td
+              #{server_type}
+            %td
+              \-
+    %table.fleft
       %tr
         %th &nbsp;
         %th Type
@@ -26,13 +43,5 @@
               #{server_type[:file]}
             %td.align-left
               #{server_type[:time]} [#{filesize(server_type[:size])}]
-          - else
-            %td
-              %input{ type: 'radio', name: 'type', value: server_type }
-            %td
-              preset
-            %td
-              #{server_type}
-            %td
-              \-
-  %input{ type: 'submit'}
+  %p
+    %input{ type: 'submit'}
