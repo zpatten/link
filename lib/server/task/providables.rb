@@ -8,7 +8,7 @@ class Server
         Tasks.schedule(task: :providables, pool: @pool, cancellation: @cancellation, server: self) do
           command = %(remote.call('link', 'get_providables'))
           rcon_handler(task: :get_providables, command: command) do |providables|
-            # LinkLogger.debug(@name) { "[LOGISTICS] providables: #{providables.ai}" }
+            LinkLogger.debug(log_tag(:logistics)) { "Providables: #{providables.ai}" }
             Factorio::Storage.bulk_add(providables)
             providables.each do |item_name, item_count|
               Metrics::Prometheus[:providable_items_total].observe(item_count,

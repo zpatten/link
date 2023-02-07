@@ -40,6 +40,10 @@ class Runner
       op.on('-f', 'Run in foreground') do
         @options[:foreground] = true
       end
+
+      op.on('-c', '--console', 'Run Console') do
+        @options[:console] = true
+      end
     end
   end
 
@@ -47,6 +51,12 @@ class Runner
 
   def run!
     @parser.parse!(ARGV.dup)
+
+    if @options[:console]
+      require 'pry'
+      binding.pry
+      exit!
+    end
 
     require_relative 'web_server'
 

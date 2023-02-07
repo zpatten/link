@@ -9,8 +9,11 @@ module Factorio
       @item_requests = item_requests
       @server        = server
 
-      LinkLogger.debug(@server.name) { "[LOGISTICS] Requests: #{@item_requests.ai}" }
+      LinkLogger.debug(log_tag(:logistics)) { "Requests: #{@item_requests.ai}" }
+    end
 
+    def log_tag(task)
+      @server.log_tag(task)
     end
 
 ################################################################################
@@ -21,14 +24,13 @@ module Factorio
         @item_totals.merge!(item_counts) { |k,o,n| o + n }
       end
 
-      removed_items = Factorio::Storage.bulk_remove(@item_totals)
-      @removed_item_totals = removed_items
+      @removed_item_totals = Factorio::Storage.bulk_remove(@item_totals)
 
       @obtained_all_requested_items ||= @item_totals.all? do |k,v|
         @removed_item_totals[k] == v
       end
 
-      LinkLogger.debug(@server.name) { "[LOGISTICS] Request Totals: #{@item_totals.ai}" }
+      LinkLogger.debug(log_tag(:logistics)) { "Request Totals: #{@item_totals.ai}" }
 
       true
     end
@@ -49,7 +51,7 @@ module Factorio
         @item_ratios[item_name] = item_ratio
       end
 
-      LinkLogger.debug(@server.name) { "[LOGISTICS] Request Ratios: #{@item_ratios.ai}" }
+      LinkLogger.debug(log_tag(:logistics)) { "Request Ratios: #{@item_ratios.ai}" }
 
       true
     end
@@ -129,7 +131,7 @@ module Factorio
       if !can_fulfill_all? && @removed_item_totals.values.any? { |v| v > 0 }
         Factorio::Storage.bulk_add(@removed_item_totals)
 
-        LinkLogger.debug(@server.name) { "[LOGISTICS] Overflow Items: #{@removed_item_totals.ai}" }
+        LinkLogger.debug(log_tag(:logistics)) { "Overflow: #{@removed_item_totals.ai}" }
 
         @removed_item_totals.each do |item_name, item_count|
           Metrics::Prometheus[:overflow_items_total].observe(item_count,
@@ -148,7 +150,7 @@ module Factorio
       calculate_fulfillment_items
       metrics_handler
 
-      LinkLogger.debug(@server.name) { "[LOGISTICS] Fulfillments: #{@items_to_fulfill.ai}" }
+      LinkLogger.debug(log_tag(:logistics)) { "Fulfillment: #{@items_to_fulfill.ai}" }
 
       if block_given?
         yield @items_to_fulfill

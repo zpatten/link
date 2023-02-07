@@ -85,11 +85,19 @@ class Config
     self[method_name]
   end
 
+  def respond_to?(method_name, include_private=false)
+    @config.keys.include?(method_name) || super
+  end
+
+  def respond_to_missing?(method_name, include_private=false)
+    @config.keys.include?(method_name) || super
+  end
+
 ################################################################################
 
   module ClassMethods
     @@config ||= Config.new
-    @@config_public_methods ||= @@config.public_methods
+    @@config_public_methods ||= (@@config.public_methods + @@config.to_h.keys.map(&:to_sym)).flatten
 
     def method_missing(method_name, *args, &block)
       if @@config_public_methods.include?(method_name)

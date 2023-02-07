@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-jruby -J-Djruby.jit.logging.verbose=true --server link.rb $*
