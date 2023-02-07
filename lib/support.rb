@@ -27,16 +27,17 @@ def filesize(size)
   '%.1f %s' % [size.to_f / 1024 ** exp, units[exp]]
 end
 
-def countsize(size)
+def countvalue(value)
+  puts value.ai
   units = [''] + %w( k M G T P E Z Y R Q )
   decimal = [0, 1, 1, 2, 2, 3, 3, 3, 3, 3]
-  size = size.to_i
+  value = value.to_i
 
-  return '0' if size == 0
-  exp = (Math.log(size) / Math.log(1000)).to_i
+  return '0' if value == 0
+  exp = (Math.log(value) / Math.log(1000)).to_i
   exp = units.length if exp > units.length
 
-  "%.#{decimal[exp]}f %s" % [size.to_f / 1000 ** exp, units[exp]]
+  "%.#{decimal[exp]}f %s" % [value.to_f / 1000 ** exp, units[exp]]
 end
 
 def deep_clone(object)

@@ -58,6 +58,7 @@ class Server
   attr_reader :watch
 
   attr_accessor :timedout_at
+  attr_reader :metrics
 
   RECV_MAX_LEN = (2 ** 16) - 1
 
@@ -83,6 +84,8 @@ class Server
     @factorio_port     = details['factorio_port']
     @host              = details['host']
     @research          = details['research']
+
+    @metrics           = Concurrent::Map.new
 
     @rx_signals_initalized = false
     @tx_signals_initalized = false

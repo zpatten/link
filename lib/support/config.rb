@@ -48,7 +48,7 @@ class Config
       (to_h.dig(*keys) rescue nil)
     end
 
-    LinkLogger.debug(:config) { "keys=#{keys.ai}, value=#{value.ai}" }
+    # LinkLogger.debug(:config) { "keys=#{keys.ai}, value=#{value.ai}" }
 
     value
   end
@@ -64,7 +64,7 @@ class Config
       (sv || mv)
     end
 
-    LinkLogger.debug(:config) { "server=#{server.ai}, keys=#{keys.ai}, value=#{value.ai}" }
+    # LinkLogger.debug(:config) { "server=#{server.ai}, keys=#{keys.ai}, value=#{value.ai}" }
 
     value
   end

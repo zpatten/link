@@ -9,7 +9,7 @@ module Factorio
       @item_requests = item_requests
       @server        = server
 
-      LinkLogger.debug(log_tag(:logistics)) { "Requests: #{@item_requests.ai}" }
+      # LinkLogger.debug(log_tag(:logistics)) { "Requests: #{@item_requests.ai}" }
     end
 
     def log_tag(task)
@@ -18,19 +18,36 @@ module Factorio
 
 ################################################################################
 
-    def calculate_item_totals
-      @item_totals = Hash.new(0)
+    def fulfill
+      remove_items_from_storage
+      calculate_item_ratios unless can_fulfill_all?
+      finalize_fulfillment
+      metrics_handler
+
+      LinkLogger.debug(log_tag(:logistics)) { "Fulfillment: #{@items_to_fulfill.ai}" }
+
+      if block_given?
+        yield @items_to_fulfill
+      else
+        @items_to_fulfill
+      end
+    end
+
+################################################################################
+
+    def remove_items_from_storage
+      @requested_item_counts = Hash.new(0)
       @item_requests.each do |unit_number, item_counts|
-        @item_totals.merge!(item_counts) { |k,o,n| o + n }
+        @requested_item_counts.merge!(item_counts) { |k,o,n| o + n }
       end
 
-      @removed_item_totals = Factorio::Storage.bulk_remove(@item_totals)
+      @removed_item_totals = Factorio::Storage.bulk_remove(@requested_item_counts)
 
-      @obtained_all_requested_items ||= @item_totals.all? do |k,v|
+      @can_fulfill_all ||= @requested_item_counts.all? do |k,v|
         @removed_item_totals[k] == v
       end
 
-      LinkLogger.debug(log_tag(:logistics)) { "Request Totals: #{@item_totals.ai}" }
+      LinkLogger.debug(log_tag(:logistics)) { "Request Totals: #{@requested_item_counts.ai}" }
 
       true
     end
@@ -39,7 +56,7 @@ module Factorio
 
     def calculate_item_ratios
       @item_ratios = Hash.new(0.0)
-      @item_totals.each do |item_name, item_count|
+      @requested_item_counts.each do |item_name, item_count|
         removed_item_count = @removed_item_totals[item_name]
         item_ratio = if removed_item_count >= item_count
           1.0
@@ -59,7 +76,7 @@ module Factorio
 ################################################################################
 
     def can_fulfill_all?
-      @can_fulfill_all ||= (@item_ratios.all? { |item_name, item_ratio| item_ratio >= 1.0 } && @obtained_all_requested_items)
+      @can_fulfill_all
     end
 
     def count_to_fulfill(requested_item_name, requested_item_count)
@@ -83,80 +100,81 @@ module Factorio
       count
     end
 
-    def calculate_fulfillment_items
+    def finalize_fulfillment
       @items_to_fulfill = Hash.new
+
+      @fulfilled_item_counts = Hash.new(0)
+      @unfulfilled_item_counts = Hash.new(0)
 
       if can_fulfill_all?
         @items_to_fulfill = @item_requests
-        item_fulfillment_totals = @item_totals
+        @fulfilled_item_counts = @requested_item_counts
       else
         @item_requests.each do |unit_number, requested_items|
           requested_items.each do |requested_item_name, requested_item_count|
             fulfill_count = count_to_fulfill(requested_item_name, requested_item_count)
+            @unfulfilled_item_counts[requested_item_name] += (requested_item_count - fulfill_count)
             next if fulfill_count == 0
 
             @items_to_fulfill[unit_number] ||= Hash.new(0)
             @items_to_fulfill[unit_number][requested_item_name] = fulfill_count
+
+            @fulfilled_item_counts[requested_item_name] += fulfill_count
           end
         end
-
+        LinkLogger.debug(log_tag(:logistics)) { "Overflow: #{@removed_item_totals.ai}" }
+        Factorio::Storage.bulk_add(@removed_item_totals)
       end
 
       true
+    end
+
+    def hash_sort(hash)
+      Hash[hash.delete_if { |key,value| value == 0 }.sort_by { |key,value| key }]
     end
 
     def metrics_handler
-      @item_totals.each do |requested_item_name, requested_item_count|
+      # REQUESTS
+      @requested_item_counts.each do |requested_item_name, requested_item_count|
         Metrics::Prometheus[:requested_items_total].observe(requested_item_count,
           labels: { server: @server.name, item_name: requested_item_name, item_type: Factorio::ItemTypes[requested_item_name] })
       end
+      @server.metrics[:requested] = @requested_item_counts
+      # @requested_item_counts = hash_sort(@requested_item_counts)
+      # command = %(remote.call('link', 'set_logistics_requested', '#{@requested_item_counts.to_json}'))
+      # @server.rcon_command_nonblock(command)
 
-      unfulfilled_item_counts = Hash.new
-      @items_to_fulfill.each do |unit_number, fulfilled_items|
-        fulfilled_items.each do |fulfilled_item_name, fulfilled_item_count|
-          unfulfilled_item_counts[fulfilled_item_name] ||= @item_totals[fulfilled_item_name]
-          Metrics::Prometheus[:fulfillment_items_total].observe(fulfilled_item_count,
-            labels: { server: @server.name, item_name: fulfilled_item_name, item_type: Factorio::ItemTypes[fulfilled_item_name] })
-          unfulfilled_item_counts[fulfilled_item_name] -= fulfilled_item_count
-        end
+      # FULFILLED
+      @fulfilled_item_counts.each do |fulfilled_item_name, fulfilled_item_count|
+        Metrics::Prometheus[:fulfillment_items_total].observe(fulfilled_item_count,
+          labels: { server: @server.name, item_name: fulfilled_item_name, item_type: Factorio::ItemTypes[fulfilled_item_name] })
       end
+      @server.metrics[:fulfilled] = @fulfilled_item_counts
+      # @fulfilled_item_counts = hash_sort(@fulfilled_item_counts)
+      # command = %(remote.call('link', 'set_logistics_fulfilled', '#{@fulfilled_item_counts.to_json}'))
+      # @server.rcon_command_nonblock(command)
 
-      unless can_fulfill_all?
-        unfulfilled_item_counts.each do |unfulfilled_item_name, unfulfilled_item_count|
-          Metrics::Prometheus[:unfulfilled_items_total].observe(unfulfilled_item_count,
-            labels: { server: @server.name, item_name: unfulfilled_item_name, item_type: Factorio::ItemTypes[unfulfilled_item_name] })
-        end
+      # UNFULFILLED
+      @unfulfilled_item_counts.each do |unfulfilled_item_name, unfulfilled_item_count|
+        Metrics::Prometheus[:unfulfilled_items_total].observe(unfulfilled_item_count,
+          labels: { server: @server.name, item_name: unfulfilled_item_name, item_type: Factorio::ItemTypes[unfulfilled_item_name] })
       end
+      @server.metrics[:unfulfilled] = @unfulfilled_item_counts
+      # @unfulfilled_item_counts = hash_sort(@unfulfilled_item_counts)
+      # command = %(remote.call('link', 'set_logistics_unfulfilled', '#{@unfulfilled_item_counts.to_json}'))
+      # @server.rcon_command_nonblock(command)
 
-      if !can_fulfill_all? && @removed_item_totals.values.any? { |v| v > 0 }
-        Factorio::Storage.bulk_add(@removed_item_totals)
-
-        LinkLogger.debug(log_tag(:logistics)) { "Overflow: #{@removed_item_totals.ai}" }
-
-        @removed_item_totals.each do |item_name, item_count|
-          Metrics::Prometheus[:overflow_items_total].observe(item_count,
-            labels: { server: @server.name, item_name: item_name, item_type: Factorio::ItemTypes[item_name] })
-        end
+      # OVERFLOW
+      @removed_item_totals.each do |removed_item_name, removed_item_count|
+        Metrics::Prometheus[:overflow_items_total].observe(removed_item_count,
+          labels: { server: @server.name, item_name: removed_item_name, item_type: Factorio::ItemTypes[removed_item_name] })
       end
+      @server.metrics[:overflow] = @removed_item_totals
+      # @removed_item_totals = hash_sort(@removed_item_totals)
+      # command = %(remote.call('link', 'set_logistics_overflow', '#{@removed_item_totals.to_json}'))
+      # @server.rcon_command_nonblock(command)
 
       true
-    end
-
-################################################################################
-
-    def fulfill
-      calculate_item_totals
-      calculate_item_ratios
-      calculate_fulfillment_items
-      metrics_handler
-
-      LinkLogger.debug(log_tag(:logistics)) { "Fulfillment: #{@items_to_fulfill.ai}" }
-
-      if block_given?
-        yield @items_to_fulfill
-      else
-        @items_to_fulfill
-      end
     end
 
 ################################################################################

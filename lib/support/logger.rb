@@ -11,6 +11,22 @@ class MultiLogger
     end
   end
 
+  def respond_to?(method_name, include_private=false)
+    unless (logger = self.class.loggers.first).nil?
+      logger.public_methods.include?(method_name) || super
+    else
+      super
+    end
+  end
+
+  def respond_to_missing?(method_name, include_private=false)
+    unless (logger = self.class.loggers.first).nil?
+      logger.public_methods.include?(method_name) || super
+    else
+      super
+    end
+  end
+
   module ClassMethods
     @@loggers ||= Array.new
 
@@ -76,7 +92,7 @@ class LinkLogger < Logger
     # end
 
     @@logger ||= LinkLogger.new(LOGFILE)
-    @@logger_methods ||= @@logger.public_methods
+    @@logger_methods ||= (@@logger.public_methods + LinkLogger.instance_methods).flatten
     @@mutex ||= Mutex.new
 
     def method_missing(method_name, *method_args, &block)
