@@ -76,13 +76,27 @@ class LinkLogger < Logger
     # end
 
     @@logger ||= LinkLogger.new(LOGFILE)
+    @@logger_methods ||= @@logger.public_methods
     @@mutex ||= Mutex.new
 
     def method_missing(method_name, *method_args, &block)
-      @@mutex.synchronize do
-        @@logger.send(method_name, *method_args, &block)
+      if @@logger_methods.include?(method_name)
+        @@mutex.synchronize do
+          @@logger.send(method_name, *method_args, &block)
+        end
+      else
+        super
       end
     end
+
+    def respond_to?(method_name, include_private=false)
+      @@logger_methods.include?(method_name) || super
+    end
+
+    def respond_to_missing?(method_name, include_private=false)
+      @@logger_methods.include?(method_name) || super
+    end
+
   end
 
   extend ClassMethods

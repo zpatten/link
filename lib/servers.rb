@@ -104,6 +104,7 @@ class Servers
 
   module ClassMethods
     @@servers ||= Servers.new
+    @@server_public_methods ||= @@servers.public_methods
 
     def to_json
       @@servers.send(:to_json)
@@ -114,7 +115,19 @@ class Servers
     end
 
     def method_missing(method_name, *args, &block)
-      @@servers.send(method_name, *args, &block)
+      if @@server_public_methods.include?(method_name)
+        @@servers.send(method_name, *args, &block)
+      else
+        super
+      end
+    end
+
+    def respond_to?(method_name, include_private=false)
+      @@server_public_methods.include?(method_name) || super
+    end
+
+    def respond_to_missing?(method_name, include_private=false)
+      @@server_public_methods.include?(method_name) || super
     end
   end
 

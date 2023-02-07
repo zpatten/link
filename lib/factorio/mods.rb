@@ -179,13 +179,26 @@ module Factorio
 
     module ClassMethods
       @@mods ||= Factorio::Mods.new
+      @@mods_public_methods ||= @@mods.public_methods
 
       def method_missing(method_name, *args, **options, &block)
-        if options.count == 0
-          @@mods.send(method_name, *args, &block)
+        if @@mods_public_methods.include?(method_name)
+          if options.count == 0
+            @@mods.send(method_name, *args, &block)
+          else
+            @@mods.send(method_name, *args, **options, &block)
+          end
         else
-          @@mods.send(method_name, *args, **options, &block)
+          super
         end
+      end
+
+      def respond_to?(method_name, include_private=false)
+        @@mods_public_methods.include?(method_name) || super
+      end
+
+      def respond_to_missing?(method_name, include_private=false)
+        @@mods_public_methods.include?(method_name) || super
       end
     end
 

@@ -108,9 +108,22 @@ module Factorio
 
     module ClassMethods
       @@storage ||= Factorio::Storage.new
+      @@storage_methods ||= @@storage.public_methods
 
       def method_missing(method_name, *args, &block)
-        @@storage.send(method_name, *args, &block)
+        if @@storage_methods.include?(method_name)
+          @@storage.send(method_name, *args, &block)
+        else
+          super
+        end
+      end
+
+      def respond_to?(method_name, include_private=false)
+        @@storage_methods.include?(method_name) || super
+      end
+
+      def respond_to_missing?(method_name, include_private=false)
+        @@storage_methods.include?(method_name) || super
       end
     end
 

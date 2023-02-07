@@ -84,9 +84,22 @@ module Factorio
 
     module ClassMethods
       @@credentials ||= Factorio::Credentials.new
+      @@credentials_public_methods ||= @@credentials.public_methods
 
       def method_missing(method_name, *args, **options, &block)
-        @@credentials.send(method_name, *args, &block)
+        if @@credentials_public_methods.include?(method_name)
+          @@credentials.send(method_name, *args, &block)
+        else
+          super
+        end
+      end
+
+      def respond_to?(method_name, include_private=false)
+        @@credentials_public_methods.include?(method_name) || super
+      end
+
+      def respond_to_missing?(method_name, include_private=false)
+        @@credentials_public_methods.include?(method_name) || super
       end
     end
 

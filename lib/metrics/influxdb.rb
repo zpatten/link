@@ -35,9 +35,22 @@ module Metrics
 
     module ClassMethods
       @@influxdb ||= Metrics::InfluxDB.new
+      @@influxdb_public_methods ||= @@influxdb.public_methods
 
       def method_missing(method_name, *args, &block)
-        @@influxdb.send(method_name, *args, &block)
+        if @@influxdb_public_methods.include?(method_name)
+          @@influxdb.send(method_name, *args, &block)
+        else
+          super
+        end
+      end
+
+      def respond_to?(method_name, include_private=false)
+        @@influxdb_public_methods.include?(method_name) || super
+      end
+
+      def respond_to_missing?(method_name, include_private=false)
+        @@influxdb_public_methods.include?(method_name) || super
       end
     end
 

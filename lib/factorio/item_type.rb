@@ -63,9 +63,22 @@ module Factorio
 
     module ClassMethods
       @@item_types ||= Factorio::ItemTypes.new
+      @@item_types_public_methods ||= @@item_types.public_methods
 
       def method_missing(method_name, *args, **options, &block)
-        @@item_types.send(method_name, *args, &block)
+        if @@item_types_public_methods.include?(method_name)
+          @@item_types.send(method_name, *args, &block)
+        else
+          super
+        end
+      end
+
+      def respond_to?(method_name, include_private=false)
+        @@item_types_public_methods.include?(method_name) || super
+      end
+
+      def respond_to_missing?(method_name, include_private=false)
+        @@item_types_public_methods.include?(method_name) || super
       end
     end
 

@@ -252,9 +252,22 @@ class Runner
 
   module ClassMethods
     @@runner ||= Runner.new
+    @@runner_public_methods ||= @@runner.public_methods
 
     def method_missing(method_name, *args, &block)
-      @@runner.send(method_name, *args, &block)
+      if @@runner_public_methods.include?(method_name)
+        @@runner.send(method_name, *args, &block)
+      else
+        super
+      end
+    end
+
+    def respond_to?(method_name, include_private=false)
+      @@runner_public_methods.include?(method_name) || super
+    end
+
+    def respond_to_missing?(method_name, include_private=false)
+      @@runner_public_methods.include?(method_name) || super
     end
   end
 

@@ -138,9 +138,22 @@ module Metrics
 
     module ClassMethods
       @@prometheus ||= Metrics::Prometheus.new
+      @@prometheus_public_methods ||= @@prometheus.public_methods
 
       def method_missing(method_name, *args, &block)
-        @@prometheus.send(method_name, *args, &block)
+        if @@prometheus_public_methods.include?(method_name)
+          @@prometheus.send(method_name, *args, &block)
+        else
+          super
+        end
+      end
+
+      def respond_to?(method_name, include_private=false)
+        @@prometheus_public_methods.include?(method_name) || super
+      end
+
+      def respond_to_missing?(method_name, include_private=false)
+        @@prometheus_public_methods.include?(method_name) || super
       end
     end
 

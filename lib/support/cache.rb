@@ -69,11 +69,23 @@ class Cache
 
   module ClassMethods
     @@cache ||= Cache.new
+    @@cache_public_methods ||= @@cache.public_methods
 
     def method_missing(method_name, *args, &block)
-      @@cache.send(method_name, *args, &block)
+      if @@cache_public_methods.include?(method_name)
+        @@cache.send(method_name, *args, &block)
+      else
+        super
+      end
     end
 
+    def respond_to?(method_name, include_private=false)
+      @@cache_public_methods.include?(method_name) || super
+    end
+
+    def respond_to_missing?(method_name, include_private=false)
+      @@cache_public_methods.include?(method_name) || super
+    end
   end
 
   extend ClassMethods
