@@ -5,9 +5,9 @@ class Server
     module Providables
 
       def schedule_task_providables
-        Tasks.schedule(what: :providables, pool: @pool, cancellation: @cancellation, server: self) do
+        Tasks.schedule(task: :providables, pool: @pool, cancellation: @cancellation, server: self) do
           command = %(remote.call('link', 'get_providables'))
-          rcon_handler(what: :get_providables, command: command) do |providables|
+          rcon_handler(task: :get_providables, command: command) do |providables|
             # LinkLogger.debug(@name) { "[LOGISTICS] providables: #{providables.ai}" }
             Factorio::Storage.bulk_add(providables)
             providables.each do |item_name, item_count|

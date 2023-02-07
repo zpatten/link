@@ -6,7 +6,10 @@ class Server
 ################################################################################
 
     def unresponsive?
-      ((@pinged_at + @ping_timeout) < Time.now.to_f)
+      timedout = (@timedout_at.nil? ? false : ((@timedout_at + @ping_timeout) < Time.now.to_f))
+      noping   = ((@pinged_at + @ping_timeout) < Time.now.to_f)
+
+      (timedout || noping)
     end
 
     def responsive?

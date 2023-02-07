@@ -8,7 +8,8 @@ class Server
     def start_rcon!
       sleep 1 until container_alive?
 
-      @pinged_at = Time.now.to_f
+      @pinged_at   = Time.now.to_f
+      @timedout_at = nil
 
       @rcon = Factorio::RConPool.new(server: self)
       @rcon.start!
@@ -43,7 +44,7 @@ class Server
 
 ################################################################################
 
-    def rcon_handler(what:, command:, &block)
+    def rcon_handler(task:, command:, &block)
       payload = self.rcon_command(command)
       unless payload.nil? || payload.empty?
         data = JSON.parse(payload)
@@ -53,7 +54,7 @@ class Server
         #   LinkLogger.warn(log_tag(:rcon)) { "Missing Payload Data! #{command.ai}" }
         end
       else
-        LinkLogger.warn(log_tag(:rcon, what)) { "Missing Payload!" }
+        LinkLogger.warn(log_tag(:rcon, task)) { "Missing Payload!" }
       end
     end
 

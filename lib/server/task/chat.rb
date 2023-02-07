@@ -16,9 +16,9 @@ class Server
       end
 
       def schedule_task_chat
-        Tasks.schedule(what: :chat, pool: @pool, cancellation: @cancellation, server: self) do
+        Tasks.schedule(task: :chat, pool: @pool, cancellation: @cancellation, server: self) do
           command = %(remote.call('link', 'get_chats'))
-          rcon_handler(what: :get_chats, command: command) do |chat_events|
+          rcon_handler(task: :get_chats, command: command) do |chat_events|
             handle_chat_events(chat_events)
           end
         end

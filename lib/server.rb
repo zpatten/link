@@ -57,6 +57,8 @@ class Server
   attr_reader :pool
   attr_reader :watch
 
+  attr_accessor :timedout_at
+
   RECV_MAX_LEN = (2 ** 16) - 1
 
 ################################################################################
@@ -65,9 +67,10 @@ class Server
     @name         = name.dup
     @id           = Zlib::crc32(@name.to_s)
     @network_id   = [@id].pack("L").unpack("l").first
-    @pinged_at    = Time.now.to_f
     @ping_timeout = Config.value(:timeout, :ping)
+    @pinged_at    = Time.now.to_f
     @rtt          = 0
+    @timedout_at  = nil
     @watch        = false
 
     @details           = details

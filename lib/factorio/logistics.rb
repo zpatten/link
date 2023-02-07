@@ -9,7 +9,7 @@ module Factorio
       @item_requests = item_requests
       @server        = server
 
-      # LinkLogger.debug(@server.name) { "[LOGISTICS] Requests: #{@item_requests.ai}" }
+      LinkLogger.debug(@server.name) { "[LOGISTICS] Requests: #{@item_requests.ai}" }
 
     end
 
@@ -148,7 +148,7 @@ module Factorio
       calculate_fulfillment_items
       metrics_handler
 
-      # LinkLogger.debug(@server.name) { "[LOGISTICS] Fulfillments: #{@items_to_fulfill.ai}" }
+      LinkLogger.debug(@server.name) { "[LOGISTICS] Fulfillments: #{@items_to_fulfill.ai}" }
 
       if block_given?
         yield @items_to_fulfill

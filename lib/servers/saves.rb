@@ -5,6 +5,10 @@ class Servers
 
 ################################################################################
 
+    def backup
+      each { |server| server.backup(timestamp: true) }
+    end
+
     def save_path
       File.expand_path(File.join(LINK_ROOT, 'saves'))
     end

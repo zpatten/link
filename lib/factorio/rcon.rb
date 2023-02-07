@@ -103,7 +103,7 @@ module Factorio
 
     def start!
       Tasks.onetime(
-        what: 'RCON',
+        task: 'RCON',
         pool: @pool,
         server: @server,
         metrics: false
@@ -120,7 +120,7 @@ module Factorio
 
         unless disconnected? || @cancellation.canceled?
           Tasks.repeat(
-            what: 'RCON.RX',
+            task: 'RCON.RX',
             pool: @pool,
             cancellation: @cancellation,
             server: @server,
@@ -128,7 +128,7 @@ module Factorio
           ) { receive_packet }
 
           Tasks.repeat(
-            what: 'RCON.TX',
+            task: 'RCON.TX',
             pool: @pool,
             cancellation: @cancellation,
             server: @server,

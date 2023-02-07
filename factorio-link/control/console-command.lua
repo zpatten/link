@@ -1,6 +1,4 @@
 function get_link_commands()
-  global.ticks_since_last_link_operation = 0
-
   if global.link_commands then
     rcon.print(game.table_to_json(global.link_commands))
   end
@@ -13,8 +11,6 @@ function link_command_event(data)
 end
 
 function set_link_command_whitelist(data)
-  global.ticks_since_last_link_operation = 0
-
   local link_command_whitelist = game.json_to_table(data)
   global.link_command_whitelist = link_command_whitelist
 

@@ -4,7 +4,6 @@ function link_dump(printer)
   printer.print("  - global.link_debug: "..tostring(global.link_debug))
   printer.print("  - global.link_id: "..global.link_id)
   printer.print("  - global.link_rtt: "..global.link_rtt)
-  printer.print("  - global.ticks_since_last_link_operation: "..global.ticks_since_last_link_operation)
   printer.print("  - global.link_command_whitelist: "..serpent.block(global.link_command_whitelist))
   printer.print("  - global.link_events: "..serpent.block(global.link_events))
   printer.print("  - global.link_inventory_combinators: "..serpent.block(global.link_inventory_combinators))
@@ -53,8 +52,6 @@ function on_link_init()
   global.link_inventory_combinators = {}
   global.link_receiver_combinators = {}
   global.link_transmitter_combinators = {}
-
-  global.ticks_since_last_link_operation = 0
 
   global.link_command_whitelist = {}
 

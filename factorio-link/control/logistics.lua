@@ -2,8 +2,6 @@
 -- PROVIDABLES
 --------------------------------------------------------------------------------
 function get_link_providables()
-  global.ticks_since_last_link_operation = 0
-
   if not global.link_providables then global.link_providables = {} end
 
   ------------
@@ -79,8 +77,6 @@ end
 -- REQUESTS
 --------------------------------------------------------------------------------
 function get_link_requests()
-  global.ticks_since_last_link_operation = 0
-
   local link_requests = {}
 
   ------------
@@ -165,8 +161,6 @@ end
 -- FULFILLMENTS
 --------------------------------------------------------------------------------
 function set_link_fulfillments(data)
-  global.ticks_since_last_link_operation = 0
-
   if not global.link_providables then global.link_providables = {} end
 
   local link_fulfillments = game.json_to_table(data)

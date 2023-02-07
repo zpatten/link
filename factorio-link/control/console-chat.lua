@@ -1,6 +1,4 @@
 function get_link_chats()
-  global.ticks_since_last_link_operation = 0
-
   if global.link_chats then
     rcon.print(game.table_to_json(global.link_chats))
   end

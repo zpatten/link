@@ -7,7 +7,12 @@ class Server
     module ServerList
 
       def schedule_task_server_list
-        Tasks.schedule(what: :server_list, pool: @pool, cancellation: @cancellation, server: self) do
+        Tasks.schedule(
+          task: :server_list,
+          pool: @pool,
+          cancellation: @cancellation,
+          server: self
+        ) do
           command = %(remote.call('link', 'set_server_list', '#{Servers.to_json}'))
           rcon_command_nonblock(command)
         end

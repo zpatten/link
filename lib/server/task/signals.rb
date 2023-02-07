@@ -40,15 +40,15 @@ class Server
       end
 
       def schedule_task_signals
-        Tasks.schedule(what: :signals, pool: @pool, cancellation: @cancellation, server: self) do
+        Tasks.schedule(task: :signals, pool: @pool, cancellation: @cancellation, server: self) do
           force = !@tx_signals_initalized
           command = %(remote.call('link', 'get_transmitter_combinator', #{force}))
-          rcon_handler(what: :get_transmitter_combinator, command: command) do |unit_network_list|
+          rcon_handler(task: :get_transmitter_combinator, command: command) do |unit_network_list|
             handle_transmitter_combinators(unit_network_list)
           end
 
           command = %(remote.call('link', 'get_receiver_combinator_network_ids'))
-          rcon_handler(what: :get_receiver_combinator_network_ids, command: command) do |network_ids|
+          rcon_handler(task: :get_receiver_combinator_network_ids, command: command) do |network_ids|
             handle_receiver_combinators(network_ids)
           end
         end

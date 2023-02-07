@@ -1,6 +1,4 @@
 function get_link_current_research()
-  global.ticks_since_last_link_operation = 0
-
   local link_current_research = nil
 
   if game.forces.player.research_queue ~= nil then
@@ -20,8 +18,6 @@ function get_link_current_research()
 end
 
 function set_link_current_research(data)
-  global.ticks_since_last_link_operation = 0
-
   local link_current_research = game.json_to_table(data)
 
   if table_size(link_current_research.research_queue) > 0 then
@@ -37,7 +33,6 @@ function set_link_current_research(data)
 end
 
 function get_link_research()
-  global.ticks_since_last_link_operation = 0
   local link_research = {}
 
   for _, technology in pairs(game.forces.player.technologies) do
@@ -49,7 +44,6 @@ function get_link_research()
 end
 
 function set_link_research(data)
-  global.ticks_since_last_link_operation = 0
   local link_research = game.json_to_table(data)
 
   for _, technology in pairs(game.forces.player.technologies) do

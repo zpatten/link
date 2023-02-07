@@ -13,44 +13,48 @@ class Tasks
       end
     end
 
-    def metrics_handler(pool:, what:, server_tag:, &block)
+    def metrics_handler(pool:, task:, server_tag:, &block)
       elapsed_time = Benchmark.realtime(&block)
       Metrics::Prometheus[:thread_duration_seconds].observe(elapsed_time,
-        labels: { server: server_tag.downcase, task: what.downcase }
+        labels: { server: server_tag.downcase, task: task.downcase }
       )
       Metrics::Prometheus[:threads].set(Thread.list.count)
       Metrics::Prometheus[:threads_running].set(Thread.list.count { |t| t.status == 'run' })
       Metrics::Prometheus[:threads_queue_length].set(pool.queue_length)
     end
 
-    def timeout_handler(timeout: Config.value(:timeout, :thread), what: nil, tag: nil, &block)
-      timeout = Config.value(:timeout, what) || Config.value(:timeout, :thread) if what
+    def timeout_handler(timeout: Config.value(:timeout, :thread), task: nil, tag: nil, server: nil, &block)
+      timeout = Config.value(:timeout, task) || Config.value(:timeout, :thread) if task
       Timeout.timeout(timeout, &block)
+      server.timedout_at = nil unless server.nil?
+      true
     rescue Timeout::Error => e
+      server.timedout_at = Time.now.to_f unless server.nil?
       LinkLogger.warn(tag) { "Timeout after #{timeout.ai} seconds" }
+      false
     end
 
     def tags(**options)
       server = options[:server]
-      what   = options[:what]
+      task   = options[:task]
 
       server_tag = (server && server.name) || PROGRAM_NAME
-      tag        = [(server && server.name), what].flatten.compact.join('.') || Thread.current.name
+      tag        = [(server && server.name), task].flatten.compact.join('.') || Thread.current.name
 
       [server_tag.downcase, tag.downcase]
     end
 
 ################################################################################
 
-    def onetime(what:, pool: Runner.pool, cancellation: Runner.cancellation, server: nil, metrics: true, **options, &block)
-      server_tag, tag = tags(what: what, server: server)
+    def onetime(task:, pool: Runner.pool, cancellation: Runner.cancellation, server: nil, metrics: true, **options, &block)
+      server_tag, tag = tags(task: task, server: server)
 
       Concurrent::Promises.future_on(pool) do
         Thread.current.name = server_tag
         LinkLogger.debug(tag) { "Process Started (onetime)" }
         exception_handler(tag: tag) do
           if metrics
-            metrics_handler(pool: pool, what: what, server_tag: server_tag) { block.call(server) }
+            metrics_handler(pool: pool, task: task, server_tag: server_tag) { block.call(server) }
           else
             block.call(server)
           end
@@ -64,17 +68,17 @@ class Tasks
 
 ################################################################################
 
-    def repeat(what:, pool: Runner.pool, cancellation: Runner.cancellation, server: nil, metrics: true, **options, &block)
-      server_tag, tag = tags(what: what, server: server)
+    def repeat(task:, pool: Runner.pool, cancellation: Runner.cancellation, server: nil, metrics: true, **options, &block)
+      server_tag, tag = tags(task: task, server: server)
 
-      task = -> cancellation do
+      repeat_task = -> cancellation do
         Thread.current.name = server_tag
         until cancellation.canceled? do
           LinkLogger.debug(tag) { "Process Started (repeat)" }
           exception_handler(tag: tag) do
-            timeout_handler(what: what, tag: tag) do
+            timeout_handler(task: task, tag: tag, server: server) do
               if metrics
-                metrics_handler(pool: pool, what: what, server_tag: server_tag) { block.call(server) }
+                metrics_handler(pool: pool, task: task, server_tag: server_tag) { block.call(server) }
               else
                 block.call(server)
               end
@@ -86,7 +90,7 @@ class Tasks
         Thread.current.name = "stopped-#{tag}"
       end
 
-      Concurrent::Promises.future_on(pool, cancellation, &task).run
+      Concurrent::Promises.future_on(pool, cancellation, &repeat_task).run
 
       LinkLogger.debug(tag) { "Added Process (repeat)" }
 
@@ -95,19 +99,16 @@ class Tasks
 
 ################################################################################
 
-    def schedule(what:, pool: Runner.pool, cancellation: Runner.cancellation, server: nil, **options, &block)
-      unless !!Config.value(:tasks, what)
-        LinkLogger.warn(:tasks) { "Task #{what.ai} not configured!" }
-        return false
-      end
+    def schedule(task:, pool: Runner.pool, cancellation: Runner.cancellation, server: nil, **options, &block)
+      return false if task_schedule(task).nil?
 
-      server_tag, tag = tags(what: what, server: server)
+      server_tag, tag = tags(task: task, server: server)
 
       repeating_scheduled_task = -> interval, cancellation, task do
         Concurrent::Promises.schedule_on(pool, interval, cancellation, &task).then { repeating_scheduled_task.call(interval, cancellation, task) }
       end
 
-      task = -> cancellation do
+      scheduled_task = -> cancellation do
         Thread.current.name = server_tag
         if cancellation.canceled?
           LinkLogger.debug(tag) { "Scheduled Task Canceled" }
@@ -116,8 +117,8 @@ class Tasks
 
         LinkLogger.debug(tag) { "Scheduled Task Started" }
         exception_handler(tag: tag) do
-          timeout_handler(what: what, tag: tag) do
-            metrics_handler(pool: pool, what: what, server_tag: server_tag)  { block.call(server) }
+          timeout_handler(task: task, tag: tag, server: server) do
+            metrics_handler(pool: pool, task: task, server_tag: server_tag)  { block.call(server) }
           end
         end
         LinkLogger.debug(tag) { "Scheduled Task Finished" }
@@ -127,15 +128,33 @@ class Tasks
       end
 
       Concurrent::Promises.future_on(pool,
-        Config.value(:scheduler, what),
+        Config.value(:scheduler, task),
         cancellation,
-        task,
+        scheduled_task,
         &repeating_scheduled_task
       ).run
 
       LinkLogger.info(tag) { "Added Scheduled Task" }
 
       true
+    end
+
+################################################################################
+
+    def task_enabled?(task)
+      !!Config.value(:tasks, task)
+    end
+
+    def task_disabled?(task)
+      !task_enabled?(task)
+    end
+
+################################################################################
+
+    def task_schedule(task)
+      return Config.value(:scheduler, task) unless task_disabled?(task)
+      LinkLogger.warn(:tasks) { "Task #{task.ai} not configured!" }
+      nil
     end
 
 ################################################################################
@@ -150,34 +169,34 @@ end
 ################################################################################
 
 def schedule_task_mark
-  Tasks.schedule(what: :mark) do
+  Tasks.schedule(task: :mark) do
     LinkLogger.info(:mark) { "---MARK--- @ #{Time.now.utc}" }
     GC.start(full_mark: true, immediate_sweep: true) if RUBY_ENGINE == 'ruby'
   end
 end
 
 def schedule_task_trim
-  Tasks.schedule(what: :trim) do
-    # Servers.backup
+  Tasks.schedule(task: :trim) do
     Servers.trim_saves
   end
 end
 
 def schedule_task_backup
-  Tasks.schedule(what: :backup) do
+  Tasks.schedule(task: :backup) do
     Factorio::ItemTypes.save
     Factorio::Storage.save
+    Servers.backup
   end
 end
 
 def schedule_task_signals
-  Tasks.schedule(what: :signals) do
+  Tasks.schedule(task: :signals) do
     Factorio::Signals.update_inventory_signals
   end
 end
 
 def schedule_task_prometheus
-  Tasks.schedule(what: :prometheus) do
+  Tasks.schedule(task: :prometheus) do
     Factorio::Storage.metrics_handler
 
     Metrics::Prometheus.push
@@ -185,7 +204,7 @@ def schedule_task_prometheus
 end
 
 def schedule_task_watchdog
-  Tasks.schedule(what: :watchdog) do
+  Tasks.schedule(task: :watchdog) do
     Servers.select(&:watch).each do |server|
       if server.unresponsive?
         LinkLogger.warn(server.log_tag(:watchdog)) { "Detected Unresponsive Server" }

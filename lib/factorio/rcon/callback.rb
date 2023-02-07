@@ -15,10 +15,10 @@ module Factorio
       def packet_callback(packet_fields)
         unless (pc = @callbacks.delete(packet_fields.id)).nil?
           @responses.delete(pc.id)
-          tag = ['rcon', 'callback', pc.what, pc.id].flatten.compact.join('.').upcase
+          # tag = ['rcon', 'callback', pc.task, pc.id].flatten.compact.join('.').upcase
 
           Tasks.onetime(
-            what: 'RCON.CALLBACK',
+            task: 'RCON.CALLBACK',
             pool: @pool,
             server: @server
           ) { pc.callback.call(@name, packet_fields) }
