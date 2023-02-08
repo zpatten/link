@@ -23,16 +23,16 @@ function link_gui_create(player)
     --   style = 'outer_frame'
     -- }
 
-    local server_list_outer_frame = global.link_gui.add{
-      type  = 'frame',
-      name  = 'link-server-list-inner-frame',
-      style = 'inner_frame_in_outer_frame'
-    }
+    -- local server_list_outer_frame = global.link_gui.add{
+    --   type  = 'frame',
+    --   name  = 'link-server-list-inner-frame',
+    --   style = 'inner_frame_in_outer_frame'
+    -- }
 
-    local server_list_inner_frame = server_list_outer_frame.add{
+    local server_list_inner_frame = global.link_gui.add{
       type      = 'frame',
       name      = 'link-server-list-frame',
-      style     = 'inner_frame',
+      style     = 'inventory_frame',
       caption = 'Servers'
     }
 
@@ -82,10 +82,10 @@ function link_gui_create(player)
     --   style = 'inner_frame_in_outer_frame'
     -- }
 
-    local storage_inner_frame = server_list_outer_frame.add{
+    local storage_inner_frame = global.link_gui.add{
       type  = 'frame',
       name  = 'link-storage-inner-frame',
-      style = 'inner_frame',
+      style = 'inventory_frame',
       caption = 'Storage'
     }
 
@@ -174,35 +174,63 @@ function link_gui_create(player)
 
 --------------------------------------------------------------------------------
 
-    local logistics_provided_inner_frame = server_list_outer_frame.add{
-      type  = 'frame',
-      name  = 'link-logistics-provided-inner-frame',
-      style = 'inner_frame',
-      caption = 'Logistics_provided'
-    }
+    -- local logistics_provided_frame = global.link_gui.add{
+    --   type  = 'frame',
+    --   name  = 'link-logistics-provided-frame',
+    --   style = 'inventory_frame',
+    --   caption = 'Provided'
+    -- }
 
-    local logistics_provided_frame = logistics_provided_inner_frame.add{
-      type      = 'frame',
-      name      = 'link-logistics-provided-frame',
-      direction = 'vertical',
-      style     = 'inside_shallow_frame'
-    }
+    -- local logistics_provided_background_frame = logistics_provided_frame.add{
+    --   type      = 'frame',
+    --   name      = 'link-logistics-provided-inner-frame',
+    --   style     = 'logistics_scroll_pane_background_frame'
+    -- }
 
-    local logistics_provided_scroll_pane = logistics_provided_frame.add{
-      type                     = 'scroll-pane',
-      name                     = 'link-logistics-provided-scroll-pane',
-      horizontal_scroll_policy = 'never',
-      vertical_scroll_policy   = 'auto',
-      style = 'inner_frame_scroll_pane'
-    }
+    -- local logistics_provided_scroll_pane = logistics_provided_background_frame.add{
+    --   type  = 'scroll-pane',
+    --   name  = 'link-logistics-provided-scroll-pane',
+    --   style = 'logistics_scroll_pane'
+    -- }
 
-    global.link_gui_logistics_table_provided = logistics_provided_scroll_pane.add{
-      type = 'table',
-      name = 'link-logistics-provided-table',
-      column_count = 2,
-      draw_horizontal_lines = true,
-      draw_horizontal_lines_after_headers = true
-    }
+    global.link_gui_logistics_table_provided = link_gui_logistics_frame('provided')
+    -- logistics_provided_scroll_pane.add{
+    --   type = 'table',
+    --   name = 'link-logistics-provided-table',
+    --   style = 'logistics_slot_table',
+    --   column_count = 10
+    -- }
+
+
+    -- local logistics_provided_inner_frame = global.link_gui.add{
+    --   type  = 'frame',
+    --   name  = 'link-logistics-provided-inner-frame',
+    --   style = 'inventory_frame',
+    --   caption = 'Provided'
+    -- }
+
+    -- local logistics_provided_frame = logistics_provided_inner_frame.add{
+    --   type      = 'frame',
+    --   name      = 'link-logistics-provided-frame',
+    --   direction = 'vertical',
+    --   style     = 'inside_shallow_frame'
+    -- }
+
+    -- local logistics_provided_scroll_pane = logistics_provided_frame.add{
+    --   type                     = 'scroll-pane',
+    --   name                     = 'link-logistics-provided-scroll-pane',
+    --   horizontal_scroll_policy = 'never',
+    --   vertical_scroll_policy   = 'auto',
+    --   style = 'inner_frame_scroll_pane'
+    -- }
+
+    -- global.link_gui_logistics_table_provided = logistics_provided_scroll_pane.add{
+    --   type = 'table',
+    --   name = 'link-logistics-provided-table',
+    --   column_count = 2,
+    --   draw_horizontal_lines = true,
+    --   draw_horizontal_lines_after_headers = true
+    -- }
 
     -- local logistics_provided_frame = global.link_gui.add{
     --   type      = 'frame',
@@ -237,140 +265,144 @@ function link_gui_create(player)
     -- }
 
 --------------------------------------------------------------------------------
+    global.link_gui_logistics_table_requested = link_gui_logistics_frame('requested')
 
-    local logistics_requested_frame = global.link_gui.add{
-      type      = 'frame',
-      name      = 'logistics-requested-frame',
-      direction = 'vertical',
-    }
+    -- local logistics_requested_frame = global.link_gui.add{
+    --   type      = 'frame',
+    --   name      = 'logistics-requested-frame',
+    --   direction = 'vertical',
+    -- }
 
-    logistics_requested_frame.add{
-      type    = 'label',
-      name    = 'logistics-requested-label',
-      caption = 'Requested'
-    }
+    -- logistics_requested_frame.add{
+    --   type    = 'label',
+    --   name    = 'logistics-requested-label',
+    --   caption = 'Requested'
+    -- }
 
-    logistics_requested_frame.add{
-      type = 'line',
-      name = 'logistics-requested-line'
-    }
+    -- logistics_requested_frame.add{
+    --   type = 'line',
+    --   name = 'logistics-requested-line'
+    -- }
 
-    local logistics_requested_scroll_pane = logistics_requested_frame.add{
-      type                     = 'scroll-pane',
-      name                     = 'logistics-requested-scroll-pane',
-      horizontal_scroll_policy = 'never',
-      vertical_scroll_policy   = 'auto'
-    }
+    -- local logistics_requested_scroll_pane = logistics_requested_frame.add{
+    --   type                     = 'scroll-pane',
+    --   name                     = 'logistics-requested-scroll-pane',
+    --   horizontal_scroll_policy = 'never',
+    --   vertical_scroll_policy   = 'auto'
+    -- }
 
-    global.link_gui_logistics_table_requested = logistics_requested_scroll_pane.add{
-      type = 'table',
-      name = 'logistics-requested-table',
-      column_count = 2,
-      draw_horizontal_lines = true,
-      draw_horizontal_lines_after_headers = true
-    }
-
---------------------------------------------------------------------------------
-
-    local logistics_fulfilled_frame = global.link_gui.add{
-      type      = 'frame',
-      name      = 'logistics-fulfilled-frame',
-      direction = 'vertical',
-    }
-
-    logistics_fulfilled_frame.add{
-      type    = 'label',
-      name    = 'logistics-fulfilled-label',
-      caption = 'Fulfilled'
-    }
-
-    logistics_fulfilled_frame.add{
-      type = 'line',
-      name = 'logistics-fulfilled-line'
-    }
-
-    local logistics_fulfilled_scroll_pane = logistics_fulfilled_frame.add{
-      type                     = 'scroll-pane',
-      name                     = 'logistics-fulfilled-scroll-pane',
-      horizontal_scroll_policy = 'never',
-      vertical_scroll_policy   = 'auto'
-    }
-
-    global.link_gui_logistics_table_fulfilled = logistics_fulfilled_scroll_pane.add{
-      type = 'table',
-      name = 'logistics-fulfilled-table',
-      column_count = 2,
-      draw_horizontal_lines = true,
-      draw_horizontal_lines_after_headers = true
-    }
+    -- global.link_gui_logistics_table_requested = logistics_requested_scroll_pane.add{
+    --   type = 'table',
+    --   name = 'logistics-requested-table',
+    --   column_count = 2,
+    --   draw_horizontal_lines = true,
+    --   draw_horizontal_lines_after_headers = true
+    -- }
 
 --------------------------------------------------------------------------------
+    global.link_gui_logistics_table_fulfilled = link_gui_logistics_frame('fulfilled')
 
-    local logistics_unfulfilled_frame = global.link_gui.add{
-      type      = 'frame',
-      name      = 'logistics-unfulfilled-frame',
-      direction = 'vertical',
-    }
+    -- local logistics_fulfilled_frame = global.link_gui.add{
+    --   type      = 'frame',
+    --   name      = 'logistics-fulfilled-frame',
+    --   direction = 'vertical',
+    -- }
 
-    logistics_unfulfilled_frame.add{
-      type    = 'label',
-      name    = 'logistics-unfulfilled-label',
-      caption = 'Unfulfilled'
-    }
+    -- logistics_fulfilled_frame.add{
+    --   type    = 'label',
+    --   name    = 'logistics-fulfilled-label',
+    --   caption = 'Fulfilled'
+    -- }
 
-    logistics_unfulfilled_frame.add{
-      type = 'line',
-      name = 'logistics-unfulfilled-line'
-    }
+    -- logistics_fulfilled_frame.add{
+    --   type = 'line',
+    --   name = 'logistics-fulfilled-line'
+    -- }
 
-    local logistics_unfulfilled_scroll_pane = logistics_unfulfilled_frame.add{
-      type                     = 'scroll-pane',
-      name                     = 'logistics-unfulfilled-scroll-pane',
-      horizontal_scroll_policy = 'never',
-      vertical_scroll_policy   = 'auto'
-    }
+    -- local logistics_fulfilled_scroll_pane = logistics_fulfilled_frame.add{
+    --   type                     = 'scroll-pane',
+    --   name                     = 'logistics-fulfilled-scroll-pane',
+    --   horizontal_scroll_policy = 'never',
+    --   vertical_scroll_policy   = 'auto'
+    -- }
 
-    global.link_gui_logistics_table_unfulfilled = logistics_unfulfilled_scroll_pane.add{
-      type = 'table',
-      name = 'logistics-unfulfilled-table',
-      column_count = 2,
-      draw_horizontal_lines = true,
-      draw_horizontal_lines_after_headers = true
-    }
+    -- global.link_gui_logistics_table_fulfilled = logistics_fulfilled_scroll_pane.add{
+    --   type = 'table',
+    --   name = 'logistics-fulfilled-table',
+    --   column_count = 2,
+    --   draw_horizontal_lines = true,
+    --   draw_horizontal_lines_after_headers = true
+    -- }
 
 --------------------------------------------------------------------------------
+    global.link_gui_logistics_table_unfulfilled = link_gui_logistics_frame('unfulfilled')
 
-    local logistics_overflow_frame = global.link_gui.add{
-      type      = 'frame',
-      name      = 'logistics-overflow-frame',
-      direction = 'vertical',
-    }
+    -- local logistics_unfulfilled_frame = global.link_gui.add{
+    --   type      = 'frame',
+    --   name      = 'logistics-unfulfilled-frame',
+    --   direction = 'vertical',
+    -- }
 
-    logistics_overflow_frame.add{
-      type    = 'label',
-      name    = 'logistics-overflow-label',
-      caption = 'Overflow'
-    }
+    -- logistics_unfulfilled_frame.add{
+    --   type    = 'label',
+    --   name    = 'logistics-unfulfilled-label',
+    --   caption = 'Unfulfilled'
+    -- }
 
-    logistics_overflow_frame.add{
-      type = 'line',
-      name = 'logistics-overflow-line'
-    }
+    -- logistics_unfulfilled_frame.add{
+    --   type = 'line',
+    --   name = 'logistics-unfulfilled-line'
+    -- }
 
-    local logistics_overflow_scroll_pane = logistics_overflow_frame.add{
-      type                     = 'scroll-pane',
-      name                     = 'logistics-overflow-scroll-pane',
-      horizontal_scroll_policy = 'never',
-      vertical_scroll_policy   = 'auto'
-    }
+    -- local logistics_unfulfilled_scroll_pane = logistics_unfulfilled_frame.add{
+    --   type                     = 'scroll-pane',
+    --   name                     = 'logistics-unfulfilled-scroll-pane',
+    --   horizontal_scroll_policy = 'never',
+    --   vertical_scroll_policy   = 'auto'
+    -- }
 
-    global.link_gui_logistics_table_overflow = logistics_overflow_scroll_pane.add{
-      type = 'table',
-      name = 'logistics-overflow-table',
-      column_count = 2,
-      draw_horizontal_lines = true,
-      draw_horizontal_lines_after_headers = true
-    }
+    -- global.link_gui_logistics_table_unfulfilled = logistics_unfulfilled_scroll_pane.add{
+    --   type = 'table',
+    --   name = 'logistics-unfulfilled-table',
+    --   column_count = 2,
+    --   draw_horizontal_lines = true,
+    --   draw_horizontal_lines_after_headers = true
+    -- }
+
+--------------------------------------------------------------------------------
+    global.link_gui_logistics_table_overflow = link_gui_logistics_frame('overflow')
+
+    -- local logistics_overflow_frame = global.link_gui.add{
+    --   type      = 'frame',
+    --   name      = 'logistics-overflow-frame',
+    --   direction = 'vertical',
+    -- }
+
+    -- logistics_overflow_frame.add{
+    --   type    = 'label',
+    --   name    = 'logistics-overflow-label',
+    --   caption = 'Overflow'
+    -- }
+
+    -- logistics_overflow_frame.add{
+    --   type = 'line',
+    --   name = 'logistics-overflow-line'
+    -- }
+
+    -- local logistics_overflow_scroll_pane = logistics_overflow_frame.add{
+    --   type                     = 'scroll-pane',
+    --   name                     = 'logistics-overflow-scroll-pane',
+    --   horizontal_scroll_policy = 'never',
+    --   vertical_scroll_policy   = 'auto'
+    -- }
+
+    -- global.link_gui_logistics_table_overflow = logistics_overflow_scroll_pane.add{
+    --   type = 'table',
+    --   name = 'logistics-overflow-table',
+    --   column_count = 2,
+    --   draw_horizontal_lines = true,
+    --   draw_horizontal_lines_after_headers = true
+    -- }
 
 
 
@@ -572,25 +604,14 @@ function link_gui_storage_table_update(player)
     global.link_gui_storage_table.clear()
     if global.link_storage then
       for item_name, item_count in pairs(global.link_storage) do
-        -- global.link_gui_storage_table.add{
-        --   type = 'label',
-        --   caption = item_name
-        -- }
         if item_name ~= 'electricity' then
           local sprite = global.link_gui_storage_table.add{
             type = 'sprite-button',
             style = 'logistic_slot_button',
             sprite = lookup_item_type(item_name)..'/'..item_name,
-            number = item_count
+            number = item_count,
+            tooltip = item_name
           }
-          -- sprite.add{
-          --   type = 'label',
-          --   style = ''
-          -- }
-          -- sprite.add{
-          --   type = 'label',
-          --   caption = tostring(item_count)
-          -- }
         end
       end
     end
@@ -600,24 +621,17 @@ end
 function link_gui_logistics_provided_table_update(player)
   if global.link_gui_logistics_table_provided and global.link_gui_logistics_table_provided.valid then
     global.link_gui_logistics_table_provided.clear()
-    global.link_gui_logistics_table_provided.add{
-      type = 'label',
-      caption = 'Name'
-    }
-    global.link_gui_logistics_table_provided.add{
-      type = 'label',
-      caption = 'Count'
-    }
     if global.link_logistics_provided then
       for item_name, item_count in pairs(global.link_logistics_provided) do
-        global.link_gui_logistics_table_provided.add{
-          type = 'label',
-          caption = item_name
-        }
-        global.link_gui_logistics_table_provided.add{
-          type = 'label',
-          caption = tostring(item_count)
-        }
+        if item_name ~= 'electricity' then
+          local sprite = global.link_gui_logistics_table_provided.add{
+            type = 'sprite-button',
+            style = 'logistic_slot_button',
+            sprite = lookup_item_type(item_name)..'/'..item_name,
+            number = item_count,
+            tooltip = item_name
+          }
+        end
       end
     end
   end
@@ -626,24 +640,17 @@ end
 function link_gui_logistics_requested_table_update(player)
   if global.link_gui_logistics_table_requested and global.link_gui_logistics_table_requested.valid then
     global.link_gui_logistics_table_requested.clear()
-    global.link_gui_logistics_table_requested.add{
-      type = 'label',
-      caption = 'Name'
-    }
-    global.link_gui_logistics_table_requested.add{
-      type = 'label',
-      caption = 'Count'
-    }
     if global.link_logistics_requested then
       for item_name, item_count in pairs(global.link_logistics_requested) do
-        global.link_gui_logistics_table_requested.add{
-          type = 'label',
-          caption = item_name
-        }
-        global.link_gui_logistics_table_requested.add{
-          type = 'label',
-          caption = tostring(item_count)
-        }
+        if item_name ~= 'electricity' then
+          local sprite = global.link_gui_logistics_table_requested.add{
+            type = 'sprite-button',
+            style = 'logistic_slot_button',
+            sprite = lookup_item_type(item_name)..'/'..item_name,
+            number = item_count,
+            tooltip = item_name
+          }
+        end
       end
     end
   end
@@ -652,24 +659,17 @@ end
 function link_gui_logistics_fulfilled_table_update(player)
   if global.link_gui_logistics_table_fulfilled and global.link_gui_logistics_table_fulfilled.valid then
     global.link_gui_logistics_table_fulfilled.clear()
-    global.link_gui_logistics_table_fulfilled.add{
-      type = 'label',
-      caption = 'Name'
-    }
-    global.link_gui_logistics_table_fulfilled.add{
-      type = 'label',
-      caption = 'Count'
-    }
     if global.link_logistics_fulfilled then
       for item_name, item_count in pairs(global.link_logistics_fulfilled) do
-        global.link_gui_logistics_table_fulfilled.add{
-          type = 'label',
-          caption = item_name
-        }
-        global.link_gui_logistics_table_fulfilled.add{
-          type = 'label',
-          caption = tostring(item_count)
-        }
+        if item_name ~= 'electricity' then
+          local sprite = global.link_gui_logistics_table_fulfilled.add{
+            type = 'sprite-button',
+            style = 'logistic_slot_button',
+            sprite = lookup_item_type(item_name)..'/'..item_name,
+            number = item_count,
+            tooltip = item_name
+          }
+        end
       end
     end
   end
@@ -678,24 +678,17 @@ end
 function link_gui_logistics_unfulfilled_table_update(player)
   if global.link_gui_logistics_table_unfulfilled and global.link_gui_logistics_table_unfulfilled.valid then
     global.link_gui_logistics_table_unfulfilled.clear()
-    global.link_gui_logistics_table_unfulfilled.add{
-      type = 'label',
-      caption = 'Name'
-    }
-    global.link_gui_logistics_table_unfulfilled.add{
-      type = 'label',
-      caption = 'Count'
-    }
     if global.link_logistics_unfulfilled then
       for item_name, item_count in pairs(global.link_logistics_unfulfilled) do
-        global.link_gui_logistics_table_unfulfilled.add{
-          type = 'label',
-          caption = item_name
-        }
-        global.link_gui_logistics_table_unfulfilled.add{
-          type = 'label',
-          caption = tostring(item_count)
-        }
+        if item_name ~= 'electricity' then
+          local sprite = global.link_gui_logistics_table_unfulfilled.add{
+            type = 'sprite-button',
+            style = 'logistic_slot_button',
+            sprite = lookup_item_type(item_name)..'/'..item_name,
+            number = item_count,
+            tooltip = item_name
+          }
+        end
       end
     end
   end
@@ -704,24 +697,17 @@ end
 function link_gui_logistics_overflow_table_update(player)
   if global.link_gui_logistics_table_overflow and global.link_gui_logistics_table_overflow.valid then
     global.link_gui_logistics_table_overflow.clear()
-    global.link_gui_logistics_table_overflow.add{
-      type = 'label',
-      caption = 'Name'
-    }
-    global.link_gui_logistics_table_overflow.add{
-      type = 'label',
-      caption = 'Count'
-    }
     if global.link_logistics_overflow then
       for item_name, item_count in pairs(global.link_logistics_overflow) do
-        global.link_gui_logistics_table_overflow.add{
-          type = 'label',
-          caption = item_name
-        }
-        global.link_gui_logistics_table_overflow.add{
-          type = 'label',
-          caption = tostring(item_count)
-        }
+        if item_name ~= 'electricity' then
+          local sprite = global.link_gui_logistics_table_overflow.add{
+            type = 'sprite-button',
+            style = 'logistic_slot_button',
+            sprite = lookup_item_type(item_name)..'/'..item_name,
+            number = item_count,
+            tooltip = item_name
+          }
+        end
       end
     end
   end

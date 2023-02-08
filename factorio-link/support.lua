@@ -28,6 +28,36 @@ function strcopy(str)
   return string.format('%s', str)
 end
 
+function link_gui_logistics_frame(caption)
+  local outer_frame = global.link_gui.add{
+    type = 'frame',
+    name = string.lower('link-'..caption..'-outer-frame'),
+    style = 'inventory_frame',
+    caption = caption
+  }
+
+  local inner_frame = outer_frame.add{
+    type = 'frame',
+    name = string.lower('link-'..caption..'-inner-frame'),
+    style = 'logistics_scroll_pane_background_frame'
+  }
+
+  local scroll_pane = inner_frame.add{
+    type = 'scroll-pane',
+    name = string.lower('link-'..caption..'-scroll-pane'),
+    style = 'logistics_scroll_pane'
+  }
+
+  local table = scroll_pane.add{
+    type = 'table',
+    name = string.lower('link-'..caption..'-table'),
+    style = 'logistics_slot_table',
+    column_count = 10
+  }
+
+  return table
+end
+
 function link_build_data(args)
   local o
 
