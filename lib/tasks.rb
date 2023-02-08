@@ -26,7 +26,7 @@ class Tasks
     def timeout_handler(timeout: Config.value(:timeout, :thread), task: nil, tag: nil, server: nil, &block)
       timeout = Config.value(:timeout, task) || Config.value(:timeout, :thread) if task
       Timeout.timeout(timeout, &block)
-      server.timedout_at = nil unless server.nil?
+      # server.timedout_at = nil unless server.nil?
       true
     rescue Timeout::Error => e
       server.timedout_at = Time.now.to_f unless server.nil?

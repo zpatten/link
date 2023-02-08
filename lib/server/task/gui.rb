@@ -23,7 +23,7 @@ class Server
           rcon_command_nonblock(command)
 
           storage = hash_sort(Factorio::Storage.to_h)
-          command = %(remote.call('link', 'set_gui_storage', '#{storage.to_json}'))
+          command = %(remote.call('link', 'set_gui_logistics_storage', '#{storage.to_json}'))
           rcon_command_nonblock(command)
 
           @metrics.keys.each do |key|

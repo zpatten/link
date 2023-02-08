@@ -11,24 +11,6 @@ function link_gui_create(player)
       visible   = false
     }
 
-    -- global.link_gui.add{
-    --   type = 'empty-widget',
-    --   style = 'draggable_space_header',
-    --   ignored_by_interaction = true
-    -- }
-
-    -- local server_list_outer_frame = global.link_gui.add{
-    --   type  = 'frame',
-    --   name  = 'link-server-list-outer-frame',
-    --   style = 'outer_frame'
-    -- }
-
-    -- local server_list_outer_frame = global.link_gui.add{
-    --   type  = 'frame',
-    --   name  = 'link-server-list-inner-frame',
-    --   style = 'inner_frame_in_outer_frame'
-    -- }
-
     local server_list_inner_frame = global.link_gui.add{
       type      = 'frame',
       name      = 'link-server-list-frame',
@@ -51,79 +33,32 @@ function link_gui_create(player)
       draw_horizontal_lines = true,
       draw_horizontal_lines_after_headers = true
     }
+    global.link_gui_servers_table.style.width = 400
 
 --------------------------------------------------------------------------------
 
-    -- local servers_tab = link_main_tabbed_pane.add{
-    --   type = 'tab',
-    --   name = 'servers-tab',
-    --   caption = 'Servers'
-    -- }
-    -- -- local servers_flow = link_main_tabbed_pane.add{
-    -- --   type = 'flow',
-    -- --   name = 'servers-flow',
-    -- --   direction = 'vertical',
-    -- -- }
-    -- global.link_gui_servers_table = link_main_tabbed_pane.add{
-    --   type = 'table',
-    --   name = 'servers-table',
-    --   column_count = 5,
-    --   draw_horizontal_lines = true,
-    --   draw_horizontal_lines_after_headers = true
-    -- }
-    -- link_main_tabbed_pane.add_tab(servers_tab, global.link_gui_servers_table)
-    -- link_main_tabbed_pane.selected_tab_index = 1
+    global.link_gui_storage_table    = link_gui_logistics_frame(global.link_gui, 'Storage')
 
 --------------------------------------------------------------------------------
 
-    -- local storage_outer_frame = global.link_gui.add{
-    --   type  = 'frame',
-    --   name  = 'link-storage-outer-frame',
-    --   style = 'inner_frame_in_outer_frame'
-    -- }
-
-    local storage_inner_frame = global.link_gui.add{
-      type  = 'frame',
-      name  = 'link-storage-inner-frame',
-      style = 'inventory_frame',
-      caption = 'Storage'
+    local logistics_flow = global.link_gui.add{
+      type      = 'flow',
+      name      = 'link-logistics-flow',
+      direction = 'vertical'
     }
+    global.link_gui_logistics_table_provided    = link_gui_logistics_frame(logistics_flow, 'Provided')
+    global.link_gui_logistics_table_requested   = link_gui_logistics_frame(logistics_flow, 'Requested')
+    global.link_gui_logistics_table_fulfilled   = link_gui_logistics_frame(logistics_flow, 'Fulfilled')
+    global.link_gui_logistics_table_unfulfilled = link_gui_logistics_frame(logistics_flow, 'Unfulfilled')
+    global.link_gui_logistics_table_overflow    = link_gui_logistics_frame(logistics_flow, 'Overflow')
 
-    local storage_frame = storage_inner_frame.add{
-      type      = 'frame',
-      name      = 'link-storage-frame',
-      style     = 'logistics_scroll_pane_background_frame'
-    }
-
-    local storage_scroll_pane = storage_frame.add{
-      type                     = 'scroll-pane',
-      name                     = 'link-storage-scroll-pane',
-      style = 'logistic_gui_scroll_pane'
-    }
-
-    global.link_gui_storage_table = storage_scroll_pane.add{
-      type = 'table',
-      name = 'link-storage-table',
-      style = 'logistics_slot_table',
-      column_count = 10
-    }
-
-    global.link_gui_logistics_table_provided = link_gui_logistics_frame('provided')
-    global.link_gui_logistics_table_requested = link_gui_logistics_frame('requested')
-    global.link_gui_logistics_table_fulfilled = link_gui_logistics_frame('fulfilled')
-    global.link_gui_logistics_table_unfulfilled = link_gui_logistics_frame('unfulfilled')
-    global.link_gui_logistics_table_overflow = link_gui_logistics_frame('overflow')
 --------------------------------------------------------------------------------
 
-    -- global.link_gui.force_auto_center()
+    global.link_gui.force_auto_center()
 
 --------------------------------------------------------------------------------
 
   end
-end
-
-function link_gui_update(player)
-  link_gui_servers_table_update(player)
 end
 
 function link_gui_servers_table_update(player)
@@ -177,108 +112,13 @@ function link_gui_servers_table_update(player)
   end
 end
 
-function link_gui_storage_table_update(player)
-  if global.link_gui_storage_table and global.link_gui_storage_table.valid then
-    global.link_gui_storage_table.clear()
-    if global.link_storage then
-      for item_name, item_count in pairs(global.link_storage) do
+function link_gui_logistics_frame_update(gui, items)
+  if gui and gui.valid then
+    gui.clear()
+    if items then
+      for item_name, item_count in pairs(items) do
         if item_name ~= 'electricity' then
-          local sprite = global.link_gui_storage_table.add{
-            type = 'sprite-button',
-            style = 'logistic_slot_button',
-            sprite = lookup_item_type(item_name)..'/'..item_name,
-            number = item_count,
-            tooltip = item_name
-          }
-        end
-      end
-    end
-  end
-end
-
-function link_gui_logistics_provided_table_update(player)
-  if global.link_gui_logistics_table_provided and global.link_gui_logistics_table_provided.valid then
-    global.link_gui_logistics_table_provided.clear()
-    if global.link_logistics_provided then
-      for item_name, item_count in pairs(global.link_logistics_provided) do
-        if item_name ~= 'electricity' then
-          local sprite = global.link_gui_logistics_table_provided.add{
-            type = 'sprite-button',
-            style = 'logistic_slot_button',
-            sprite = lookup_item_type(item_name)..'/'..item_name,
-            number = item_count,
-            tooltip = item_name
-          }
-        end
-      end
-    end
-  end
-end
-
-function link_gui_logistics_requested_table_update(player)
-  if global.link_gui_logistics_table_requested and global.link_gui_logistics_table_requested.valid then
-    global.link_gui_logistics_table_requested.clear()
-    if global.link_logistics_requested then
-      for item_name, item_count in pairs(global.link_logistics_requested) do
-        if item_name ~= 'electricity' then
-          local sprite = global.link_gui_logistics_table_requested.add{
-            type = 'sprite-button',
-            style = 'logistic_slot_button',
-            sprite = lookup_item_type(item_name)..'/'..item_name,
-            number = item_count,
-            tooltip = item_name
-          }
-        end
-      end
-    end
-  end
-end
-
-function link_gui_logistics_fulfilled_table_update(player)
-  if global.link_gui_logistics_table_fulfilled and global.link_gui_logistics_table_fulfilled.valid then
-    global.link_gui_logistics_table_fulfilled.clear()
-    if global.link_logistics_fulfilled then
-      for item_name, item_count in pairs(global.link_logistics_fulfilled) do
-        if item_name ~= 'electricity' then
-          local sprite = global.link_gui_logistics_table_fulfilled.add{
-            type = 'sprite-button',
-            style = 'logistic_slot_button',
-            sprite = lookup_item_type(item_name)..'/'..item_name,
-            number = item_count,
-            tooltip = item_name
-          }
-        end
-      end
-    end
-  end
-end
-
-function link_gui_logistics_unfulfilled_table_update(player)
-  if global.link_gui_logistics_table_unfulfilled and global.link_gui_logistics_table_unfulfilled.valid then
-    global.link_gui_logistics_table_unfulfilled.clear()
-    if global.link_logistics_unfulfilled then
-      for item_name, item_count in pairs(global.link_logistics_unfulfilled) do
-        if item_name ~= 'electricity' then
-          local sprite = global.link_gui_logistics_table_unfulfilled.add{
-            type = 'sprite-button',
-            style = 'logistic_slot_button',
-            sprite = lookup_item_type(item_name)..'/'..item_name,
-            number = item_count,
-            tooltip = item_name
-          }
-        end
-      end
-    end
-  end
-end
-
-function link_gui_logistics_overflow_table_update(player)
-  if global.link_gui_logistics_table_overflow and global.link_gui_logistics_table_overflow.valid then
-    global.link_gui_logistics_table_overflow.clear()
-    if global.link_logistics_overflow then
-      for item_name, item_count in pairs(global.link_logistics_overflow) do
-        if item_name ~= 'electricity' then
-          local sprite = global.link_gui_logistics_table_overflow.add{
+          local sprite = gui.add{
             type = 'sprite-button',
             style = 'logistic_slot_button',
             sprite = lookup_item_type(item_name)..'/'..item_name,

@@ -28,31 +28,38 @@ function strcopy(str)
   return string.format('%s', str)
 end
 
-function link_gui_logistics_frame(caption)
-  local outer_frame = global.link_gui.add{
+function link_gui_logistics_frame(parent, caption)
+  local outer_frame = parent.add{
     type = 'frame',
     name = string.lower('link-'..caption..'-outer-frame'),
     style = 'inventory_frame',
-    caption = caption
+    caption = 'Logistics: '..caption
   }
 
-  local inner_frame = outer_frame.add{
+  local scroll_pane = outer_frame.add{
+    type = 'scroll-pane',
+    name = string.lower('link-'..caption..'-scroll-pane'),
+    style = 'logistics_scroll_pane',
+    horizontal_scroll_policy = 'never',
+    vertical_scroll_policy = 'auto-and-reserve-space'
+  }
+
+  scroll_pane.style.width = 300
+  if caption == 'Storage' then
+    scroll_pane.style.height = 800
+  end
+
+  local inner_frame = scroll_pane.add{
     type = 'frame',
     name = string.lower('link-'..caption..'-inner-frame'),
     style = 'logistics_scroll_pane_background_frame'
   }
 
-  local scroll_pane = inner_frame.add{
-    type = 'scroll-pane',
-    name = string.lower('link-'..caption..'-scroll-pane'),
-    style = 'logistics_scroll_pane'
-  }
-
-  local table = scroll_pane.add{
+  local table = inner_frame.add{
     type = 'table',
     name = string.lower('link-'..caption..'-table'),
     style = 'logistics_slot_table',
-    column_count = 10
+    column_count = 7
   }
 
   return table
