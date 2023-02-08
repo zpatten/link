@@ -7,7 +7,7 @@ function link_gui_create(player)
       type      = 'frame',
       name      = 'link-outer-frame',
       direction = 'horizontal',
-      style = 'outer_frame',
+      caption   = 'Link',
       visible   = false
     }
 
