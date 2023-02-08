@@ -95,10 +95,18 @@ function link_gui_servers_table_update(player)
           type = 'label',
           caption = server.name
         }
-        global.link_gui_servers_table.add{
-          type = 'label',
-          caption = tostring(server.research)
-        }
+        if server.research then
+          global.link_gui_servers_table.add{
+            type = 'label',
+            caption = '[RESEARCH]'
+            style = 'bold_green_label'
+          }
+        else
+          global.link_gui_servers_table.add{
+            type = 'label',
+            caption = ''
+          }
+        end
         global.link_gui_servers_table.add{
           type = 'label',
           caption = tostring(server.responsive)
