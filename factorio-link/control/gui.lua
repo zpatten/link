@@ -92,24 +92,20 @@ function link_gui_create(player)
     local storage_frame = storage_inner_frame.add{
       type      = 'frame',
       name      = 'link-storage-frame',
-      direction = 'vertical',
-      style     = 'inside_shallow_frame'
+      style     = 'logistics_scroll_pane_background_frame'
     }
 
     local storage_scroll_pane = storage_frame.add{
       type                     = 'scroll-pane',
       name                     = 'link-storage-scroll-pane',
-      horizontal_scroll_policy = 'never',
-      vertical_scroll_policy   = 'auto',
-      style = 'inner_frame_scroll_pane'
+      style = 'logistic_gui_scroll_pane'
     }
 
     global.link_gui_storage_table = storage_scroll_pane.add{
       type = 'table',
       name = 'link-storage-table',
-      column_count = 2,
-      draw_horizontal_lines = true,
-      draw_horizontal_lines_after_headers = true
+      style = 'logistics_slot_table',
+      column_count = 10
     }
 
     -- local storage_frame = global.link_gui.add{
@@ -178,37 +174,67 @@ function link_gui_create(player)
 
 --------------------------------------------------------------------------------
 
-    local logistics_provided_frame = global.link_gui.add{
+    local logistics_provided_inner_frame = server_list_outer_frame.add{
+      type  = 'frame',
+      name  = 'link-logistics-provided-inner-frame',
+      style = 'inner_frame',
+      caption = 'Logistics_provided'
+    }
+
+    local logistics_provided_frame = logistics_provided_inner_frame.add{
       type      = 'frame',
-      name      = 'logistics-provided-frame',
+      name      = 'link-logistics-provided-frame',
       direction = 'vertical',
-    }
-
-    logistics_provided_frame.add{
-      type    = 'label',
-      name    = 'logistics-provided-label',
-      caption = 'Provided'
-    }
-
-    logistics_provided_frame.add{
-      type = 'line',
-      name = 'logistics-provided-line'
+      style     = 'inside_shallow_frame'
     }
 
     local logistics_provided_scroll_pane = logistics_provided_frame.add{
       type                     = 'scroll-pane',
-      name                     = 'logistics-provided-scroll-pane',
+      name                     = 'link-logistics-provided-scroll-pane',
       horizontal_scroll_policy = 'never',
-      vertical_scroll_policy   = 'auto'
+      vertical_scroll_policy   = 'auto',
+      style = 'inner_frame_scroll_pane'
     }
 
     global.link_gui_logistics_table_provided = logistics_provided_scroll_pane.add{
       type = 'table',
-      name = 'logistics-provided-table',
+      name = 'link-logistics-provided-table',
       column_count = 2,
       draw_horizontal_lines = true,
       draw_horizontal_lines_after_headers = true
     }
+
+    -- local logistics_provided_frame = global.link_gui.add{
+    --   type      = 'frame',
+    --   name      = 'logistics-provided-frame',
+    --   direction = 'vertical',
+    -- }
+
+    -- logistics_provided_frame.add{
+    --   type    = 'label',
+    --   name    = 'logistics-provided-label',
+    --   caption = 'Provided'
+    -- }
+
+    -- logistics_provided_frame.add{
+    --   type = 'line',
+    --   name = 'logistics-provided-line'
+    -- }
+
+    -- local logistics_provided_scroll_pane = logistics_provided_frame.add{
+    --   type                     = 'scroll-pane',
+    --   name                     = 'logistics-provided-scroll-pane',
+    --   horizontal_scroll_policy = 'never',
+    --   vertical_scroll_policy   = 'auto'
+    -- }
+
+    -- global.link_gui_logistics_table_provided = logistics_provided_scroll_pane.add{
+    --   type = 'table',
+    --   name = 'logistics-provided-table',
+    --   column_count = 2,
+    --   draw_horizontal_lines = true,
+    --   draw_horizontal_lines_after_headers = true
+    -- }
 
 --------------------------------------------------------------------------------
 
@@ -544,24 +570,28 @@ end
 function link_gui_storage_table_update(player)
   if global.link_gui_storage_table and global.link_gui_storage_table.valid then
     global.link_gui_storage_table.clear()
-    global.link_gui_storage_table.add{
-      type = 'label',
-      caption = 'Name'
-    }
-    global.link_gui_storage_table.add{
-      type = 'label',
-      caption = 'Count'
-    }
     if global.link_storage then
       for item_name, item_count in pairs(global.link_storage) do
-        global.link_gui_storage_table.add{
-          type = 'label',
-          caption = item_name
-        }
-        global.link_gui_storage_table.add{
-          type = 'label',
-          caption = tostring(item_count)
-        }
+        -- global.link_gui_storage_table.add{
+        --   type = 'label',
+        --   caption = item_name
+        -- }
+        if item_name ~= 'electricity' then
+          local sprite = global.link_gui_storage_table.add{
+            type = 'sprite-button',
+            style = 'logistic_slot_button',
+            sprite = lookup_item_type(item_name)..'/'..item_name,
+            number = item_count
+          }
+          -- sprite.add{
+          --   type = 'label',
+          --   style = ''
+          -- }
+          -- sprite.add{
+          --   type = 'label',
+          --   caption = tostring(item_count)
+          -- }
+        end
       end
     end
   end

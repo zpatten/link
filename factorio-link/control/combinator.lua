@@ -266,6 +266,22 @@ function set_link_receiver_combinator(force, json)
   rcon.print('OK')
 end
 
+function lookup_item_type(item_name)
+  local fluids = game.fluid_prototypes
+  local items = game.item_prototypes
+  local virtuals = game.virtual_signal_prototypes
+
+  if items[item_name] then
+    return 'item'
+  elseif fluids[item_name] then
+    return 'fluid'
+  elseif virtuals[item_name] then
+    return 'virtual'
+  else
+    return ''
+  end
+end
+
 function link_lookup_item_type(item_name)
   local fluids = game.fluid_prototypes
   local items = game.item_prototypes

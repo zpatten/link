@@ -15,9 +15,8 @@ class Server
         ) do
           def hash_sort(hash)
             hash = hash.clone
-            hash.delete_if { |key,value| value.nil? || value == 0 }
-            hash = hash.transform_values { |value| countvalue(value) }
-            Hash[hash.sort_by { |key,value| key }]
+            hash.delete_if { |key, value| value.nil? || value == 0 }
+            Hash[hash.sort_by { |key, value| value }.reverse]
           end
 
           command = %(remote.call('link', 'set_gui_server_list', '#{Servers.to_json}'))
