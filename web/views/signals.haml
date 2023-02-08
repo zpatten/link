@@ -1,8 +1,7 @@
 %h1 Signals
 %hr
-%h2 Network IDs: #{signals.get_network_ids.map(&:to_s).sort.join(', ')}
-%hr
-%table.fleft
+%h2 Network IDs & Signal Counts:
+%table
   %tr
     %th Network ID
     %th Signals
@@ -11,7 +10,8 @@
     %tr
       %td.align-right= nid
       %td.align-right #{s.count} Signals
-
+%hr
+%h2 Network Signals:
 - signals.get_network_ids.map(&:to_s).sort.each do |nid|
   %table.fleft
     %tr

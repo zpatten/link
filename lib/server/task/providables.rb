@@ -14,10 +14,7 @@ class Server
               Metrics::Prometheus[:providable_items_total].observe(item_count,
                 labels: { server: self.name, item_name: item_name, item_type: Factorio::ItemTypes[item_name] })
             end
-            @metrics[:provided] = providables
-            # providables = Hash[providables.delete_if { |key,value| value == 0 }.transform_values { |value| countvalue(value) }.sort_by { |key,value| key }]
-            # command = %(remote.call('link', 'set_logistics_provided', '#{providables.to_json}'))
-            # rcon_command_nonblock(command)
+            @metrics[:provided] = providables.clone
           end
         end
 

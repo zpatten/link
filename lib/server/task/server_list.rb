@@ -26,12 +26,6 @@ class Server
             command = %(remote.call('link', 'set_logistics_#{key}', '#{hash_sort(@metrics[key]).to_json}'))
             rcon_command_nonblock(command)
           end
-          # @server.metrics[:requested] = @requested_item_counts
-          # @requested_item_counts = hash_sort(@requested_item_counts)
-
-          # command = %(remote.call('link', 'set_logistics_requested', '#{@server.metrics[:requested].to_json}'))
-          # @server.rcon_command_nonblock(command)
-
         end
       end
 

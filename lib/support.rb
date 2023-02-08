@@ -28,6 +28,7 @@ def filesize(size)
 end
 
 def countvalue(value)
+  # v = value.dup
   units = [''] + %w( k M G T P E Z Y R Q )
   decimal = [0, 1, 1, 2, 2, 3, 3, 3, 3, 3]
   value = value.to_i
@@ -35,8 +36,10 @@ def countvalue(value)
   return '0' if value == 0
   exp = (Math.log(value) / Math.log(1000)).to_i
   exp = units.length if exp > units.length
+  result = ("%.#{decimal[exp]}f %s" % [value.to_f / 1000 ** exp, units[exp]]).strip
+  # puts "v=#{v.ai}, value=#{value.ai}, result=#{result.ai}, decimal[exp]=#{decimal[exp].ai}, exp=#{exp.ai}"
 
-  "%.#{decimal[exp]}f %s" % [value.to_f / 1000 ** exp, units[exp]]
+  result
 end
 
 def deep_clone(object)

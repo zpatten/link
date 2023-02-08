@@ -108,7 +108,7 @@ module Factorio
 
       if can_fulfill_all?
         @items_to_fulfill      = @item_requests
-        @fulfilled_item_counts = @requested_item_counts
+        @fulfilled_item_counts = @requested_item_counts.clone
         @removed_item_totals   = Hash.new(0)
       else
         @item_requests.each do |unit_number, requested_items|
@@ -140,40 +140,28 @@ module Factorio
         Metrics::Prometheus[:requested_items_total].observe(requested_item_count,
           labels: { server: @server.name, item_name: requested_item_name, item_type: Factorio::ItemTypes[requested_item_name] })
       end
-      @server.metrics[:requested] = @requested_item_counts
-      # @requested_item_counts = hash_sort(@requested_item_counts)
-      # command = %(remote.call('link', 'set_logistics_requested', '#{@requested_item_counts.to_json}'))
-      # @server.rcon_command_nonblock(command)
+      @server.metrics[:requested] = @requested_item_counts.clone
 
       # FULFILLED
       @fulfilled_item_counts.each do |fulfilled_item_name, fulfilled_item_count|
         Metrics::Prometheus[:fulfillment_items_total].observe(fulfilled_item_count,
           labels: { server: @server.name, item_name: fulfilled_item_name, item_type: Factorio::ItemTypes[fulfilled_item_name] })
       end
-      @server.metrics[:fulfilled] = @fulfilled_item_counts
-      # @fulfilled_item_counts = hash_sort(@fulfilled_item_counts)
-      # command = %(remote.call('link', 'set_logistics_fulfilled', '#{@fulfilled_item_counts.to_json}'))
-      # @server.rcon_command_nonblock(command)
+      @server.metrics[:fulfilled] = @fulfilled_item_counts.clone
 
       # UNFULFILLED
       @unfulfilled_item_counts.each do |unfulfilled_item_name, unfulfilled_item_count|
         Metrics::Prometheus[:unfulfilled_items_total].observe(unfulfilled_item_count,
           labels: { server: @server.name, item_name: unfulfilled_item_name, item_type: Factorio::ItemTypes[unfulfilled_item_name] })
       end
-      @server.metrics[:unfulfilled] = @unfulfilled_item_counts
-      # @unfulfilled_item_counts = hash_sort(@unfulfilled_item_counts)
-      # command = %(remote.call('link', 'set_logistics_unfulfilled', '#{@unfulfilled_item_counts.to_json}'))
-      # @server.rcon_command_nonblock(command)
+      @server.metrics[:unfulfilled] = @unfulfilled_item_counts.clone
 
       # OVERFLOW
       @removed_item_totals.each do |removed_item_name, removed_item_count|
         Metrics::Prometheus[:overflow_items_total].observe(removed_item_count,
           labels: { server: @server.name, item_name: removed_item_name, item_type: Factorio::ItemTypes[removed_item_name] })
       end
-      @server.metrics[:overflow] = @removed_item_totals
-      # @removed_item_totals = hash_sort(@removed_item_totals)
-      # command = %(remote.call('link', 'set_logistics_overflow', '#{@removed_item_totals.to_json}'))
-      # @server.rcon_command_nonblock(command)
+      @server.metrics[:overflow] = @removed_item_totals.clone
 
       true
     end
