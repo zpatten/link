@@ -56,6 +56,7 @@ function on_link_init()
   global.link_command_whitelist = {}
 
   global.link_server_list = {}
+  global.link_storage = {}
   global.link_logistics_provided = {}
   global.link_logistics_requested = {}
   global.link_logistics_fulfilled = {}

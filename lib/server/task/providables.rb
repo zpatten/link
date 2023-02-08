@@ -14,7 +14,7 @@ class Server
               Metrics::Prometheus[:providable_items_total].observe(item_count,
                 labels: { server: self.name, item_name: item_name, item_type: Factorio::ItemTypes[item_name] })
             end
-            @metrics[:provided] = providables.clone
+            @metrics[:provided] = providables
           end
         end
 

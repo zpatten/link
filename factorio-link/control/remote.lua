@@ -17,12 +17,13 @@ local remote_interface = {
   set_id = set_link_id,
   set_receiver_combinator = set_link_receiver_combinator,
   set_research = set_link_research,
-  set_server_list = set_link_server_list,
-  set_logistics_provided = set_link_logistics_provided,
-  set_logistics_requested = set_link_logistics_requested,
-  set_logistics_fulfilled = set_link_logistics_fulfilled,
-  set_logistics_unfulfilled = set_link_logistics_unfulfilled,
-  set_logistics_overflow = set_link_logistics_overflow
+  set_gui_server_list = set_link_gui_server_list,
+  set_gui_storage = set_link_gui_storage,
+  set_gui_logistics_provided = set_link_gui_logistics_provided,
+  set_gui_logistics_requested = set_link_gui_logistics_requested,
+  set_gui_logistics_fulfilled = set_link_gui_logistics_fulfilled,
+  set_gui_logistics_unfulfilled = set_link_gui_logistics_unfulfilled,
+  set_gui_logistics_overflow = set_link_gui_logistics_overflow
 }
 
 remote.add_interface("link", remote_interface)

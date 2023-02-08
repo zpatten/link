@@ -9,12 +9,12 @@ require_relative 'server/state'
 require_relative 'server/task'
 require_relative 'server/task/chat'
 require_relative 'server/task/fulfillments'
+require_relative 'server/task/gui'
 require_relative 'server/task/id'
 require_relative 'server/task/ping'
 require_relative 'server/task/providables'
 require_relative 'server/task/research'
 require_relative 'server/task/save'
-require_relative 'server/task/server_list'
 require_relative 'server/task/signals'
 
 class Server
@@ -30,12 +30,12 @@ class Server
   include Server::Task
   include Server::Task::Chat
   include Server::Task::Fulfillments
+  include Server::Task::GUI
   include Server::Task::ID
   include Server::Task::Ping
   include Server::Task::Providables
   include Server::Task::Research
   include Server::Task::Save
-  include Server::Task::ServerList
   include Server::Task::Signals
 
 ################################################################################

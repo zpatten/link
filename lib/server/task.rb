@@ -10,7 +10,7 @@ class Server
 
       schedule_task_id
       schedule_task_ping
-      schedule_task_server_list
+      schedule_task_gui
 
       schedule_task_fulfillments
       schedule_task_providables

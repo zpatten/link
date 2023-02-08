@@ -8,7 +8,7 @@ local shortcut = link_build_data({
     toggleable = false,
     style = 'red',
     icon = {
-      filename = '__base__/graphics/icons/signal/signal_blue.png',
+      filename = '__base__/graphics/icons/signal/signal_L.png',
       -- '__base__/graphics/icons/computer.png',
       priority = 'extra-high-no-scale',
       size = 64,
@@ -16,14 +16,14 @@ local shortcut = link_build_data({
       flags = { 'icon' }
     },
     small_icon = {
-      filename = '__base__/graphics/icons/signal/signal_blue.png',
+      filename = '__base__/graphics/icons/signal/signal_L.png',
       priority = 'extra-high-no-scale',
       size = 64,
       scale = 1,
       flags = { 'icon' }
     },
     disabled_small_icon = {
-      filename = '__base__/graphics/icons/signal/signal_blue.png',
+      filename = '__base__/graphics/icons/signal/signal_L.png',
       priority = 'extra-high-no-scale',
       size = 64,
       scale = 1,
