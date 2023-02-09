@@ -104,18 +104,31 @@ function link_gui_signal_frame(parent, caption)
     style                    = 'naked_scroll_pane'
   }
 
-  local signal_table = scroll_pane.add{
-    type                                = 'table',
-    name                                = 'link-signals-table',
-    column_count                        = 21,
-    style                               = 'inset_frame_container_table'
+  scroll_pane.style.vertically_stretchable  = 'stretch_and_expand'
+  scroll_pane.style.horizontally_stretchable = 'stretch_and_expand'
+
+  -- scroll_pane.style.width = 800
+
+  return scroll_pane
+end
+
+function link_gui_signal_network_frame(parent, caption)
+  local inner_frame = parent.add{
+    type    = 'frame',
+    style   = 'invisible_frame_with_title_for_inventory',
+    caption = caption
   }
 
-  scroll_pane.style.height = 800
-  scroll_pane.style.width = 900
+  local table_frame = inner_frame.add{
+    type    = 'frame',
+    style   = 'inside_deep_frame'
+  }
 
-  signal_table.style.vertically_stretchable  = 'stretch_and_expand'
-  signal_table.style.horizontally_stretchable = 'stretch_and_expand'
+  local signal_table = table_frame.add{
+    type         = 'table',
+    column_count = 25,
+    style        = 'slot_table'
+  }
 
   return signal_table
 end
@@ -133,6 +146,9 @@ function link_gui_server_frame(parent, caption)
     style                    = 'naked_scroll_pane'
   }
 
+  scroll_pane.style.vertically_stretchable  = 'stretch_and_expand'
+  scroll_pane.style.horizontally_stretchable = 'stretch_and_expand'
+
   local server_table = scroll_pane.add{
     type                                = 'table',
     name                                = 'link-servers-table',
@@ -140,10 +156,8 @@ function link_gui_server_frame(parent, caption)
     style                               = 'inset_frame_container_table'
   }
 
-  scroll_pane.style.height = 800
+  -- scroll_pane.style.height = 800
 
-  server_table.style.vertically_stretchable  = 'stretch_and_expand'
-  server_table.style.horizontally_stretchable = 'stretch_and_expand'
 
   return server_table
 end
@@ -164,6 +178,8 @@ function link_gui_logistics_frame(parent, caption)
 
   scroll_pane.style.width = 290
   if caption == 'Link Storage' then
+    scroll_pane.style.vertically_stretchable  = 'stretch_and_expand'
+    scroll_pane.style.horizontally_stretchable = 'stretch_and_expand'
     scroll_pane.style.height = 800
   else
     scroll_pane.style.height = 120
@@ -247,12 +263,13 @@ function link_gui_signal_frame_update(gui, signal_networks)
     gui.clear()
     if signal_networks then
       for network_id, signals in pairs(signal_networks) do
+        local signal_network_frame = link_gui_signal_network_frame(gui, 'Network ID: '..network_id)
         for i, s in pairs(signals) do
           local type = s.signal.type
           if type == 'virtual' then
             type = 'virtual-signal'
           end
-          local sprite = gui.add{
+          local sprite = signal_network_frame.add{
             type = 'sprite-button',
             style = 'green_circuit_network_content_slot',
             sprite = type..'/'..s.signal.name,

@@ -41,7 +41,7 @@ class Server
 
           signal_networks = Hash.new
           Factorio::Signals.get_network_ids.each do |network_id|
-            signal_networks[network_id] = Factorio::Signals.calculate_signals(network_id).sort_by { |s| s['signal']['name'] }
+            signal_networks[network_id] = Factorio::Signals.calculate_signals(network_id).sort_by { |s| s['signal']['name'] }.reverse
           end
           # puts "signal_networks=#{signal_networks.ai}"
           command = %(remote.call('link', 'set_gui_signals', '#{signal_networks.to_json}'))
