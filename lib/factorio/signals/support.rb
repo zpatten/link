@@ -137,7 +137,12 @@ module Factorio
       end
 
       def copy(network_id)
-        deep_clone(signal_networks[network_id])
+        hash = Hash.new
+        signal_networks[network_id].each do |key, value|
+          hash[key] = value
+        end
+        hash
+        # deep_clone(signal_networks[network_id])
       end
 
     end

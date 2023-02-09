@@ -244,15 +244,19 @@ end
 function link_gui_signal_frame_update(gui, signal_networks)
   if gui and gui.valid then
     gui.clear()
-    if items then
-      for item_name, item_count in pairs(items) do
-        if item_name ~= 'electricity' then
+    if signal_networks then
+      for network_id, signals in pairs(signal_networks) do
+        for i, s in pairs(signals) do
+          local type = s.signal.type
+          if type == 'virtual' then
+            type = 'virtual-signal'
+          end
           local sprite = gui.add{
             type = 'sprite-button',
             style = 'green_circuit_network_content_slot',
-            sprite = lookup_item_type(item_name)..'/'..item_name,
-            number = item_count,
-            tooltip = item_name
+            sprite = type..'/'..s.signal.name,
+            number = s.count,
+            tooltip = s.signal.name
           }
         end
       end
