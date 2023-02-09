@@ -41,7 +41,6 @@ end
 function link_gui_frame(parent, caption)
   local frame = parent.add{
     type      = 'frame',
-    name      = 'link-gui-frame',
     caption   = caption,
     visible   = false
   }
@@ -52,13 +51,11 @@ end
 function link_gui_tabbed_pane(parent, caption)
   local frame = parent.add{
     type  = 'frame',
-    name  = dasherize(string.lower('link-'..caption..'-frame')),
     style = 'inside_deep_frame_for_tabs'
   }
 
   local tabbed_pane = frame.add{
     type  = 'tabbed-pane',
-    name  = dasherize(string.lower('link-'..caption..'-tabbed-pane')),
     style = 'tabbed_pane_with_extra_padding'
   }
   tabbed_pane.selected_tab_index = 1
@@ -69,12 +66,10 @@ end
 function link_gui_tab(parent, caption)
   local tab = parent.add{
     type    = 'tab',
-    name    = dasherize(string.lower('link-'..caption..'-tab')),
     caption = caption
   }
   local frame = parent.add{
     type  = 'frame',
-    name  = dasherize(string.lower('link-'..caption..'-frame')),
     style = 'naked_frame'
   }
   parent.add_tab(tab, frame)
@@ -85,13 +80,11 @@ end
 function link_gui_server_frame(parent, caption)
   local frame = parent.add{
     type  = 'frame',
-    name  = dasherize(string.lower('link-'..caption..'-frame')),
     style = 'naked_frame'
   }
 
   local scroll_pane = frame.add{
     type                     = 'scroll-pane',
-    name                     = dasherize(string.lower('link-'..caption..'-scroll-pane')),
     horizontal_scroll_policy = 'never',
     vertical_scroll_policy   = 'auto-and-reserve-space',
     style                    = 'naked_scroll_pane'
@@ -119,14 +112,12 @@ end
 function link_gui_logistics_frame(parent, caption)
   local outer_frame = parent.add{
     type    = 'frame',
-    name    = dasherize(string.lower('link-'..caption..'-outer-frame')),
     style   = 'invisible_frame_with_title_for_inventory',
     caption = caption
   }
 
   local scroll_pane = outer_frame.add{
     type                     = 'scroll-pane',
-    name                     = dasherize(string.lower('link-'..caption..'-scroll-pane')),
     style                    = 'logistics_scroll_pane',
     horizontal_scroll_policy = 'never',
     vertical_scroll_policy   = 'auto-and-reserve-space'
@@ -139,13 +130,11 @@ function link_gui_logistics_frame(parent, caption)
 
   local inner_frame = scroll_pane.add{
     type  = 'frame',
-    name  = dasherize(string.lower('link-'..caption..'-inner-frame')),
     style = 'logistics_scroll_pane_background_frame'
   }
 
   local logistics_slot_table = inner_frame.add{
     type         = 'table',
-    name         = dasherize(string.lower('link-'..caption..'-table')),
     style        = 'logistics_slot_table',
     column_count = 7
   }
