@@ -241,6 +241,25 @@ function link_gui_logistics_frame_update(gui, items, yellow_items, red_items)
   end
 end
 
+function link_gui_signal_frame_update(gui, signal_networks)
+  if gui and gui.valid then
+    gui.clear()
+    if items then
+      for item_name, item_count in pairs(items) do
+        if item_name ~= 'electricity' then
+          local sprite = gui.add{
+            type = 'sprite-button',
+            style = 'green_circuit_network_content_slot',
+            sprite = lookup_item_type(item_name)..'/'..item_name,
+            number = item_count,
+            tooltip = item_name
+          }
+        end
+      end
+    end
+  end
+end
+
 function link_gui_destroy(player)
   if global.link_gui and global.link_gui.valid then
     global.link_gui.destroy()

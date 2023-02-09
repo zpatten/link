@@ -1,4 +1,4 @@
-function set_link_gui_server_list(json)
+function set_link_gui_servers(json)
   if global.link_gui and global.link_gui.visible then
     global.link_server_list = game.json_to_table(json)
     link_gui_servers_table_update(player)

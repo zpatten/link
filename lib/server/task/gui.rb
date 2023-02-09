@@ -19,17 +19,12 @@ class Server
             Hash[hash.sort_by { |key, value| value }.reverse]
           end
 
-          command = %(remote.call('link', 'set_gui_server_list', '#{Servers.to_json}'))
+          command = %(remote.call('link', 'set_gui_servers', '#{Servers.to_json}'))
           rcon_command_nonblock(command)
 
           storage = hash_sort(Factorio::Storage.to_h)
           command = %(remote.call('link', 'set_gui_logistics_storage', '#{storage.to_json}'))
           rcon_command_nonblock(command)
-
-          signal_networks = Hash.new
-          Signals.get_network_ids.each do |network_id|
-            signal_networks[network_id] = Signals.copy(network_id)
-          end
 
           @metrics.keys.each do |key|
             all_metrics = Servers.collect { |server| server.metrics[key] }.flatten.compact.map(&:clone)
@@ -43,6 +38,14 @@ class Server
             command = %(remote.call('link', 'set_gui_logistics_#{key}', '#{hash_sort(@metrics[key]).to_json}', '#{hash_sort(totals).to_json}'))
             rcon_command_nonblock(command)
           end
+
+          signal_networks = Hash.new
+          Signals.get_network_ids.each do |network_id|
+            signal_networks[network_id] = Signals.copy(network_id)
+          end
+
+          command = %(remote.call('link', 'set_gui_signals', '#{signal_networks.to_json}'))
+          rcon_command_nonblock(command)
         end
       end
 
