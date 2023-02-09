@@ -124,7 +124,7 @@ function link_gui_server_frame(parent, caption)
     name                     = 'link-server-list-scroll-pane',
     horizontal_scroll_policy = 'never',
     vertical_scroll_policy   = 'auto-and-reserve-space',
-    style = 'inner_frame_scroll_pane'
+    style = 'scroll_frame_in_shallow_frame'
   }
 
   local server_table = scroll_pane.add{
