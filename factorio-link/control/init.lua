@@ -56,6 +56,8 @@ function on_link_init()
   global.link_command_whitelist = {}
 
   global.link_server_list = {}
+  global.link_logistics_fulfilled_items = {}
+  global.link_logistics_unfulfilled_items = {}
 
   add_all_link_entities()
 end

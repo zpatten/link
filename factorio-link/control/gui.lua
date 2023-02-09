@@ -11,11 +11,16 @@ function link_gui_create(player)
       visible   = false
     }
 
-    local server_list_inner_frame = global.link_gui.add{
+    tabbed_pane = link_gui_tabbed_pane(global.link_gui, 'Link Tabbed Pane')
+
+    server_tab = link_gui_tab(tabbed_pane, 'Servers')
+    logistics_tab = link_gui_tab(tabbed_pane, 'Logistics')
+    signals_tab = link_gui_tab(tabbed_pane, 'Signals')
+
+    local server_list_inner_frame = server_tab.add{
       type      = 'frame',
       name      = 'link-server-list-frame',
-      style     = 'inventory_frame',
-      caption = 'Servers'
+      style     = 'inventory_frame'
     }
 
     local server_list_scroll_pane = server_list_inner_frame.add{
@@ -29,19 +34,24 @@ function link_gui_create(player)
     global.link_gui_servers_table = server_list_scroll_pane.add{
       type = 'table',
       name = 'link-servers-table',
-      column_count = 5,
+      column_count = 4,
       draw_horizontal_lines = true,
       draw_horizontal_lines_after_headers = true
     }
-    global.link_gui_servers_table.style.width = 400
+    -- global.link_gui_servers_table.style.width = 400
+    global.link_gui_servers_table.style.horizontally_stretchable = 'stretch_and_expand'
+    global.link_gui_servers_table.style.column_alignments[1] = 'center'
+    global.link_gui_servers_table.style.column_alignments[2] = 'left'
+    global.link_gui_servers_table.style.column_alignments[3] = 'left'
+    global.link_gui_servers_table.style.column_alignments[4] = 'center'
 
 --------------------------------------------------------------------------------
 
-    global.link_gui_storage_table    = link_gui_logistics_frame(global.link_gui, 'Storage')
+    global.link_gui_storage_table    = link_gui_logistics_frame(logistics_tab, 'Storage')
 
 --------------------------------------------------------------------------------
 
-    local logistics_flow = global.link_gui.add{
+    local logistics_flow = logistics_tab.add{
       type      = 'flow',
       name      = 'link-logistics-flow',
       direction = 'vertical'
@@ -61,12 +71,82 @@ function link_gui_create(player)
   end
 end
 
+function link_gui_tabbed_pane(parent, caption)
+  local outer_frame = parent.add{
+    type = 'frame',
+    name = dasherize(string.lower('link-'..caption..'-outer-frame')),
+    style = 'inside_deep_frame_for_tabs'
+  }
+
+  local tabbed_pane = outer_frame.add{
+    type = 'tabbed-pane',
+    name = dasherize(string.lower('link-'..caption..'-tabbed-pane')),
+    style = 'tabbed_pane_with_extra_padding'
+  }
+  tabbed_pane.selected_tab_index = 1
+
+  return tabbed_pane
+end
+
+function link_gui_tab(parent, caption)
+  local tab = parent.add{
+    type = 'tab',
+    name = dasherize(string.lower('link-'..caption..'-tab')),
+    caption = caption
+  }
+  local frame = parent.add{
+    type = 'frame',
+    name = dasherize(string.lower('link-'..caption..'-outer-frame')),
+    style = 'inventory_frame'
+  }
+  parent.add_tab(tab, frame)
+
+  return frame
+end
+
+function link_gui_logistics_frame(parent, caption)
+  local outer_frame = parent.add{
+    type = 'frame',
+    name = string.lower('link-'..caption..'-outer-frame'),
+    style = 'inventory_frame',
+    caption = 'Logistics: '..caption
+  }
+
+  local scroll_pane = outer_frame.add{
+    type = 'scroll-pane',
+    name = string.lower('link-'..caption..'-scroll-pane'),
+    style = 'logistics_scroll_pane',
+    horizontal_scroll_policy = 'never',
+    vertical_scroll_policy = 'auto-and-reserve-space'
+  }
+
+  scroll_pane.style.width = 300
+  if caption == 'Storage' then
+    scroll_pane.style.height = 800
+  end
+
+  local inner_frame = scroll_pane.add{
+    type = 'frame',
+    name = string.lower('link-'..caption..'-inner-frame'),
+    style = 'logistics_scroll_pane_background_frame'
+  }
+
+  local table = inner_frame.add{
+    type = 'table',
+    name = string.lower('link-'..caption..'-table'),
+    style = 'logistics_slot_table',
+    column_count = 7
+  }
+
+  return table
+end
+
 function link_gui_servers_table_update(player)
   if global.link_gui_servers_table and global.link_gui_servers_table.valid then
     global.link_gui_servers_table.clear()
     global.link_gui_servers_table.add{
       type = 'label',
-      caption = 'Connect'
+      caption = ''
     }
     global.link_gui_servers_table.add{
       type = 'label',
@@ -74,11 +154,7 @@ function link_gui_servers_table_update(player)
     }
     global.link_gui_servers_table.add{
       type = 'label',
-      caption = 'Research'
-    }
-    global.link_gui_servers_table.add{
-      type = 'label',
-      caption = 'Responsive?'
+      caption = 'Details'
     }
     global.link_gui_servers_table.add{
       type = 'label',
@@ -98,7 +174,7 @@ function link_gui_servers_table_update(player)
         if server.research then
           global.link_gui_servers_table.add{
             type = 'label',
-            caption = '[RESEARCH]'
+            caption = '[RESEARCH]',
             style = 'bold_green_label'
           }
         else
@@ -109,10 +185,6 @@ function link_gui_servers_table_update(player)
         end
         global.link_gui_servers_table.add{
           type = 'label',
-          caption = tostring(server.responsive)
-        }
-        global.link_gui_servers_table.add{
-          type = 'label',
           caption = tostring(server.rtt)
         }
       end
@@ -120,15 +192,21 @@ function link_gui_servers_table_update(player)
   end
 end
 
-function link_gui_logistics_frame_update(gui, items)
+function link_gui_logistics_frame_update(gui, items, yellow_items, red_items)
   if gui and gui.valid then
     gui.clear()
     if items then
       for item_name, item_count in pairs(items) do
         if item_name ~= 'electricity' then
+          local style = 'logistic_slot_button'
+          if yellow_items and yellow_items[item_name] and red_items and red_items[item_name] then
+            style = 'yellow_logistic_slot_button'
+          elseif red_items and red_items[item_name] then
+            style = 'red_logistic_slot_button'
+          end
           local sprite = gui.add{
             type = 'sprite-button',
-            style = 'logistic_slot_button',
+            style = style,
             sprite = lookup_item_type(item_name)..'/'..item_name,
             number = item_count,
             tooltip = item_name
