@@ -27,7 +27,7 @@ function link_gui_create(player)
       type                     = 'scroll-pane',
       name                     = 'link-server-list-scroll-pane',
       horizontal_scroll_policy = 'never',
-      vertical_scroll_policy   = 'auto',
+      vertical_scroll_policy   = 'auto-and-reserve-space',
       style = 'inner_frame_scroll_pane'
     }
 
