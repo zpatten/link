@@ -32,6 +32,7 @@ function on_link_init()
   global.link_rtt = 0
 
   global.link_id = 42
+  global.link_name = 'link'
 
   global.link_events = {}
 

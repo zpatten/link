@@ -15,6 +15,7 @@ local remote_interface = {
   set_current_research = set_link_current_research,
   set_fulfillments = set_link_fulfillments,
   set_id = set_link_id,
+  set_name = set_link_name,
   set_receiver_combinator = set_link_receiver_combinator,
   set_research = set_link_research,
   set_gui_server_list = set_link_gui_server_list,

@@ -27,7 +27,15 @@ class Server
           rcon_command_nonblock(command)
 
           @metrics.keys.each do |key|
-            command = %(remote.call('link', 'set_gui_logistics_#{key}', '#{hash_sort(@metrics[key]).to_json}'))
+            all_metrics = Servers.collect { |server| server.metrics[key] }.flatten.compact.map(&:clone)
+            totals = Hash.new(0)
+            all_metrics.each do |metric|
+              totals.merge!(metric) do |k,o,n|
+                o + n
+              end
+            end
+
+            command = %(remote.call('link', 'set_gui_logistics_#{key}', '#{hash_sort(@metrics[key]).to_json}', '#{hash_sort(totals).to_json}'))
             rcon_command_nonblock(command)
           end
         end

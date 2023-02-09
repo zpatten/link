@@ -3,9 +3,9 @@ function link_gui_create(player)
 
 --------------------------------------------------------------------------------
 
-    global.link_gui = link_gui_frame(player.gui.screen, 'Link')
+    global.link_gui = link_gui_frame(player.gui.screen, 'Link Control Panel for Server '..capitalize(global.link_name))
 
-    tabbed_pane     = link_gui_tabbed_pane(global.link_gui, 'Link Tabbed Pane')
+    tabbed_pane     = link_gui_tabbed_pane(global.link_gui)
 
     server_tab      = link_gui_tab(tabbed_pane, 'Servers')
     logistics_tab   = link_gui_tab(tabbed_pane, 'Logistics')
@@ -17,17 +17,27 @@ function link_gui_create(player)
 
 --------------------------------------------------------------------------------
 
-    global.link_gui_storage_table = link_gui_logistics_frame(logistics_tab, 'Storage')
+    global.link_gui_storage_table = link_gui_logistics_frame(logistics_tab, 'Link Storage')
+
     local logistics_flow = logistics_tab.add{
       type      = 'flow',
-      name      = 'link-logistics-flow',
       direction = 'vertical'
     }
-    global.link_gui_logistics_table_provided    = link_gui_logistics_frame(logistics_flow, 'Provided')
-    global.link_gui_logistics_table_requested   = link_gui_logistics_frame(logistics_flow, 'Requested')
-    global.link_gui_logistics_table_fulfilled   = link_gui_logistics_frame(logistics_flow, 'Fulfilled')
-    global.link_gui_logistics_table_unfulfilled = link_gui_logistics_frame(logistics_flow, 'Unfulfilled')
-    global.link_gui_logistics_table_overflow    = link_gui_logistics_frame(logistics_flow, 'Overflow')
+    global.link_gui_logistics_table_all_provided    = link_gui_logistics_frame(logistics_flow, 'All Servers: Provided')
+    global.link_gui_logistics_table_all_requested   = link_gui_logistics_frame(logistics_flow, 'All Servers: Requested')
+    global.link_gui_logistics_table_all_fulfilled   = link_gui_logistics_frame(logistics_flow, 'All Servers: Fulfilled')
+    global.link_gui_logistics_table_all_unfulfilled = link_gui_logistics_frame(logistics_flow, 'All Servers: Unfulfilled')
+    global.link_gui_logistics_table_all_overflow    = link_gui_logistics_frame(logistics_flow, 'All Servers: Overflow')
+
+    local logistics_flow = logistics_tab.add{
+      type      = 'flow',
+      direction = 'vertical'
+    }
+    global.link_gui_logistics_table_provided    = link_gui_logistics_frame(logistics_flow, 'This Server: Provided')
+    global.link_gui_logistics_table_requested   = link_gui_logistics_frame(logistics_flow, 'This Server: Requested')
+    global.link_gui_logistics_table_fulfilled   = link_gui_logistics_frame(logistics_flow, 'This Server: Fulfilled')
+    global.link_gui_logistics_table_unfulfilled = link_gui_logistics_frame(logistics_flow, 'This Server: Unfulfilled')
+    global.link_gui_logistics_table_overflow    = link_gui_logistics_frame(logistics_flow, 'This Server: Overflow')
 
 --------------------------------------------------------------------------------
 
@@ -126,6 +136,8 @@ function link_gui_logistics_frame(parent, caption)
   scroll_pane.style.width = 300
   if caption == 'Storage' then
     scroll_pane.style.height = 800
+  else
+    scroll_pane.style.height = 120
   end
 
   local inner_frame = scroll_pane.add{
@@ -157,6 +169,10 @@ function link_gui_servers_table_update(player)
       type = 'label',
       caption = 'RTT'
     }
+    global.link_gui_servers_table.add{
+      type = 'label',
+      caption = 'ID'
+    }
     if global.link_server_list then
       for _, server in pairs(global.link_server_list) do
         global.link_gui_servers_table.add{
@@ -182,6 +198,10 @@ function link_gui_servers_table_update(player)
         global.link_gui_servers_table.add{
           type = 'label',
           caption = tostring(server.rtt)
+        }
+        global.link_gui_servers_table.add{
+          type = 'label',
+          caption = server.id
         }
       end
     end

@@ -105,8 +105,7 @@ module Factorio
       Tasks.onetime(
         task: 'RCON',
         pool: @pool,
-        server: @server,
-        metrics: false
+        server: @server
       ) do
         until connected? || @cancellation.canceled? do
           begin

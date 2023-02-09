@@ -46,7 +46,7 @@ class Tasks
 
 ################################################################################
 
-    def onetime(task:, pool: Runner.pool, cancellation: Runner.cancellation, server: nil, metrics: true, **options, &block)
+    def onetime(task:, pool: Runner.pool, cancellation: Runner.cancellation, server: nil, metrics: false, **options, &block)
       server_tag, tag = tags(task: task, server: server)
 
       Concurrent::Promises.future_on(pool) do
