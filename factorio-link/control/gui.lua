@@ -11,36 +11,13 @@ function link_gui_create(player)
     logistics_tab   = link_gui_tab(tabbed_pane, 'Logistics')
     signals_tab     = link_gui_tab(tabbed_pane, 'Signals')
 
-    -- local server_list_inner_frame = server_tab.add{
-    --   type      = 'frame',
-    --   name      = 'link-server-list-frame',
-    --   style     = 'inventory_frame'
-    -- }
+--------------------------------------------------------------------------------
 
-    -- local server_list_scroll_pane = server_list_inner_frame.add{
-    --   type                     = 'scroll-pane',
-    --   name                     = 'link-server-list-scroll-pane',
-    --   horizontal_scroll_policy = 'never',
-    --   vertical_scroll_policy   = 'auto-and-reserve-space',
-    --   style = 'inner_frame_scroll_pane'
-    -- }
-
-    -- global.link_gui_servers_table = server_list_scroll_pane.add{
-    --   type = 'table',
-    --   name = 'link-servers-table',
-    --   column_count = 4,
-    --   draw_horizontal_lines = true,
-    --   draw_horizontal_lines_after_headers = true
-    -- }
     global.link_gui_servers_table = link_gui_server_frame(server_tab, 'Servers')
-    -- global.link_gui_servers_table.style.width = 400
 
 --------------------------------------------------------------------------------
 
-    global.link_gui_storage_table    = link_gui_logistics_frame(logistics_tab, 'Storage')
-
---------------------------------------------------------------------------------
-
+    global.link_gui_storage_table = link_gui_logistics_frame(logistics_tab, 'Storage')
     local logistics_flow = logistics_tab.add{
       type      = 'flow',
       name      = 'link-logistics-flow',
