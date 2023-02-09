@@ -25,7 +25,7 @@ local electricity = link_build_data({
         icon_size = 64,
         scale = 0.5,
         shift = {
-          -7,
+          -10,
           0
         }
       },
@@ -34,7 +34,7 @@ local electricity = link_build_data({
         icon_size = 64,
         scale = 0.5,
         shift = {
-          7,
+          10,
           0
         }
       }
