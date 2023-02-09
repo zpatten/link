@@ -109,7 +109,7 @@ function link_gui_logistics_frame(parent, caption)
     type = 'frame',
     name = string.lower('link-'..caption..'-outer-frame'),
     style = 'inventory_frame',
-    caption = 'Logistics: '..caption
+    caption = caption
   }
 
   local scroll_pane = outer_frame.add{
