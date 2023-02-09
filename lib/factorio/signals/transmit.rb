@@ -75,7 +75,7 @@ module Factorio
                 network_signals << current_signal
               else
                 count_changed = (signal_count(previous_signal) != signal_count(current_signal))
-                index_changed = (signal_count(previous_signal) != signal_count(current_signal))
+                index_changed = (signal_index(previous_signal) != signal_index(current_signal))
                 if count_changed
                   LinkLogger.debug(:signals_tx) { "Update Signal[#{network_id}]: #{signal_name(current_signal)} count:(#{signal_count(previous_signal)} -> #{signal_count(current_signal)})" }
                   network_signals << current_signal
