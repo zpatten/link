@@ -112,6 +112,7 @@ function link_gui_signal_frame(parent, caption)
   }
 
   scroll_pane.style.height = 800
+  scroll_pane.style.width = 900
 
   signal_table.style.vertically_stretchable  = 'stretch_and_expand'
   signal_table.style.horizontally_stretchable = 'stretch_and_expand'
