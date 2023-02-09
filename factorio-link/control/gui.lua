@@ -69,26 +69,19 @@ function link_gui_frame(parent, caption)
     visible   = false
   }
 
-  -- local inner_frame = global.link_gui.add{
-  --   type      = 'frame',
-  --   name      = 'link-gui-inner-frame',
-  --   direction = 'horizontal',
-  --   style     = 'inside_shallow_frame_with_padding'
-  -- }
-
   return frame
 end
 
 function link_gui_tabbed_pane(parent, caption)
-  local outer_frame = parent.add{
-    type = 'frame',
-    name = dasherize(string.lower('link-'..caption..'-outer-frame')),
+  local frame = parent.add{
+    type  = 'frame',
+    name  = dasherize(string.lower('link-'..caption..'-frame')),
     style = 'inside_deep_frame_for_tabs'
   }
 
-  local tabbed_pane = outer_frame.add{
-    type = 'tabbed-pane',
-    name = dasherize(string.lower('link-'..caption..'-tabbed-pane')),
+  local tabbed_pane = frame.add{
+    type  = 'tabbed-pane',
+    name  = dasherize(string.lower('link-'..caption..'-tabbed-pane')),
     style = 'tabbed_pane_with_extra_padding'
   }
   tabbed_pane.selected_tab_index = 1
@@ -98,14 +91,14 @@ end
 
 function link_gui_tab(parent, caption)
   local tab = parent.add{
-    type = 'tab',
-    name = dasherize(string.lower('link-'..caption..'-tab')),
+    type    = 'tab',
+    name    = dasherize(string.lower('link-'..caption..'-tab')),
     caption = caption
   }
   local frame = parent.add{
-    type = 'frame',
-    name = dasherize(string.lower('link-'..caption..'-outer-frame')),
-    style = 'invisible_frame'
+    type  = 'frame',
+    name  = dasherize(string.lower('link-'..caption..'-frame')),
+    style = 'naked_frame'
   }
   parent.add_tab(tab, frame)
 
@@ -113,26 +106,27 @@ function link_gui_tab(parent, caption)
 end
 
 function link_gui_server_frame(parent, caption)
-  -- local inner_frame = parent.add{
-  --   type      = 'frame',
-  --   name      = 'link-server-list-frame',
-  --   style     = 'inside_shallow_frame_with_padding'
-  -- }
+  local frame = parent.add{
+    type  = 'frame',
+    name  = dasherize(string.lower('link-'..caption..'-frame')),
+    style = 'naked_frame'
+  }
 
-  local scroll_pane = parent.add{
+  local scroll_pane = frame.add{
     type                     = 'scroll-pane',
-    name                     = 'link-server-list-scroll-pane',
+    name                     = dasherize(string.lower('link-'..caption..'-scroll-pane')),
     horizontal_scroll_policy = 'never',
     vertical_scroll_policy   = 'auto-and-reserve-space',
-    style = 'scroll_frame_in_shallow_frame'
+    style                    = 'naked_scroll_pane'
   }
 
   local server_table = scroll_pane.add{
-    type = 'table',
-    name = 'link-servers-table',
-    column_count = 4,
-    draw_horizontal_lines = true,
-    draw_horizontal_lines_after_headers = true
+    type                                = 'table',
+    name                                = 'link-servers-table',
+    column_count                        = 3,
+    draw_horizontal_lines               = true,
+    draw_horizontal_lines_after_headers = true,
+    style                               = 'inset_frame_container_table'
   }
 
   server_table.style.vertically_stretchable  = 'stretch_and_expand'
@@ -147,18 +141,18 @@ end
 
 function link_gui_logistics_frame(parent, caption)
   local outer_frame = parent.add{
-    type = 'frame',
-    name = string.lower('link-'..caption..'-outer-frame'),
-    style = 'invisible_frame_with_title_for_inventory',
+    type    = 'frame',
+    name    = dasherize(string.lower('link-'..caption..'-outer-frame')),
+    style   = 'invisible_frame_with_title_for_inventory',
     caption = caption
   }
 
   local scroll_pane = outer_frame.add{
-    type = 'scroll-pane',
-    name = string.lower('link-'..caption..'-scroll-pane'),
-    style = 'logistics_scroll_pane',
+    type                     = 'scroll-pane',
+    name                     = dasherize(string.lower('link-'..caption..'-scroll-pane')),
+    style                    = 'logistics_scroll_pane',
     horizontal_scroll_policy = 'never',
-    vertical_scroll_policy = 'auto-and-reserve-space'
+    vertical_scroll_policy   = 'auto-and-reserve-space'
   }
 
   scroll_pane.style.width = 300
@@ -167,15 +161,15 @@ function link_gui_logistics_frame(parent, caption)
   end
 
   local inner_frame = scroll_pane.add{
-    type = 'frame',
-    name = string.lower('link-'..caption..'-inner-frame'),
+    type  = 'frame',
+    name  = dasherize(string.lower('link-'..caption..'-inner-frame')),
     style = 'logistics_scroll_pane_background_frame'
   }
 
   local logistics_slot_table = inner_frame.add{
-    type = 'table',
-    name = string.lower('link-'..caption..'-table'),
-    style = 'logistics_slot_table',
+    type         = 'table',
+    name         = dasherize(string.lower('link-'..caption..'-table')),
+    style        = 'logistics_slot_table',
     column_count = 7
   }
 
@@ -195,10 +189,6 @@ function link_gui_servers_table_update(player)
     }
     global.link_gui_servers_table.add{
       type = 'label',
-      caption = 'Details'
-    }
-    global.link_gui_servers_table.add{
-      type = 'label',
       caption = 'RTT'
     }
     if global.link_server_list then
@@ -208,20 +198,19 @@ function link_gui_servers_table_update(player)
           type = 'button',
           caption = 'Connect'
         }
-        global.link_gui_servers_table.add{
+        local flow = global.link_gui_servers_table.add{
+          type = 'flow',
+          direction = 'horizontal'
+        }
+        flow.add{
           type = 'label',
           caption = server.name
         }
         if server.research then
-          global.link_gui_servers_table.add{
+          flow.add{
             type = 'label',
             caption = '[RESEARCH]',
             style = 'bold_green_label'
-          }
-        else
-          global.link_gui_servers_table.add{
-            type = 'label',
-            caption = ''
           }
         end
         global.link_gui_servers_table.add{
