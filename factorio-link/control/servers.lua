@@ -6,6 +6,14 @@ function set_link_gui_server_list(json)
   rcon.print("OK")
 end
 
+function set_link_gui_signals(signal_networks_json)
+  if global.link_gui and global.link_gui.visible then
+    signal_networks = game.json_to_table(signal_networks_json)
+    link_gui_signal_frame_update(global.link_gui_signals_table, signal_networks)
+  end
+  rcon.print("OK")
+end
+
 function set_link_gui_logistics_storage(storage_items_json)
   if global.link_gui and global.link_gui.visible then
     storage_items = game.json_to_table(storage_items_json)

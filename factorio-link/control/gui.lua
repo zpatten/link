@@ -7,13 +7,13 @@ function link_gui_create(player)
 
     tabbed_pane     = link_gui_tabbed_pane(global.link_gui)
 
-    server_tab      = link_gui_tab(tabbed_pane, 'Servers')
+    servers_tab     = link_gui_tab(tabbed_pane, 'Servers')
     logistics_tab   = link_gui_tab(tabbed_pane, 'Logistics')
     signals_tab     = link_gui_tab(tabbed_pane, 'Signals')
 
 --------------------------------------------------------------------------------
 
-    global.link_gui_servers_table = link_gui_server_frame(server_tab, 'Servers')
+    global.link_gui_servers_table = link_gui_server_frame(servers_tab, 'Servers')
 
 --------------------------------------------------------------------------------
 
@@ -38,6 +38,10 @@ function link_gui_create(player)
     global.link_gui_logistics_table_fulfilled   = link_gui_logistics_frame(logistics_flow, 'This Server: Fulfilled')
     global.link_gui_logistics_table_unfulfilled = link_gui_logistics_frame(logistics_flow, 'This Server: Unfulfilled')
     global.link_gui_logistics_table_overflow    = link_gui_logistics_frame(logistics_flow, 'This Server: Overflow')
+
+--------------------------------------------------------------------------------
+
+    global.link_gui_signals_table = link_gui_signal_frame(signals_tab, 'Signals')
 
 --------------------------------------------------------------------------------
 
@@ -87,6 +91,34 @@ function link_gui_tab(parent, caption)
   return frame
 end
 
+function link_gui_signal_frame(parent, caption)
+  local frame = parent.add{
+    type  = 'frame',
+    style = 'naked_frame'
+  }
+
+  local scroll_pane = frame.add{
+    type                     = 'scroll-pane',
+    horizontal_scroll_policy = 'never',
+    vertical_scroll_policy   = 'auto-and-reserve-space',
+    style                    = 'naked_scroll_pane'
+  }
+
+  local signal_table = scroll_pane.add{
+    type                                = 'table',
+    name                                = 'link-signals-table',
+    column_count                        = 21,
+    style                               = 'inset_frame_container_table'
+  }
+
+  scroll_pane.style.height = 800
+
+  signal_table.style.vertically_stretchable  = 'stretch_and_expand'
+  signal_table.style.horizontally_stretchable = 'stretch_and_expand'
+
+  return signal_table
+end
+
 function link_gui_server_frame(parent, caption)
   local frame = parent.add{
     type  = 'frame',
@@ -104,8 +136,6 @@ function link_gui_server_frame(parent, caption)
     type                                = 'table',
     name                                = 'link-servers-table',
     column_count                        = 3,
-    -- draw_horizontal_lines               = true,
-    -- draw_horizontal_lines_after_headers = true,
     style                               = 'inset_frame_container_table'
   }
 
@@ -113,10 +143,6 @@ function link_gui_server_frame(parent, caption)
 
   server_table.style.vertically_stretchable  = 'stretch_and_expand'
   server_table.style.horizontally_stretchable = 'stretch_and_expand'
-
-  server_table.style.column_alignments[1] = 'center'
-  server_table.style.column_alignments[2] = 'center'
-  server_table.style.column_alignments[3] = 'left'
 
   return server_table
 end
