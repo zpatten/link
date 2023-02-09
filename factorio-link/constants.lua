@@ -34,7 +34,7 @@ LINK_FLUID_BASE_AREA = LINK_FLUID_RECIPE_AMOUNT / 100
 
 --------------------------------------------------------------------------------
 
-LINK_SHORTCUT_SERVERS = 'link-shortcut-servers'
+LINK_SHORTCUT_GUI = 'link-shortcut-gui'
 
 --------------------------------------------------------------------------------
 

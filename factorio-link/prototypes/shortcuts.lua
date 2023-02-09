@@ -1,12 +1,11 @@
 local shortcut = link_build_data({
   type = 'shortcut',
   what = 'shortcut',
-  name = 'servers',
+  name = 'gui',
   attributes = {
     localised_name = 'Link Servers',
     action = 'lua',
     toggleable = false,
-    style = 'red',
     icon = {
       filename = '__base__/graphics/icons/signal/signal_L.png',
       -- '__base__/graphics/icons/computer.png',
