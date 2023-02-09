@@ -104,17 +104,19 @@ function link_gui_server_frame(parent, caption)
     type                                = 'table',
     name                                = 'link-servers-table',
     column_count                        = 3,
-    draw_horizontal_lines               = true,
-    draw_horizontal_lines_after_headers = true,
+    -- draw_horizontal_lines               = true,
+    -- draw_horizontal_lines_after_headers = true,
     style                               = 'inset_frame_container_table'
   }
 
+  scroll_pane.style.height = 800
+
   server_table.style.vertically_stretchable  = 'stretch_and_expand'
   server_table.style.horizontally_stretchable = 'stretch_and_expand'
+
   server_table.style.column_alignments[1] = 'center'
-  server_table.style.column_alignments[2] = 'left'
+  server_table.style.column_alignments[2] = 'center'
   server_table.style.column_alignments[3] = 'left'
-  server_table.style.column_alignments[4] = 'center'
 
   return server_table
 end
@@ -133,8 +135,8 @@ function link_gui_logistics_frame(parent, caption)
     vertical_scroll_policy   = 'auto-and-reserve-space'
   }
 
-  scroll_pane.style.width = 300
-  if caption == 'Storage' then
+  scroll_pane.style.width = 290
+  if caption == 'Link Storage' then
     scroll_pane.style.height = 800
   else
     scroll_pane.style.height = 120
@@ -157,36 +159,24 @@ end
 function link_gui_servers_table_update(player)
   if global.link_gui_servers_table and global.link_gui_servers_table.valid then
     global.link_gui_servers_table.clear()
-    global.link_gui_servers_table.add{
-      type = 'label',
-      caption = ''
-    }
-    global.link_gui_servers_table.add{
-      type = 'label',
-      caption = 'Name'
-    }
-    global.link_gui_servers_table.add{
-      type = 'label',
-      caption = 'RTT'
-    }
-    global.link_gui_servers_table.add{
-      type = 'label',
-      caption = 'ID'
-    }
     if global.link_server_list then
       for _, server in pairs(global.link_server_list) do
-        global.link_gui_servers_table.add{
+        local button = global.link_gui_servers_table.add{
           name = server.name,
           type = 'button',
-          caption = 'Connect'
+          caption = server.name,
+          style = 'menu_button'
         }
-        local flow = global.link_gui_servers_table.add{
+        button.style.width = 300
+        button.style.height = 80
+
+        local flow = button.add{
           type = 'flow',
-          direction = 'horizontal'
+          direction = 'vertical'
         }
         flow.add{
           type = 'label',
-          caption = server.name
+          caption = server.rtt..' ms'
         }
         if server.research then
           flow.add{
@@ -195,14 +185,6 @@ function link_gui_servers_table_update(player)
             style = 'bold_green_label'
           }
         end
-        global.link_gui_servers_table.add{
-          type = 'label',
-          caption = tostring(server.rtt)
-        }
-        global.link_gui_servers_table.add{
-          type = 'label',
-          caption = server.id
-        }
       end
     end
   end
