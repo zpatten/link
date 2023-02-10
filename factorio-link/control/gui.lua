@@ -117,18 +117,24 @@ function link_gui_signal_frame(parent, caption)
 end
 
 function link_gui_signal_network_frame(parent, caption)
+  -- local outer_frame = parent.add{
+  --   type    = 'frame',
+  --   style   = 'inside_shallow_frame_with_padding',
+  -- }
+
   local inner_frame = parent.add{
     type    = 'frame',
     style   = 'invisible_frame_with_title_for_inventory',
     caption = caption
   }
 
-  inner_frame.add{ type = 'line', direction = 'horizontal' }
-
-  local table_frame = inner_frame.add{
+  local flow = inner_frame.add{ type = 'flow', direction = 'vertical' }
+  flow.add{ type = 'line', direction = 'horizontal' }
+  local table_frame = flow.add{
     type  = 'frame',
     style = 'inside_deep_frame'
   }
+  flow.add{ type = 'line', direction = 'horizontal' }
 
   local signal_table = table_frame.add{
     type         = 'table',
