@@ -62,6 +62,8 @@ function link_gui_frame(parent, caption)
   return frame
 end
 
+--------------------------------------------------------------------------------
+
 function link_gui_tabbed_pane(parent, caption)
   local frame = parent.add{
     type  = 'frame',
@@ -91,6 +93,8 @@ function link_gui_tab(parent, caption)
   return frame
 end
 
+--------------------------------------------------------------------------------
+
 function link_gui_signal_frame(parent, caption)
   local frame = parent.add{
     type  = 'frame',
@@ -104,7 +108,7 @@ function link_gui_signal_frame(parent, caption)
     style                    = 'naked_scroll_pane'
   }
 
-  scroll_pane.style.vertically_stretchable  = 'stretch_and_expand'
+  scroll_pane.style.vertically_stretchable   = 'stretch_and_expand'
   scroll_pane.style.horizontally_stretchable = 'stretch_and_expand'
 
   -- scroll_pane.style.width = 800
@@ -119,9 +123,11 @@ function link_gui_signal_network_frame(parent, caption)
     caption = caption
   }
 
+  inner_frame.add{ type = 'line', direction = 'horizontal' }
+
   local table_frame = inner_frame.add{
-    type    = 'frame',
-    style   = 'inside_deep_frame'
+    type  = 'frame',
+    style = 'inside_deep_frame'
   }
 
   local signal_table = table_frame.add{
@@ -132,6 +138,8 @@ function link_gui_signal_network_frame(parent, caption)
 
   return signal_table
 end
+
+--------------------------------------------------------------------------------
 
 function link_gui_server_frame(parent, caption)
   local frame = parent.add{
@@ -146,14 +154,14 @@ function link_gui_server_frame(parent, caption)
     style                    = 'naked_scroll_pane'
   }
 
-  scroll_pane.style.vertically_stretchable  = 'stretch_and_expand'
+  scroll_pane.style.vertically_stretchable   = 'stretch_and_expand'
   scroll_pane.style.horizontally_stretchable = 'stretch_and_expand'
 
   local server_table = scroll_pane.add{
-    type                                = 'table',
-    name                                = 'link-servers-table',
-    column_count                        = 3,
-    style                               = 'inset_frame_container_table'
+    type         = 'table',
+    name         = 'link-servers-table',
+    column_count = 3,
+    style        = 'inset_frame_container_table'
   }
 
   -- scroll_pane.style.height = 800
@@ -161,6 +169,8 @@ function link_gui_server_frame(parent, caption)
 
   return server_table
 end
+
+--------------------------------------------------------------------------------
 
 function link_gui_logistics_frame(parent, caption)
   local outer_frame = parent.add{
@@ -178,7 +188,7 @@ function link_gui_logistics_frame(parent, caption)
 
   scroll_pane.style.width = 290
   if caption == 'Link Storage' then
-    scroll_pane.style.vertically_stretchable  = 'stretch_and_expand'
+    scroll_pane.style.vertically_stretchable   = 'stretch_and_expand'
     scroll_pane.style.horizontally_stretchable = 'stretch_and_expand'
     scroll_pane.style.height = 800
   else
@@ -198,6 +208,8 @@ function link_gui_logistics_frame(parent, caption)
 
   return logistics_slot_table
 end
+
+--------------------------------------------------------------------------------
 
 function link_gui_servers_table_update(player)
   if global.link_gui_servers_table and global.link_gui_servers_table.valid then
