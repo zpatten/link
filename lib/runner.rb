@@ -187,7 +187,6 @@ class Runner
     # end
 
     @pool.wait_for_termination(Config.value(:timeout, :pool))
-    puts Thread.list.count.ai
   end
 
 ################################################################################
