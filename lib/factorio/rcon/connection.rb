@@ -14,7 +14,7 @@ module Factorio
       def connected?
         return false if @socket.nil?
 
-        @socket_mutex.synchronize { @socket.remote_address }
+        @socket_mutex.synchronize { !@socket.closed? }
         true
       rescue Errno::ENOTCONN
         false
@@ -40,7 +40,7 @@ module Factorio
 
       def disconnect!
         if connected?
-          @socket_mutex.synchronize { @socket.shutdown }
+          @socket_mutex.synchronize { @socket.close }
           LinkLogger.info(tag) { "Disconnected from #{host_tag.ai}" }
         end
 

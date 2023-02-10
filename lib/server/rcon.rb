@@ -8,8 +8,8 @@ class Server
     def start_rcon!
       sleep 1 until container_alive?
 
-      @pinged_at   = Time.now.to_f
-      @timedout_at = nil
+      @pinged_at = Time.now.to_f
+      @timeouts  = 0
 
       @rcon = Factorio::RConPool.new(server: self)
       @rcon.start!
@@ -19,6 +19,7 @@ class Server
 
     def stop_rcon!
       @rcon and @rcon.stop!
+      @rcon = nil
 
       @pinged_at = 0
       @rtt       = 0

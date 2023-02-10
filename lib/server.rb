@@ -39,7 +39,7 @@ class Server
   attr_reader :pool
   attr_reader :watch
 
-  attr_accessor :timedout_at
+  attr_accessor :timeouts
   attr_reader :metrics
 
   RECV_MAX_LEN = (2 ** 16) - 1
@@ -53,7 +53,7 @@ class Server
     @ping_timeout = Config.value(:timeout, :ping)
     @pinged_at    = Time.now.to_f
     @rtt          = 0
-    @timedout_at  = nil
+    @timeouts     = 0
     @watch        = false
 
     @details           = details
@@ -67,7 +67,7 @@ class Server
     @host              = details['host']
     @research          = details['research']
 
-    @metrics           = Concurrent::Map.new
+    @metrics           = Concurrent::Map.new { Hash.new(0) }
 
     @rx_signals_initalized = false
     @tx_signals_initalized = false

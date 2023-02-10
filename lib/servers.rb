@@ -67,17 +67,16 @@ class Servers
   def to_json
     server_list = Hash.new
     collect do |server|
-      if server.connected?
-        server_list[server.name] = {
-          name: server.name,
-          id: server.id,
-          host: external_host,
-          port: server.factorio_port,
-          research: server.research,
-          responsive: server.responsive?,
-          rtt: server.rtt
-        }
-      end
+      server_list[server.name] = {
+        name: server.name,
+        id: server.id,
+        host: external_host,
+        port: server.factorio_port,
+        research: server.research,
+        connected: server.connected?,
+        responsive: server.responsive?,
+        rtt: server.rtt
+      }
     end
     server_list.to_json
   end

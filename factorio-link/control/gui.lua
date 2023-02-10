@@ -235,10 +235,18 @@ function link_gui_servers_table_update(player)
           type = 'flow',
           direction = 'vertical'
         }
-        flow.add{
-          type = 'label',
-          caption = server.rtt..' ms'
-        }
+        if server.connected then
+          flow.add{
+            type = 'label',
+            caption = server.rtt..' ms'
+          }
+        else
+          flow.add{
+            type = 'label',
+            caption = '[OFFLINE]',
+            style = 'bold_red_label'
+          }
+        end
         if server.research then
           flow.add{
             type = 'label',

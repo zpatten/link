@@ -29,10 +29,11 @@ module Factorio
         buffer = ''
         while buffer.length < length do
           break if disconnected? || @cancellation.canceled?
-          len = (length - buffer.length)
-          data = nil
-          data = @socket.recv(len) unless disconnected? || @cancellation.canceled? || IO.select([@socket], nil, nil, 1).nil?
-          buffer += data unless data.nil?
+          unless (disconnected? || @cancellation.canceled? || IO.select([@socket], nil, nil, 1).nil?)
+            len    = (length - buffer.length)
+            data   = @socket.recv(len)
+            buffer += data unless data.nil?
+          end
           # data = socket.recvmsg_nonblock(len, exception: false)
           # if data == :wait_readable
           #   IO.select([socket])
