@@ -19,7 +19,14 @@ module Factorio
 
           network_signals.each do |unit_number, unit_signals|
             unit_signals.each do |unit_signal|
-              signal_totals.merge!(signal_name(unit_signal) => signal_count(unit_signal)) { |k,o,n| o + n }
+              signal_totals.merge!(signal_name(unit_signal) => signal_count(unit_signal)) do |k, o, n|
+                case k
+                when /^link-/
+                  o
+                else
+                  o + n
+                end
+              end
               signal_types[signal_name(unit_signal)] ||= signal_type(unit_signal)
             end
           end

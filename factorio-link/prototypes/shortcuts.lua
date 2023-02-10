@@ -3,12 +3,11 @@ local shortcut = link_build_data({
   what = 'shortcut',
   name = 'gui',
   attributes = {
-    localised_name = 'Link Servers',
+    localised_name = 'Link Control Panel',
     action = 'lua',
     toggleable = false,
     icon = {
       filename = '__base__/graphics/icons/signal/signal_L.png',
-      -- '__base__/graphics/icons/computer.png',
       priority = 'extra-high-no-scale',
       size = 64,
       scale = 1,
