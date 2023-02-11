@@ -111,9 +111,10 @@ function link_gui_signal_frame(parent, caption)
   scroll_pane.style.vertically_stretchable   = 'stretch_and_expand'
   scroll_pane.style.horizontally_stretchable = 'stretch_and_expand'
 
-  -- scroll_pane.style.width = 800
+  local flow = scroll_pane.add{ type = 'flow', direction = 'vertical' }
+  -- scroll_pane.style.width = 900
 
-  return scroll_pane
+  return flow
 end
 
 function link_gui_signal_network_frame(parent, caption)
@@ -127,14 +128,15 @@ function link_gui_signal_network_frame(parent, caption)
     style   = 'invisible_frame_with_title_for_inventory',
     caption = caption
   }
+  -- inner_frame.style.width = 900
 
-  local flow = inner_frame.add{ type = 'flow', direction = 'vertical' }
-  flow.add{ type = 'line', direction = 'horizontal' }
-  local table_frame = flow.add{
+  -- local flow = inner_frame.add{ type = 'flow', direction = 'horizontal' }
+  -- flow.add{ type = 'line', direction = 'vertical' }
+  local table_frame = inner_frame.add{
     type  = 'frame',
     style = 'inside_deep_frame'
   }
-  flow.add{ type = 'line', direction = 'horizontal' }
+  -- flow.add{ type = 'line', direction = 'vertical' }
 
   local signal_table = table_frame.add{
     type         = 'table',
