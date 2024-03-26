@@ -1,0 +1,14 @@
+%h1 Threads
+%hr
+%table
+  %tr
+    %th PID
+    %th Name
+    %th Status
+    %th Priority
+  - @threads.each do |thread|
+    %tr
+      %td= thread.pid
+      %td.align-left= thread.name
+      %td= thread.status
+      %td= thread.priority

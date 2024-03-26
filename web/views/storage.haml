@@ -1,0 +1,29 @@
+%h1 Storage
+%hr
+%table.wide
+  %tr
+    %th Item
+    %th Count
+    %th{ style: "width: #{@meter_width}px;" } Distribution
+  - @storage.sort.each do |item_name, item_count|
+    %tr
+      %td.align-right.one= item_name
+      %td.align-right.one{ id: "#{item_name}-count" }= countsize(item_count)
+      %td
+        %div.fleft{ style: "width: #{((item_count.to_f / @total_count.to_f) * 100.0).to_i}%; background-color: red;" } &nbsp;
+        %div.fright{ style: "width: #{100 - ((item_count.to_f / @total_count.to_f) * 100.0).to_i}%; background-color: green;" } &nbsp;
+
+:javascript
+  window.onload = function(){
+    (function(){
+      var show = function(msg){
+        console.log(msg);
+        var item = JSON.parse(msg);
+        var el = document.getElementById(item.name + "-count");
+        el.innerHTML = item.count;
+      };
+
+      var ws       = new WebSocket("ws://" + window.location.host + window.location.pathname);
+      ws.onmessage = function(m) { show(m.data); };
+    })();
+  }

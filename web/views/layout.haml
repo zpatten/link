@@ -1,0 +1,21 @@
+!!!
+%html
+  %head
+    %title Link
+    %link{ rel: "stylesheet", type: "text/css", href: "/css/style.css"}
+%body
+  %div
+    [
+    %a{ href: "/config", title: "Config" } Config
+    |
+    %a{ href: "/mods", title: "Mods" } Mods
+    |
+    %a{ href: "/servers", title: "Servers" } Servers
+    |
+    %a{ href: "/signals", title: "Signals" } Signals
+    |
+    %a{ href: "/storage", title: "Storage" } Storage
+    |
+    %a{ href: "/threads", title: "Threads" } Threads
+    ]
+  != yield

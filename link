@@ -1,0 +1,57 @@
+#!/usr/bin/env -S ruby
+# frozen_string_literal: true
+
+Thread.current.name = 'main'
+
+require 'rubygems'
+require 'bundler/setup'
+
+################################################################################
+
+require 'benchmark'
+require 'json'
+require 'ostruct'
+require 'resolv'
+require 'securerandom'
+require 'socket'
+require 'timeout'
+require 'zlib'
+
+################################################################################
+
+require 'awesome_print'
+require 'concurrent-edge'
+require 'httparty'
+
+################################################################################
+
+GIGAJOULE       = 10 ** 9
+INT_32_MAX      = (2 ** 31) - 1
+LINK_ROOT       = Dir.pwd
+PROGRAM_NAME    = 'link'
+THREAD_EXECUTOR = Concurrent::CachedThreadPool  # Concurrent::ImmediateExecutor
+
+################################################################################
+
+PID_FILE              = File.join(LINK_ROOT, 'link.pid')
+PID_STOP_SIGNAL_ORDER = %w( QUIT TERM KILL )
+PID_TIMEOUT           = 30
+
+################################################################################
+
+TRAP_SIGNALS = (RUBY_ENGINE == 'ruby' ? %w( INT TERM QUIT ) : %w( INT TERM ))
+
+################################################################################
+
+require_relative 'lib/support'
+
+require_relative 'lib/factorio'
+require_relative 'lib/metrics'
+require_relative 'lib/runner'
+require_relative 'lib/server'
+require_relative 'lib/servers'
+require_relative 'lib/tasks'
+
+################################################################################
+
+Runner.run!

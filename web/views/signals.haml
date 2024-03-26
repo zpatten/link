@@ -1,0 +1,31 @@
+%h1 Signals
+%hr
+%h2 Network IDs & Signal Counts:
+%table
+  %tr
+    %th Network ID
+    %th Signals
+  - signals.get_network_ids.map(&:to_s).sort.each do |nid|
+    - s = signals.tx(nid, force: true)
+    %tr
+      %td.align-right= nid
+      %td.align-right #{s.count} Signals
+%hr
+%h2 Network Signals:
+- signals.get_network_ids.map(&:to_s).sort.each do |nid|
+  %table.fleft
+    %tr
+      %th{ colspan: 3 } NID: #{nid}
+    %tr
+      - s = signals.tx(nid, force: true)
+      - if s.nil?
+        %th No Signals!
+      - else
+        %th.align-right Name
+        %th.one Type
+        %th.one Count
+      - s.each do |signal|
+        %tr
+          %td.align-right= signal["signal"]["name"]
+          %td.one= signal["signal"]["type"]
+          %td.one= signal["count"]

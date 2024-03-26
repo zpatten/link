@@ -1,0 +1,67 @@
+%h1 Factorio Mods
+%hr
+%table.fright
+  %tr
+    %td
+      %form{ method: :post, action: '/mods/search' }
+        %p
+          %label Search Factorio Mod Portal:
+          %input{ type: 'text', name: 'name' }
+        %input{ type: 'submit'}
+%table.fleft
+  %tr
+    %th.align-right Name
+    %th Enabled?
+    %th Toggle
+    %th Search
+    %th View
+    %th Files
+  - Factorio::Mods.names.each do |mod_name|
+    %tr
+      %td.align-right
+        = mod_name
+      %td
+        - if Factorio::Mods.enabled?(mod_name)
+          ENABLED
+      %td
+        %form{ method: :post, action: "/mods/#{Factorio::Mods.enabled?(mod_name) ? 'disable' : 'enable'}" }
+          %input{ type: 'hidden', name: 'name', value: mod_name }
+          %input{ type: 'submit', value: Factorio::Mods.enabled?(mod_name) ? 'Disable' : 'Enable' }
+      %td
+        %form{ method: :post, action: '/mods/search' }
+          %input{ type: 'hidden', name: 'name', value: mod_name }
+          %input{ type: 'submit', value: 'Search' }
+      %td
+        %a{ href: Factorio::Mods.mod_portal_uri(mod_name), target: '_blank' } View
+      %td
+        %table
+          - Factorio::Mods.files.select { |f| f[:name] == mod_name }.each do |mod|
+            %tr
+              %td
+                %form{ method: :post, action: '/mods/delete' }
+                  %input{ type: 'hidden', name: 'filename', value: mod[:file] }
+                  %input{ type: 'submit', value: 'Delete', onclick: "return confirm('WARNING: Are you sure you want to delete \"#{mod[:file]}\"?')"  }
+              %td.one.align-left
+                = mod[:file]
+              %td.align-left
+                = filesize(mod[:size])
+              %td.align-left
+                = mod[:time]
+%table.fleft
+  %tr
+    %th.align-left Delete
+    %th.align-left Filename
+    %th.align-left File Size
+    %th.align-left Timestamp
+  - Factorio::Mods.files.each do |mod|
+    %tr
+      %td
+        %form{ method: :post, action: '/mods/delete' }
+          %input{ type: 'hidden', name: 'filename', value: mod[:file] }
+          %input{ type: 'submit', value: 'Delete', onclick: "return confirm('WARNING: Are you sure you want to delete \"#{mod[:file]}\"?')"  }
+      %td.align-left
+        = mod[:file]
+      %td.align-left
+        = filesize(mod[:size])
+      %td.align-left
+        = mod[:time]

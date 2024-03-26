@@ -1,0 +1,8 @@
+%h1 Config
+%hr
+%table.fleft
+  %tr
+    %th Key
+    %th Value
+    %th Actions
+  != haml :_config, locals: { data: Config.to_h.sort.to_h, depth: 0 }

@@ -1,0 +1,22 @@
+{
+  "max_players": 0,
+  "visibility": {
+    "public": false,
+    "steam": false,
+    "lan": true
+  },
+  "username": "",
+  "password": "",
+  "token": "",
+  "game_password": "",
+  "require_user_verification": true,
+  "max_upload_slots": 0,
+  "allow_commands": "admins-only",
+  "autosave_interval": 0,
+  "autosave_slots": 0,
+  "afk_autokick_interval": 0,
+  "auto_pause": false,
+  "non_blocking_saving": true,
+  "maximum_segment_size": 300,
+  "maximum_segment_size_peer_count": 20
+}
